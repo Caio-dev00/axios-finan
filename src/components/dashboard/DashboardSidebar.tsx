@@ -4,7 +4,14 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyPlan } from "@/contexts/FamilyPlanContext";
 import { Button } from "@/components/ui/button";
-import { Sidebar, SidebarSection, SidebarItem } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarGroup,
+} from "@/components/ui/sidebar";
 import {
   CreditCard,
   DollarSign,
@@ -93,18 +100,25 @@ const DashboardSidebar = () => {
           </Link>
         </div>
 
-        <SidebarSection>
-          {menuItems.map((item, index) => (
-            <SidebarItem
-              key={index}
-              icon={item.icon}
-              href={item.href}
-              active={isActive(item.href, item.exact)}
-            >
-              {item.title}
-            </SidebarItem>
-          ))}
-        </SidebarSection>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarMenu>
+              {menuItems.map((item, index) => (
+                <SidebarMenuItem key={index}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.href, item.exact)}
+                  >
+                    <Link to={item.href}>
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
 
         <div className="mt-auto p-4 border-t">
           <Button

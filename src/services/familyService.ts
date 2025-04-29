@@ -1,17 +1,16 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "../integrations/supabase/client";
 
-// Types
-export interface FamilyPlan {
+export type FamilyPlan = {
   id: string;
   owner_id: string;
   name: string;
   created_at: string;
   updated_at: string;
   max_members: number;
-}
+};
 
-export interface FamilyMember {
+export type FamilyMember = {
   id: string;
   family_plan_id: string;
   user_id: string;
@@ -19,134 +18,189 @@ export interface FamilyMember {
   created_at: string;
   user?: {
     email: string;
-    nome: string;
+    user_metadata?: {
+      nome?: string;
+    };
   };
-}
+};
 
-export interface UserSubscription {
+export type UserSubscription = {
   id: string;
   user_id: string;
   plan_type: "free" | "pro" | "family";
   start_date: string;
-  end_date: string | null;
+  end_date?: string;
   is_active: boolean;
-}
-
-// Get current user's family plan
-export const getFamilyPlan = async (): Promise<FamilyPlan | null> => {
-  const { data: familyPlans, error } = await supabase
-    .from("family_plans")
-    .select("*")
-    .limit(1);
-
-  if (error) {
-    console.error("Error fetching family plan:", error);
-    throw error;
-  }
-
-  return familyPlans && familyPlans.length > 0 ? familyPlans[0] : null;
+  created_at: string;
+  updated_at: string;
 };
 
-// Get current user subscription
-export const getUserSubscription = async (): Promise<UserSubscription | null> => {
-  const user = (await supabase.auth.getUser()).data.user;
-  
-  if (!user) return null;
-  
-  const { data, error } = await supabase
-    .from("user_subscriptions")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+// Função para obter a assinatura do usuário atual
+export async function getUserSubscription(): Promise<UserSubscription | null> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      throw new Error("Usuário não autenticado");
+    }
 
-  if (error) {
-    console.error("Error fetching user subscription:", error);
+    const { data, error } = await supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", user.user.id)
+      .single();
+
+    if (error) {
+      console.error("Erro ao buscar assinatura:", error);
+      return null;
+    }
+
+    // Ensure the plan_type is one of the allowed values
+    const subscription: UserSubscription = {
+      ...data,
+      plan_type: data.plan_type as "free" | "pro" | "family"
+    };
+
+    return subscription;
+  } catch (error) {
+    console.error("Erro ao buscar assinatura do usuário:", error);
     return null;
   }
+}
 
-  return data;
-};
-
-// Get members of a family plan
-export const getFamilyMembers = async (familyPlanId: string): Promise<FamilyMember[]> => {
-  const { data, error } = await supabase
-    .from("family_members")
-    .select(`
-      *,
-      user:user_id (
-        email,
-        nome:raw_user_meta_data->nome
-      )
-    `)
-    .eq("family_plan_id", familyPlanId);
-
-  if (error) {
-    console.error("Error fetching family members:", error);
-    throw error;
-  }
-
-  return data || [];
-};
-
-// Create an invitation link (simplified for now)
-export const createInvitationLink = (familyPlanId: string): string => {
-  // In a real app, this would create a secure, time-limited token
-  // For now, we'll just encode some basic info
-  const token = btoa(`invite:${familyPlanId}:${Date.now()}`);
-  return `${window.location.origin}/invite/${token}`;
-};
-
-// Invite family member by email
-export const inviteFamilyMember = async (email: string, familyPlanId: string): Promise<boolean> => {
+// Função para obter o plano familiar do usuário atual
+export async function getFamilyPlan(): Promise<FamilyPlan | null> {
   try {
-    // In a real app, you would:
-    // 1. Check if user exists
-    // 2. If yes, add them to the family_members table
-    // 3. If no, send an invitation email
-    
-    // For this demo, we'll assume the user exists
-    // In a production app, you would handle this more robustly
-    
-    // Simplified: we just log that an invitation would be sent
-    console.log(`Invitation would be sent to ${email} for family plan ${familyPlanId}`);
-    return true;
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    // Primeiro verifica se o usuário é um proprietário de plano familiar
+    let { data, error } = await supabase
+      .from("family_plans")
+      .select("*")
+      .eq("owner_id", user.user.id)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      // Se não for proprietário, verifica se é membro de algum plano familiar
+      const { data: memberData, error: memberError } = await supabase
+        .from("family_members")
+        .select("family_plan_id")
+        .eq("user_id", user.user.id)
+        .single();
+
+      if (memberError) {
+        console.error("Erro ao buscar associação de membro:", memberError);
+        return null;
+      }
+
+      const { data: planData, error: planError } = await supabase
+        .from("family_plans")
+        .select("*")
+        .eq("id", memberData.family_plan_id)
+        .single();
+
+      if (planError) {
+        console.error("Erro ao buscar plano familiar como membro:", planError);
+        return null;
+      }
+
+      data = planData;
+    } else if (error) {
+      console.error("Erro ao buscar plano familiar como proprietário:", error);
+      return null;
+    }
+
+    return data as FamilyPlan;
   } catch (error) {
-    console.error("Error inviting family member:", error);
-    return false;
+    console.error("Erro ao buscar plano familiar:", error);
+    return null;
   }
-};
+}
 
-// Remove a member from family plan
-export const removeFamilyMember = async (memberId: string): Promise<boolean> => {
-  const { error } = await supabase
-    .from("family_members")
-    .delete()
-    .eq("id", memberId);
+// Função para obter os membros de um plano familiar
+export async function getFamilyMembers(familyPlanId: string): Promise<FamilyMember[]> {
+  try {
+    const { data, error } = await supabase
+      .from("family_members")
+      .select(`
+        *,
+        user:user_id(
+          email,
+          user_metadata
+        )
+      `)
+      .eq("family_plan_id", familyPlanId);
 
-  if (error) {
-    console.error("Error removing family member:", error);
-    return false;
+    if (error) {
+      console.error("Erro ao buscar membros da família:", error);
+      return [];
+    }
+
+    // Cast the role to the correct type and transform the data
+    return data.map(member => ({
+      ...member,
+      role: member.role as "owner" | "member",
+      user: member.user as FamilyMember['user']
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar membros da família:", error);
+    return [];
   }
+}
 
-  return true;
-};
+// Função para convidar um novo membro para o plano familiar
+export async function inviteFamilyMember(email: string, familyPlanId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data: inviteData, error: inviteError } = await supabase.functions.invoke("invite-family-member", {
+      body: { email, familyPlanId },
+    });
 
-// Update family plan name
-export const updateFamilyPlan = async (
-  planId: string,
-  updates: Partial<FamilyPlan>
-): Promise<FamilyPlan | null> => {
-  const { data, error } = await supabase
-    .from("family_plans")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", planId)
-    .select()
-    .single();
+    if (inviteError) {
+      return { success: false, message: `Erro ao enviar convite: ${inviteError.message}` };
+    }
 
-  if (error) {
-    console.error("Error updating family plan:", error);
-    throw error;
+    return { success: true, message: "Convite enviado com sucesso!" };
+  } catch (error) {
+    console.error("Erro ao convidar membro:", error);
+    return { success: false, message: "Erro ao enviar convite. Tente novamente." };
   }
+}
 
-  return data;
-};
+// Função para aceitar um convite para um plano familiar
+export async function acceptFamilyInvite(token: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("accept-family-invite", {
+      body: { token },
+    });
+
+    if (error) {
+      return { success: false, message: `Erro ao aceitar convite: ${error.message}` };
+    }
+
+    return { success: true, message: "Convite aceito com sucesso!" };
+  } catch (error) {
+    console.error("Erro ao aceitar convite:", error);
+    return { success: false, message: "Erro ao aceitar convite. Tente novamente." };
+  }
+}
+
+// Função para remover um membro do plano familiar
+export async function removeFamilyMember(memberId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const { error } = await supabase
+      .from("family_members")
+      .delete()
+      .eq("id", memberId);
+
+    if (error) {
+      return { success: false, message: `Erro ao remover membro: ${error.message}` };
+    }
+
+    return { success: true, message: "Membro removido com sucesso!" };
+  } catch (error) {
+    console.error("Erro ao remover membro:", error);
+    return { success: false, message: "Erro ao remover membro. Tente novamente." };
+  }
+}
