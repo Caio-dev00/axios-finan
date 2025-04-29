@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
@@ -14,8 +15,9 @@ import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Sun, Moon, Monitor } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSearchParams } from "react-router-dom";
 
 // Profile schema validation
 const profileSchema = z.object({
@@ -49,13 +51,20 @@ interface NotificationPreferences {
 }
 
 const SettingsPage = () => {
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "profile";
   const { user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
+  const [currencyPreference, setCurrencyPreference] = useState("BRL");
+  const [dateFormatPreference, setDateFormatPreference] = useState("DD/MM/YYYY");
+  const [monthStartDayPreference, setMonthStartDayPreference] = useState("1");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   
   // Initialize form with react-hook-form
@@ -100,6 +109,11 @@ const SettingsPage = () => {
               phone: data.phone || "",
               occupation: data.occupation || "",
             });
+            
+            // Carregar preferências gerais
+            setCurrencyPreference(data.currency_preference || "BRL");
+            setDateFormatPreference(data.date_format_preference || "DD/MM/YYYY");
+            setMonthStartDayPreference(data.month_start_day || "1");
           }
         } catch (error: any) {
           console.error("Erro ao buscar perfil:", error.message);
@@ -305,11 +319,54 @@ const SettingsPage = () => {
     }
   };
 
+  // Salvar preferências gerais do aplicativo
+  const saveAppPreferences = async () => {
+    if (!user?.id) return;
+    
+    setSavingPreferences(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          currency_preference: currencyPreference,
+          date_format_preference: dateFormatPreference,
+          month_start_day: monthStartDayPreference,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Preferências atualizadas",
+        description: "Suas preferências do aplicativo foram atualizadas com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Erro ao salvar preferências gerais:", error.message);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar suas preferências",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingPreferences(false);
+    }
+  };
+
+  // Alterar o tema
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    toast({
+      title: "Tema alterado",
+      description: `O tema foi alterado para ${newTheme === 'light' ? 'claro' : newTheme === 'dark' ? 'escuro' : 'do sistema'}`,
+    });
+  };
+
   return (
     <div className="container mx-auto">
       <h1 className="text-2xl font-bold mb-6">Configurações</h1>
 
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="preferences">Preferências</TabsTrigger>
@@ -343,7 +400,7 @@ const SettingsPage = () => {
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input id="email" type="email" defaultValue={user?.email || ""} disabled />
-                      <p className="text-xs text-gray-500">O email não pode ser alterado</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">O email não pode ser alterado</p>
                     </div>
                   </div>
                   
@@ -395,10 +452,14 @@ const SettingsPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Moeda Padrão</Label>
-                  <p className="text-sm text-gray-500">Moeda usada nos relatórios e visualizações</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Moeda usada nos relatórios e visualizações</p>
                 </div>
                 <div className="w-[180px]">
-                  <select className="w-full p-2 border rounded">
+                  <select 
+                    className="w-full p-2 border rounded bg-background dark:bg-gray-800 text-foreground"
+                    value={currencyPreference}
+                    onChange={(e) => setCurrencyPreference(e.target.value)}
+                  >
                     <option value="BRL">Real Brasileiro (R$)</option>
                     <option value="USD">Dólar Americano ($)</option>
                     <option value="EUR">Euro (€)</option>
@@ -409,10 +470,14 @@ const SettingsPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Formato de Data</Label>
-                  <p className="text-sm text-gray-500">Como as datas são exibidas</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Como as datas são exibidas</p>
                 </div>
                 <div className="w-[180px]">
-                  <select className="w-full p-2 border rounded">
+                  <select 
+                    className="w-full p-2 border rounded bg-background dark:bg-gray-800 text-foreground"
+                    value={dateFormatPreference}
+                    onChange={(e) => setDateFormatPreference(e.target.value)}
+                  >
                     <option value="DD/MM/YYYY">DD/MM/AAAA</option>
                     <option value="MM/DD/YYYY">MM/DD/AAAA</option>
                     <option value="YYYY-MM-DD">AAAA-MM-DD</option>
@@ -423,10 +488,14 @@ const SettingsPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Dia de início do mês</Label>
-                  <p className="text-sm text-gray-500">Para cálculo de orçamentos mensais</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Para cálculo de orçamentos mensais</p>
                 </div>
                 <div className="w-[180px]">
-                  <select className="w-full p-2 border rounded">
+                  <select 
+                    className="w-full p-2 border rounded bg-background dark:bg-gray-800 text-foreground"
+                    value={monthStartDayPreference}
+                    onChange={(e) => setMonthStartDayPreference(e.target.value)}
+                  >
                     <option value="1">Dia 1</option>
                     <option value="5">Dia 5</option>
                     <option value="10">Dia 10</option>
@@ -440,19 +509,43 @@ const SettingsPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Tema</Label>
-                  <p className="text-sm text-gray-500">Aparência do aplicativo</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Aparência do aplicativo</p>
                 </div>
-                <div className="w-[180px]">
-                  <select className="w-full p-2 border rounded">
-                    <option value="light">Claro</option>
-                    <option value="dark">Escuro</option>
-                    <option value="system">Sistema</option>
-                  </select>
+                <div className="flex gap-2">
+                  <Button 
+                    variant={theme === 'light' ? "default" : "outline"} 
+                    className="flex items-center gap-2"
+                    onClick={() => handleThemeChange('light')}
+                  >
+                    <Sun className="h-4 w-4" />
+                    Claro
+                  </Button>
+                  <Button 
+                    variant={theme === 'dark' ? "default" : "outline"} 
+                    className="flex items-center gap-2"
+                    onClick={() => handleThemeChange('dark')}
+                  >
+                    <Moon className="h-4 w-4" />
+                    Escuro
+                  </Button>
+                  <Button 
+                    variant={theme === 'system' ? "default" : "outline"} 
+                    className="flex items-center gap-2"
+                    onClick={() => handleThemeChange('system')}
+                  >
+                    <Monitor className="h-4 w-4" />
+                    Sistema
+                  </Button>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
-              <Button>Salvar Preferências</Button>
+              <Button 
+                onClick={saveAppPreferences}
+                disabled={savingPreferences}
+              >
+                {savingPreferences ? "Salvando..." : "Salvar Preferências"}
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>
@@ -473,7 +566,7 @@ const SettingsPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Alertas de orçamento</Label>
-                      <p className="text-sm text-gray-500">Notificações quando você ultrapassar 75% do orçamento</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Notificações quando você ultrapassar 75% do orçamento</p>
                     </div>
                     <Switch 
                       checked={notificationPreferences.budget_alerts}
@@ -484,7 +577,7 @@ const SettingsPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Lembretes de contas</Label>
-                      <p className="text-sm text-gray-500">Lembretes para contas próximas do vencimento</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Lembretes para contas próximas do vencimento</p>
                     </div>
                     <Switch 
                       checked={notificationPreferences.bill_reminders}
@@ -495,7 +588,7 @@ const SettingsPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Relatórios semanais</Label>
-                      <p className="text-sm text-gray-500">Resumo semanal das suas finanças por email</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Resumo semanal das suas finanças por email</p>
                     </div>
                     <Switch 
                       checked={notificationPreferences.weekly_reports}
@@ -506,7 +599,7 @@ const SettingsPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Dicas financeiras</Label>
-                      <p className="text-sm text-gray-500">Receba dicas para melhorar suas finanças</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Receba dicas para melhorar suas finanças</p>
                     </div>
                     <Switch 
                       checked={notificationPreferences.financial_tips}
@@ -517,7 +610,7 @@ const SettingsPage = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label>Novidades e atualizações</Label>
-                      <p className="text-sm text-gray-500">Notificações sobre novos recursos do aplicativo</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Notificações sobre novos recursos do aplicativo</p>
                     </div>
                     <Switch 
                       checked={notificationPreferences.app_updates}

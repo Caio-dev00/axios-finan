@@ -82,7 +82,7 @@
 /* Custom utility classes */
 @layer components {
   .finance-card {
-    @apply bg-white rounded-xl shadow-md p-6 transition-all hover:shadow-lg;
+    @apply bg-white dark:bg-card rounded-xl shadow-md p-6 transition-all hover:shadow-lg;
   }
   
   .income-text {
@@ -106,10 +106,19 @@
   }
   
   .finance-btn-outline {
-    @apply finance-btn border-2 border-finance-primary text-finance-primary hover:bg-finance-light;
+    @apply finance-btn border-2 border-finance-primary text-finance-primary hover:bg-finance-light dark:hover:bg-opacity-20;
   }
 
   .glass-card {
-    @apply bg-white bg-opacity-70 backdrop-blur-lg rounded-xl shadow-md;
+    @apply bg-white dark:bg-gray-800/50 bg-opacity-70 dark:bg-opacity-30 backdrop-blur-lg rounded-xl shadow-md;
+  }
+  
+  /* Classes específicas para o tema escuro */
+  .dark .finance-card {
+    @apply border border-border;
+  }
+  
+  .dark .shadow-md {
+    @apply shadow-gray-900/20;
   }
 }

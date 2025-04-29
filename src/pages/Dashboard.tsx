@@ -9,6 +9,7 @@ import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import ExpenseDistribution from "@/components/dashboard/ExpenseDistribution";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Criar um cliente QueryClient para o Dashboard
 const queryClient = new QueryClient({
@@ -22,6 +23,7 @@ const queryClient = new QueryClient({
 
 const DashboardContent = () => {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
   const location = useLocation();
   const isMainDashboard = location.pathname === "/dashboard";
   
@@ -30,7 +32,7 @@ const DashboardContent = () => {
   const firstName = userName.split(" ")[0];
 
   return (
-    <div className="min-h-screen flex bg-gray-50 w-full">
+    <div className="min-h-screen flex bg-gray-50 dark:bg-background w-full">
       <DashboardSidebar />
       
       <div className="flex flex-col flex-1 min-h-screen">
@@ -38,7 +40,7 @@ const DashboardContent = () => {
         <main className="flex-1 p-6">
           {isMainDashboard ? (
             <>
-              <h1 className="text-2xl font-bold text-gray-900 mb-6">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground mb-6">
                 Olá, {firstName}
               </h1>
               
