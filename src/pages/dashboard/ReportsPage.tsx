@@ -15,13 +15,22 @@ import {
   Pie, 
   Cell,
   LineChart,
-  Line
+  Line,
+  TooltipProps
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { getReportData } from "@/services/financeService";
 import { Loader2 } from "lucide-react";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+// Custom formatter function for tooltip values
+const formatCurrency = (value: any): string => {
+  if (typeof value === 'number') {
+    return `R$ ${value.toFixed(2)}`;
+  }
+  return `R$ ${value}`;
+};
 
 const ReportsPage = () => {
   const { data, isLoading, error } = useQuery({
@@ -81,7 +90,7 @@ const ReportsPage = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
-                      <Tooltip formatter={(value) => `R$ ${value.toFixed(2)}`} />
+                      <Tooltip formatter={formatCurrency} />
                       <Legend />
                       <Bar dataKey="despesas" name="Despesas" fill="#FF8042" />
                       <Bar dataKey="receitas" name="Receitas" fill="#00C49F" />
@@ -125,7 +134,7 @@ const ReportsPage = () => {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `R$ ${value.toFixed(2)}`} />
+                      <Tooltip formatter={formatCurrency} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -158,7 +167,7 @@ const ReportsPage = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
-                      <Tooltip formatter={(value) => `R$ ${value.toFixed(2)}`} />
+                      <Tooltip formatter={formatCurrency} />
                       <Legend />
                       <Line 
                         type="monotone" 
