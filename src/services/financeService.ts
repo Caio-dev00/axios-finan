@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 export interface FinancialSummary {
   currentBalance: number;
@@ -18,6 +18,22 @@ export interface Transaction {
   amount: number;
   date: string;
   type: 'income' | 'expense';
+}
+
+export interface MonthlyData {
+  name: string; // Nome do mês
+  despesas: number;
+  receitas: number;
+}
+
+export interface CategoryData {
+  name: string;
+  valor: number;
+}
+
+export interface CashFlowData {
+  name: string;
+  fluxo: number;
 }
 
 export const getFinancialSummary = async (): Promise<FinancialSummary> => {
@@ -167,4 +183,90 @@ export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> =
     });
 
   return transactions;
+};
+
+// Nova função para obter dados para relatórios
+export const getReportData = async () => {
+  const now = new Date();
+  const monthlyData: MonthlyData[] = [];
+  const categoryData: CategoryData[] = [];
+  const cashFlowData: CashFlowData[] = [];
+  
+  // Buscar dados dos últimos 6 meses
+  for (let i = 5; i >= 0; i--) {
+    const targetDate = subMonths(now, i);
+    const monthStart = startOfMonth(targetDate);
+    const monthEnd = endOfMonth(targetDate);
+    const monthName = format(targetDate, 'MMM');
+    
+    const startStr = format(monthStart, "yyyy-MM-dd");
+    const endStr = format(monthEnd, "yyyy-MM-dd");
+    
+    // Buscar receitas do mês
+    const { data: monthIncomes } = await supabase
+      .from("incomes")
+      .select("amount")
+      .gte("date", startStr)
+      .lte("date", endStr);
+      
+    // Buscar despesas do mês
+    const { data: monthExpenses } = await supabase
+      .from("expenses")
+      .select("amount")
+      .gte("date", startStr)
+      .lte("date", endStr);
+      
+    // Calcular totais
+    const totalIncome = monthIncomes?.reduce(
+      (sum, record) => sum + parseFloat(record.amount.toString()), 
+      0
+    ) || 0;
+    
+    const totalExpense = monthExpenses?.reduce(
+      (sum, record) => sum + parseFloat(record.amount.toString()), 
+      0
+    ) || 0;
+    
+    monthlyData.push({
+      name: monthName,
+      receitas: totalIncome,
+      despesas: totalExpense
+    });
+    
+    cashFlowData.push({
+      name: monthName,
+      fluxo: totalIncome - totalExpense
+    });
+  }
+  
+  // Buscar categorias de despesas
+  const { data: expensesByCategory } = await supabase
+    .from("expenses")
+    .select("category, amount");
+    
+  // Calcular total por categoria
+  const categories: Record<string, number> = {};
+  
+  expensesByCategory?.forEach(expense => {
+    const category = expense.category;
+    const amount = parseFloat(expense.amount.toString());
+    
+    if (!categories[category]) {
+      categories[category] = 0;
+    }
+    categories[category] += amount;
+  });
+  
+  Object.entries(categories).forEach(([name, valor]) => {
+    categoryData.push({ name, valor });
+  });
+  
+  return { monthlyData, categoryData, cashFlowData };
+};
+
+// Nova função para adicionar categoria de despesa
+export const addExpenseCategory = async (categoryName: string) => {
+  // Como as categorias são simplesmente strings nas despesas,
+  // não precisamos criar uma entrada na tabela. Basta retornar o nome para confirmar
+  return { success: true, category: categoryName };
 };

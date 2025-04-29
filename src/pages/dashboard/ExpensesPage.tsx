@@ -1,9 +1,11 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
+import AddCategoryDialog from "@/components/dashboard/AddCategoryDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getExpenses, getExpensesByCategory, deleteExpense } from "@/services/expenseService";
 import { format } from "date-fns";
@@ -41,6 +43,8 @@ const ExpensesPage = () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["expenseCategories"] });
       queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      // Invalidate report data to update reports
+      queryClient.invalidateQueries({ queryKey: ["reportData"] });
       toast({
         title: "Despesa excluída",
         description: "A despesa foi excluída com sucesso.",
@@ -230,7 +234,13 @@ const ExpensesPage = () => {
                 </div>
               )}
               <div className="mt-4">
-                <Button variant="outline" className="w-full">Adicionar nova categoria</Button>
+                <AddCategoryDialog 
+                  trigger={
+                    <Button variant="outline" className="w-full">
+                      Adicionar nova categoria
+                    </Button>
+                  }
+                />
               </div>
             </CardContent>
           </Card>

@@ -34,6 +34,7 @@ const IncomePage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["incomes"] });
       queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["reportData"] });
       toast({
         title: "Receita excluída",
         description: "A receita foi excluída com sucesso.",

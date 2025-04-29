@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -100,6 +99,7 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
       queryClient.invalidateQueries({ queryKey: ["recentIncomes"] });
       queryClient.invalidateQueries({ queryKey: ["financialSummary"] });
       queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["reportData"] });
       
       toast({
         title: "Receita adicionada",
