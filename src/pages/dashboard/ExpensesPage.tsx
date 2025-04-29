@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
-import AddCategoryDialog from "@/components/dashboard/AddCategoryDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getExpenses, getExpensesByCategory, deleteExpense } from "@/services/expenseService";
 import { format } from "date-fns";
@@ -214,7 +213,7 @@ const ExpensesPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Categorias de Despesas</CardTitle>
-              <CardDescription>Gerencie suas categorias de despesas</CardDescription>
+              <CardDescription>Visualize suas categorias de despesas</CardDescription>
             </CardHeader>
             <CardContent>
               {expenseCategories && expenseCategories.length > 0 ? (
@@ -233,15 +232,6 @@ const ExpensesPage = () => {
                   <p className="text-gray-500">Nenhuma categoria com despesas</p>
                 </div>
               )}
-              <div className="mt-4">
-                <AddCategoryDialog 
-                  trigger={
-                    <Button variant="outline" className="w-full">
-                      Adicionar nova categoria
-                    </Button>
-                  }
-                />
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
@@ -295,52 +294,4 @@ export const getExpenseCategories = async (): Promise<ExpenseCategory[]> => {
   return Object.entries(categoryCounts)
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
-};
-
-// Função para adicionar uma nova categoria de despesa
-export const addExpenseCategory = async (categoryName: string) => {
-  // Verificar se a categoria já existe no banco
-  const { data, error: checkError } = await supabase
-    .from("expenses")
-    .select("category")
-    .eq("category", categoryName)
-    .limit(1);
-
-  if (checkError) throw checkError;
-
-  // Se a categoria não existir, adicionamos uma despesa temporária com essa categoria
-  // para que ela seja reconhecida pelo sistema
-  if (!data || data.length === 0) {
-    // Inserir um registro temporário com valor 0 e a nova categoria
-    const { error: insertError } = await supabase
-      .from("expenses")
-      .insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        description: "Categoria temporária",
-        amount: 0,
-        category: categoryName,
-        date: new Date().toISOString().split("T")[0],
-        is_recurring: false,
-      });
-
-    if (insertError) throw insertError;
-    
-    // Excluir o registro temporário imediatamente após criá-lo
-    const { data: inserted } = await supabase
-      .from("expenses")
-      .select("id")
-      .eq("description", "Categoria temporária")
-      .eq("category", categoryName)
-      .eq("amount", 0);
-      
-    if (inserted && inserted.length > 0) {
-      await supabase
-        .from("expenses")
-        .delete()
-        .eq("id", inserted[0].id);
-    }
-  }
-  
-  // Retornar a categoria adicionada
-  return { success: true, category: categoryName };
 };
