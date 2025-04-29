@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,9 +7,104 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { Textarea } from "@/components/ui/textarea";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Profile schema validation
+const profileSchema = z.object({
+  nome: z.string().min(1, "Nome é obrigatório"),
+  phone: z.string().optional(),
+  occupation: z.string().optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 const SettingsPage = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
+  
+  // Initialize form with react-hook-form
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      nome: "",
+      phone: "",
+      occupation: "",
+    },
+  });
+
+  // Fetch user profile data when component loads
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            throw error;
+          }
+
+          if (data) {
+            setProfileData(data);
+            form.reset({
+              nome: data.nome || user?.user_metadata?.nome || "",
+              phone: data.phone || "",
+              occupation: data.occupation || "",
+            });
+          }
+        } catch (error: any) {
+          console.error("Erro ao buscar perfil:", error.message);
+        }
+      }
+    };
+
+    fetchProfileData();
+  }, [user, form]);
+
+  // Handle form submission
+  const onSubmit = async (formData: ProfileFormValues) => {
+    setLoading(true);
+    try {
+      // Update the profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          nome: formData.nome,
+          phone: formData.phone,
+          occupation: formData.occupation,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram atualizadas com sucesso",
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: error.message,
+        variant: "destructive",
+      });
+      console.error("Erro ao atualizar perfil:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto">
@@ -29,32 +124,65 @@ const SettingsPage = () => {
               <CardTitle>Informações de Perfil</CardTitle>
               <CardDescription>Atualize suas informações pessoais</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input id="name" placeholder="Seu nome" defaultValue={user?.user_metadata?.nome || ""} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue={user?.email || ""} disabled />
-                  <p className="text-xs text-gray-500">O email não pode ser alterado</p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" placeholder="(00) 00000-0000" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="occupation">Ocupação</Label>
-                <Input id="occupation" placeholder="Sua ocupação" />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button>Salvar Alterações</Button>
-            </CardFooter>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="nome"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Seu nome" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" defaultValue={user?.email || ""} disabled />
+                      <p className="text-xs text-gray-500">O email não pode ser alterado</p>
+                    </div>
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Telefone</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="(00) 00000-0000" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="occupation"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel>Ocupação</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Sua ocupação" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
           </Card>
         </TabsContent>
         
