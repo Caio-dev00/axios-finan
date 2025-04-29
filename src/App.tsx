@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 import Index from "./pages/Index";
+import Resources from "./pages/Resources";
+import PricingPage from "./pages/Pricing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ExpensesPage from "./pages/dashboard/ExpensesPage";
@@ -31,6 +33,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/recursos" element={<Resources />} />
+              <Route path="/precos" element={<PricingPage />} />
               <Route path="/auth" element={<Auth />} />
               
               {/* Rotas protegidas */}

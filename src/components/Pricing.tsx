@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Pricing = () => {
   const features = [
@@ -52,8 +53,8 @@ const Pricing = () => {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full border-finance-primary text-finance-primary">
-                Começar teste grátis
+              <Button variant="outline" className="w-full border-finance-primary text-finance-primary" asChild>
+                <Link to="/auth">Começar teste grátis</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -79,13 +80,21 @@ const Pricing = () => {
             </CardContent>
             <CardFooter>
               <Button className="w-full bg-finance-primary hover:bg-finance-primary/90 text-white">
-                Assinar plano Pro
+                <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
+                  Assinar plano Pro
+                </a>
               </Button>
             </CardFooter>
           </Card>
         </div>
         
-        <div className="text-center mt-8 text-sm text-gray-500">
+        <div className="mt-8 text-center">
+          <Button variant="link" className="text-finance-primary" asChild>
+            <Link to="/precos">Ver comparação detalhada dos planos</Link>
+          </Button>
+        </div>
+        
+        <div className="text-center mt-4 text-sm text-gray-500">
           Pagamento processado de forma segura pela Cakto.
         </div>
       </div>
