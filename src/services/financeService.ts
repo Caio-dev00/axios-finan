@@ -36,6 +36,11 @@ export interface CashFlowData {
   fluxo: number;
 }
 
+export interface ExpenseCategory {
+  name: string;
+  count?: number;
+}
+
 export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -264,9 +269,78 @@ export const getReportData = async () => {
   return { monthlyData, categoryData, cashFlowData };
 };
 
-// Nova função para adicionar categoria de despesa
+// Função para obter todas as categorias de despesas
+export const getExpenseCategories = async (): Promise<ExpenseCategory[]> => {
+  // Buscar todas as categorias usadas em despesas
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("category");
+
+  if (error) throw error;
+  
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Calcular quantas vezes cada categoria é usada
+  const categoryCounts: Record<string, number> = {};
+  data.forEach(item => {
+    if (!categoryCounts[item.category]) {
+      categoryCounts[item.category] = 0;
+    }
+    categoryCounts[item.category]++;
+  });
+
+  // Converter para array e ordenar por frequência de uso (mais usadas primeiro)
+  return Object.entries(categoryCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+};
+
+// Função para adicionar uma nova categoria de despesa
 export const addExpenseCategory = async (categoryName: string) => {
-  // Como as categorias são simplesmente strings nas despesas,
-  // não precisamos criar uma entrada na tabela. Basta retornar o nome para confirmar
+  // Verificar se a categoria já existe no banco
+  const { data, error: checkError } = await supabase
+    .from("expenses")
+    .select("category")
+    .eq("category", categoryName)
+    .limit(1);
+
+  if (checkError) throw checkError;
+
+  // Se a categoria não existir, adicionamos uma despesa temporária com essa categoria
+  // para que ela seja reconhecida pelo sistema
+  if (!data || data.length === 0) {
+    // Inserir um registro temporário com valor 0 e a nova categoria
+    const { error: insertError } = await supabase
+      .from("expenses")
+      .insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        description: "Categoria temporária",
+        amount: 0,
+        category: categoryName,
+        date: new Date().toISOString().split("T")[0],
+        is_recurring: false,
+      });
+
+    if (insertError) throw insertError;
+    
+    // Excluir o registro temporário imediatamente após criá-lo
+    const { data: inserted } = await supabase
+      .from("expenses")
+      .select("id")
+      .eq("description", "Categoria temporária")
+      .eq("category", categoryName)
+      .eq("amount", 0);
+      
+    if (inserted && inserted.length > 0) {
+      await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", inserted[0].id);
+    }
+  }
+  
+  // Retornar a categoria adicionada
   return { success: true, category: categoryName };
 };

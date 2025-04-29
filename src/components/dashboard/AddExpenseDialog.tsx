@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -5,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { addExpense } from "@/services/expenseService";
+import { getExpenseCategories } from "@/services/financeService";
 
 const expenseFormSchema = z.object({
   description: z.string().min(3, "A descrição deve ter pelo menos 3 caracteres"),
@@ -60,7 +62,8 @@ const expenseFormSchema = z.object({
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 
-const expenseCategories = [
+// Categorias padrão (fallback)
+const defaultCategories = [
   "Alimentação",
   "Moradia",
   "Transporte",
@@ -85,6 +88,27 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Buscar categorias do banco de dados
+  const { data: expenseCategories, isLoading: loadingCategories } = useQuery({
+    queryKey: ["expenseCategories"],
+    queryFn: getExpenseCategories
+  });
+  
+  // Combinar categorias padrão com as categorias personalizadas
+  const allCategories = React.useMemo(() => {
+    if (!expenseCategories || expenseCategories.length === 0) {
+      return defaultCategories;
+    }
+    
+    // Extrair nomes de categorias únicas
+    const categoryNames = new Set([
+      ...defaultCategories,
+      ...expenseCategories.map(cat => cat.name)
+    ]);
+    
+    return Array.from(categoryNames).sort();
+  }, [expenseCategories]);
+
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
@@ -105,6 +129,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       queryClient.invalidateQueries({ queryKey: ["financialSummary"] });
       queryClient.invalidateQueries({ queryKey: ["expenseCategories"] });
       queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["reportData"] });
       
       toast({
         title: "Despesa adicionada",
@@ -219,11 +244,15 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Categorias</SelectLabel>
-                        {expenseCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
+                        {loadingCategories ? (
+                          <SelectItem value="carregando" disabled>Carregando categorias...</SelectItem>
+                        ) : (
+                          allCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
