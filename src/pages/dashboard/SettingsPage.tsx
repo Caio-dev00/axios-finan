@@ -111,16 +111,16 @@ const SettingsPage = () => {
             });
             
             // Carregar preferências gerais - checking if properties exist
-            if ('currency_preference' in data) {
-              setCurrencyPreference(data.currency_preference || "BRL");
+            if (data && typeof data === 'object' && 'currency_preference' in data) {
+              setCurrencyPreference(String(data.currency_preference || "BRL"));
             }
             
-            if ('date_format_preference' in data) {
-              setDateFormatPreference(data.date_format_preference || "DD/MM/YYYY");
+            if (data && typeof data === 'object' && 'date_format_preference' in data) {
+              setDateFormatPreference(String(data.date_format_preference || "DD/MM/YYYY"));
             }
             
-            if ('month_start_day' in data) {
-              setMonthStartDayPreference(data.month_start_day || "1");
+            if (data && typeof data === 'object' && 'month_start_day' in data) {
+              setMonthStartDayPreference(String(data.month_start_day || "1"));
             }
           }
         } catch (error: any) {

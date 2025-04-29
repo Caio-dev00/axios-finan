@@ -40,7 +40,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (error) throw error;
           
           // Check if theme_preference exists in the data (it might not exist yet in the database)
-          if (data && 'theme_preference' in data) {
+          if (data && typeof data === 'object' && 'theme_preference' in data) {
             const userTheme = data.theme_preference as Theme;
             if (userTheme) {
               setTheme(userTheme);
@@ -62,13 +62,18 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (user?.id) {
         try {
           // Only try to update if there's a user logged in
-          await supabase
-            .from('profiles')
-            .update({ 
-              // Add theme_preference as a custom field that might not exist in the type yet
-              ...(theme !== 'system' ? { theme_preference: theme } : {})
-            })
-            .eq('id', user.id);
+          const updates: Record<string, any> = {};
+          
+          if (theme !== 'system') {
+            updates.theme_preference = theme;
+          }
+          
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from('profiles')
+              .update(updates)
+              .eq('id', user.id);
+          }
         } catch (error) {
           console.error("Erro ao salvar preferência de tema:", error);
         }
