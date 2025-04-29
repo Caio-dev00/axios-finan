@@ -1,16 +1,30 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
-import { useQuery } from "@tanstack/react-query";
-import { getExpenses, getExpensesByCategory } from "@/services/expenseService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getExpenses, getExpensesByCategory, deleteExpense } from "@/services/expenseService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const ExpensesPage = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: expenses, isLoading } = useQuery({
     queryKey: ["expenses"],
     queryFn: getExpenses
@@ -21,12 +35,79 @@ const ExpensesPage = () => {
     queryFn: getExpensesByCategory
   });
 
+  const deleteExpenseMutation = useMutation({
+    mutationFn: deleteExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["expenseCategories"] });
+      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      toast({
+        title: "Despesa excluída",
+        description: "A despesa foi excluída com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a despesa. Tente novamente.",
+        variant: "destructive",
+      });
+      console.error("Erro ao excluir despesa:", error);
+    },
+  });
+
+  const handleDeleteExpense = (id: string) => {
+    deleteExpenseMutation.mutate(id);
+  };
+
   const recurringExpenses = expenses?.filter(expense => expense.is_recurring);
   const oneTimeExpenses = expenses?.filter(expense => !expense.is_recurring);
 
   const formatDate = (date: Date) => {
     return format(date, "dd 'de' MMMM, yyyy", { locale: ptBR });
   };
+
+  const renderExpenseItem = (expense: any) => (
+    <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
+      <div>
+        <p className="font-medium">{expense.description}</p>
+        <p className="text-sm text-gray-500">
+          {expense.is_recurring 
+            ? `Mensal - Dia ${new Date(expense.date).getDate()}` 
+            : formatDate(expense.date)}
+        </p>
+      </div>
+      <div className="flex items-center gap-4">
+        <p className="font-semibold text-red-600">
+          - R$ {expense.amount.toFixed(2)}
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir despesa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a despesa "{expense.description}"? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => handleDeleteExpense(expense.id)}
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
 
   return (
     <div className="container mx-auto">
@@ -63,17 +144,7 @@ const ExpensesPage = () => {
                 </div>
               ) : expenses && expenses.length > 0 ? (
                 <div className="space-y-4">
-                  {expenses.slice(0, 5).map((expense) => (
-                    <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                      <div>
-                        <p className="font-medium">{expense.description}</p>
-                        <p className="text-sm text-gray-500">{formatDate(expense.date)}</p>
-                      </div>
-                      <p className="font-semibold text-red-600">
-                        - R$ {expense.amount.toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
+                  {expenses.map((expense) => renderExpenseItem(expense))}
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -84,11 +155,6 @@ const ExpensesPage = () => {
                 </div>
               )}
             </CardContent>
-            {expenses && expenses.length > 5 && (
-              <CardFooter>
-                <Button variant="outline" className="w-full">Ver todas as despesas</Button>
-              </CardFooter>
-            )}
           </Card>
         </TabsContent>
         
@@ -105,17 +171,7 @@ const ExpensesPage = () => {
                 </div>
               ) : recurringExpenses && recurringExpenses.length > 0 ? (
                 <div className="space-y-4">
-                  {recurringExpenses.map((expense) => (
-                    <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                      <div>
-                        <p className="font-medium">{expense.description}</p>
-                        <p className="text-sm text-gray-500">Mensal - Dia {new Date(expense.date).getDate()}</p>
-                      </div>
-                      <p className="font-semibold text-red-600">
-                        - R$ {expense.amount.toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
+                  {recurringExpenses.map((expense) => renderExpenseItem(expense))}
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -139,17 +195,7 @@ const ExpensesPage = () => {
                 </div>
               ) : oneTimeExpenses && oneTimeExpenses.length > 0 ? (
                 <div className="space-y-4">
-                  {oneTimeExpenses.map((expense) => (
-                    <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                      <div>
-                        <p className="font-medium">{expense.description}</p>
-                        <p className="text-sm text-gray-500">{formatDate(expense.date)}</p>
-                      </div>
-                      <p className="font-semibold text-red-600">
-                        - R$ {expense.amount.toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
+                  {oneTimeExpenses.map((expense) => renderExpenseItem(expense))}
                 </div>
               ) : (
                 <div className="text-center py-8">

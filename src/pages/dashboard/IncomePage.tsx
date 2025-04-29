@@ -1,19 +1,57 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import AddIncomeDialog from "@/components/dashboard/AddIncomeDialog";
-import { useQuery } from "@tanstack/react-query";
-import { getIncomes } from "@/services/incomeService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getIncomes, deleteIncome } from "@/services/incomeService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const IncomePage = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: incomes, isLoading } = useQuery({
     queryKey: ["incomes"],
     queryFn: getIncomes
   });
+
+  const deleteIncomeMutation = useMutation({
+    mutationFn: deleteIncome,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      toast({
+        title: "Receita excluída",
+        description: "A receita foi excluída com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a receita. Tente novamente.",
+        variant: "destructive",
+      });
+      console.error("Erro ao excluir receita:", error);
+    },
+  });
+
+  const handleDeleteIncome = (id: string) => {
+    deleteIncomeMutation.mutate(id);
+  };
 
   // Calcular estatísticas de receitas
   const totalThisMonth = React.useMemo(() => {
@@ -104,13 +142,39 @@ const IncomePage = () => {
               </div>
             ) : incomes && incomes.length > 0 ? (
               <div className="space-y-4">
-                {incomes.slice(0, 5).map(income => (
+                {incomes.map(income => (
                   <div key={income.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
                     <div>
                       <p className="font-medium">{income.description}</p>
                       <p className="text-sm text-gray-500">{formatDate(income.date)}</p>
                     </div>
-                    <p className="font-semibold text-green-600">+ R$ {income.amount.toFixed(2)}</p>
+                    <div className="flex items-center gap-4">
+                      <p className="font-semibold text-green-600">+ R$ {income.amount.toFixed(2)}</p>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir receita</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir a receita "{income.description}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              className="bg-red-600 text-white hover:bg-red-700"
+                              onClick={() => handleDeleteIncome(income.id)}
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -123,11 +187,6 @@ const IncomePage = () => {
               </div>
             )}
           </CardContent>
-          {incomes && incomes.length > 5 && (
-            <CardFooter>
-              <Button variant="outline" className="w-full">Ver todas as receitas</Button>
-            </CardFooter>
-          )}
         </Card>
 
         <Card>

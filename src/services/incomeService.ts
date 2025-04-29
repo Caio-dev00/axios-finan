@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Income {
@@ -22,6 +21,16 @@ export const addIncome = async (income: Income) => {
 
   if (error) throw error;
   return data?.[0];
+};
+
+export const deleteIncome = async (id: string) => {
+  const { error } = await supabase
+    .from("incomes")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+  return true;
 };
 
 export const getIncomes = async () => {

@@ -1,16 +1,30 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Trash2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import AddBudgetDialog from "@/components/dashboard/AddBudgetDialog";
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentMonthBudgets, getExpensesForBudget } from "@/services/budgetService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCurrentMonthBudgets, getExpensesForBudget, deleteBudget } from "@/services/budgetService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const BudgetsPage = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: budgets, isLoading: isLoadingBudgets } = useQuery({
     queryKey: ["currentMonthBudgets"],
     queryFn: getCurrentMonthBudgets
@@ -20,6 +34,29 @@ const BudgetsPage = () => {
     queryKey: ["expensesByCategory"],
     queryFn: getExpensesForBudget
   });
+
+  const deleteBudgetMutation = useMutation({
+    mutationFn: deleteBudget,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentMonthBudgets"] });
+      toast({
+        title: "Orçamento excluído",
+        description: "O orçamento foi excluído com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o orçamento. Tente novamente.",
+        variant: "destructive",
+      });
+      console.error("Erro ao excluir orçamento:", error);
+    },
+  });
+
+  const handleDeleteBudget = (id: string) => {
+    deleteBudgetMutation.mutate(id);
+  };
 
   const isLoading = isLoadingBudgets || isLoadingExpenses;
 
@@ -102,21 +139,47 @@ const BudgetsPage = () => {
                     const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
                     
                     return (
-                      <div key={budget.id}>
+                      <div key={budget.id} className="relative">
                         <div className="flex justify-between mb-2">
                           <div>
                             <h4 className="font-medium">{budget.category}</h4>
                             <p className="text-sm text-gray-500">
-                              R$ {budgetAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} orçado
+                              R$ {budgetAmount.toFixed(2)} orçado
                             </p>
                           </div>
-                          <div className="text-right">
-                            <p className="font-medium">
-                              R$ {spent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} gastos
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              R$ {remaining.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} restantes
-                            </p>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="font-medium">
+                                R$ {spent.toFixed(2)} gastos
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                R$ {remaining.toFixed(2)} restantes
+                              </p>
+                            </div>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-600">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir orçamento</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir o orçamento de "{budget.category}"? Esta ação não pode ser desfeita.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    className="bg-red-600 text-white hover:bg-red-700"
+                                    onClick={() => handleDeleteBudget(budget.id)}
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </div>
                         <Progress value={percentage} className="h-2" />

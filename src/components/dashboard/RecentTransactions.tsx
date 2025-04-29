@@ -2,18 +2,80 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Loader2, Trash2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRecentTransactions } from "@/services/financeService";
+import { deleteIncome } from "@/services/incomeService";
+import { deleteExpense } from "@/services/expenseService";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const RecentTransactions = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: transactions, isLoading } = useQuery({
     queryKey: ["recentTransactions"],
     queryFn: () => getRecentTransactions(4),
   });
+
+  const deleteIncomeMutation = useMutation({
+    mutationFn: deleteIncome,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      toast({
+        title: "Receita excluída",
+        description: "A receita foi excluída com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a receita. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteExpenseMutation = useMutation({
+    mutationFn: deleteExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      toast({
+        title: "Despesa excluída",
+        description: "A despesa foi excluída com sucesso.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a despesa. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = (transaction: any) => {
+    if (transaction.type === "income") {
+      deleteIncomeMutation.mutate(transaction.id);
+    } else {
+      deleteExpenseMutation.mutate(transaction.id);
+    }
+  };
 
   return (
     <Card className="shadow-sm h-full">
@@ -40,14 +102,40 @@ const RecentTransactions = () => {
                   <p className="font-medium">{transaction.name}</p>
                   <p className="text-sm text-gray-500">{transaction.category}</p>
                 </div>
-                <div className="text-right">
+                <div className="flex items-center gap-2">
                   <p className={`font-medium ${
                     transaction.type === "income" ? "text-green-600" : "text-red-600"
                   }`}>
                     {transaction.type === "income" ? "+" : "-"}
                     R$ {transaction.amount.toFixed(2)}
                   </p>
-                  <p className="text-xs text-gray-500">{transaction.date}</p>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-600 p-0 h-auto">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Excluir {transaction.type === "income" ? "receita" : "despesa"}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir "{transaction.name}"? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                          className="bg-red-600 text-white hover:bg-red-700"
+                          onClick={() => handleDelete(transaction)}
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <p className="text-xs text-gray-500 ml-1">{transaction.date}</p>
                 </div>
               </div>
             ))}

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Goal {
@@ -22,6 +21,16 @@ export const addGoal = async (goal: Goal) => {
 
   if (error) throw error;
   return data?.[0];
+};
+
+export const deleteGoal = async (id: string) => {
+  const { error } = await supabase
+    .from("goals")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+  return true;
 };
 
 export const getGoals = async () => {
