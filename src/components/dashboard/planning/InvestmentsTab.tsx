@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import InvestmentDistributionItem from "./InvestmentDistributionItem";
@@ -67,7 +66,7 @@ const InvestmentsTab = () => {
   const { data: performance, isLoading: performanceLoading } = useQuery({
     queryKey: ["investment-performance"],
     queryFn: getInvestmentTotalAndReturns,
-    onSettled: (data) => {
+    onSuccess: (data) => {
       if (data) {
         setPerformanceForm({
           monthly_return_percentage: data.monthly_return_percentage,

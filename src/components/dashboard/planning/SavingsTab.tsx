@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ const SavingsTab = () => {
   const { data: savingsData, isLoading } = useQuery({
     queryKey: ["savings"],
     queryFn: getSavingsData,
-    onSettled: (data) => {
+    onSuccess: (data) => {
       if (data) {
         setSavingsForm({
           balance: data.balance,
