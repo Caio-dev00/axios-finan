@@ -29,7 +29,7 @@ const PricingPage = () => {
       name: "Plano Pro",
       price: "R$ 29,90",
       period: "por mês",
-      description: "Nosso plano mais popular com todas as ferramentas para gerenciar suas finanças.",
+      description: "Nosso plano completo com todas as ferramentas para gerenciar suas finanças.",
       features: [
         "Registro ilimitado de transações",
         "Dashboard personalizado",
@@ -41,23 +41,6 @@ const PricingPage = () => {
       ],
       cta: "Assinar plano Pro",
       highlight: true
-    },
-    {
-      name: "Plano Familiar",
-      price: "R$ 49,90",
-      period: "por mês",
-      description: "Ideal para famílias que querem gerenciar finanças em conjunto.",
-      features: [
-        "Tudo do Plano Pro +",
-        "Até 5 usuários",
-        "Gerenciamento compartilhado",
-        "Orçamentos familiares",
-        "Metas coletivas e individuais",
-        "Permissões personalizadas",
-        "Suporte VIP"
-      ],
-      cta: "Assinar plano Familiar",
-      highlight: false
     }
   ];
 
@@ -68,7 +51,7 @@ const PricingPage = () => {
     },
     {
       question: "Como funciona o teste gratuito?",
-      answer: "Nosso teste gratuito dá acesso a todas as funcionalidades do Plano Pro por 2 dias. Após esse período, você pode optar por assinar um de nossos planos ou continuar com a versão gratuita limitada."
+      answer: "Nosso teste gratuito dá acesso a todas as funcionalidades do Plano Pro por 2 dias. Após esse período, você pode optar por assinar o plano Pro ou continuar com a versão gratuita limitada."
     },
     {
       question: "Quais formas de pagamento são aceitas?",
@@ -98,7 +81,7 @@ const PricingPage = () => {
         {/* Pricing Plans */}
         <section className="py-16" id="planos">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {plans.map((plan, index) => (
                 <Card 
                   key={index}
@@ -110,7 +93,7 @@ const PricingPage = () => {
                 >
                   {plan.highlight && (
                     <div className="absolute top-0 right-0 bg-finance-primary text-white px-4 py-1 text-sm font-medium rounded-bl-lg">
-                      Mais Popular
+                      Recomendado
                     </div>
                   )}
                   <CardHeader>
@@ -168,7 +151,6 @@ const PricingPage = () => {
                     <th className="py-4 px-6 text-left text-gray-600 font-medium">Funcionalidades</th>
                     <th className="py-4 px-6 text-center text-gray-600 font-medium">Gratuito</th>
                     <th className="py-4 px-6 text-center text-finance-primary font-bold">Pro</th>
-                    <th className="py-4 px-6 text-center text-gray-600 font-medium">Familiar</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -176,49 +158,36 @@ const PricingPage = () => {
                     <td className="py-3 px-6 text-gray-800">Registro de transações</td>
                     <td className="py-3 px-6 text-center">Até 20</td>
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">Ilimitado</td>
-                    <td className="py-3 px-6 text-center">Ilimitado</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Dashboard personalizado</td>
                     <td className="py-3 px-6 text-center">Básico</td>
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">Completo</td>
-                    <td className="py-3 px-6 text-center">Completo</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Categorização</td>
                     <td className="py-3 px-6 text-center">Manual</td>
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">Automática</td>
-                    <td className="py-3 px-6 text-center">Automática</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Relatórios</td>
                     <td className="py-3 px-6 text-center">Não</td>
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">Sim</td>
-                    <td className="py-3 px-6 text-center">Sim</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Exportação de dados</td>
                     <td className="py-3 px-6 text-center">Não</td>
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">PDF, CSV</td>
-                    <td className="py-3 px-6 text-center">PDF, CSV, Excel</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Dicas personalizadas</td>
                     <td className="py-3 px-6 text-center">Básicas</td>
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">Avançadas</td>
-                    <td className="py-3 px-6 text-center">Avançadas</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-6 text-gray-800">Usuários</td>
-                    <td className="py-3 px-6 text-center">1</td>
-                    <td className="py-3 px-6 text-center font-medium text-finance-primary">1</td>
-                    <td className="py-3 px-6 text-center">Até 5</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Suporte</td>
                     <td className="py-3 px-6 text-center">Email</td>
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">Prioritário</td>
-                    <td className="py-3 px-6 text-center">VIP</td>
                   </tr>
                 </tbody>
               </table>
