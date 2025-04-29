@@ -196,7 +196,7 @@ const FamilyMembersPage: React.FC = () => {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium">{member.user?.nome || "Usuário"}</p>
+                      <p className="font-medium">{member.user?.user_metadata?.nome || "Usuário"}</p>
                       <p className="text-sm text-gray-500">{member.user?.email}</p>
                     </div>
                     <div className="flex items-center gap-2">

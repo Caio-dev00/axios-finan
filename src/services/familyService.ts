@@ -1,4 +1,3 @@
-
 import { supabase } from "../integrations/supabase/client";
 
 export type FamilyPlan = {
@@ -138,12 +137,20 @@ export async function getFamilyMembers(familyPlanId: string): Promise<FamilyMemb
       return [];
     }
 
-    // Cast the role to the correct type and transform the data
-    return data.map(member => ({
-      ...member,
-      role: member.role as "owner" | "member",
-      user: member.user as FamilyMember['user']
-    }));
+    // Transform the data and ensure proper typing
+    return data.map(member => {
+      // Handle potential null/undefined values
+      const userData = member.user as any || {};
+      
+      return {
+        ...member,
+        role: member.role as "owner" | "member",
+        user: {
+          email: userData.email || "",
+          user_metadata: userData.user_metadata || {}
+        }
+      };
+    });
   } catch (error) {
     console.error("Erro ao buscar membros da família:", error);
     return [];
@@ -203,4 +210,37 @@ export async function removeFamilyMember(memberId: string): Promise<{ success: b
     console.error("Erro ao remover membro:", error);
     return { success: false, message: "Erro ao remover membro. Tente novamente." };
   }
+}
+
+// Nova função para atualizar o plano familiar
+export async function updateFamilyPlan(
+  planId: string,
+  updates: Partial<FamilyPlan>
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const { error } = await supabase
+      .from("family_plans")
+      .update(updates)
+      .eq("id", planId);
+
+    if (error) {
+      return { success: false, message: `Erro ao atualizar plano: ${error.message}` };
+    }
+
+    return { success: true, message: "Plano familiar atualizado com sucesso!" };
+  } catch (error) {
+    console.error("Erro ao atualizar plano familiar:", error);
+    return { success: false, message: "Erro ao atualizar plano. Tente novamente." };
+  }
+}
+
+// Nova função para criar um link de convite
+export function createInvitationLink(familyPlanId: string): string {
+  // Generate a token that includes the family plan ID
+  // In a real app, you might want to encrypt this or use a more secure method
+  const token = btoa(`invite:${familyPlanId}:${Date.now()}`);
+  
+  // Create the full invitation URL
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/invite/${token}`;
 }
