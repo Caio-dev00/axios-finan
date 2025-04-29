@@ -48,10 +48,10 @@ const DashboardHeader = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
                 <DropdownMenuItem asChild>
-                  <Link to="/perfil">Perfil</Link>
+                  <Link to="/dashboard/settings">Perfil</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/configuracoes">
+                  <Link to="/dashboard/settings">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Configurações</span>
                   </Link>

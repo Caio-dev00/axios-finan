@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -80,10 +79,10 @@ const Header = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
                 <DropdownMenuItem asChild>
-                  <Link to="/perfil">Perfil</Link>
+                  <Link to="/dashboard/settings">Perfil</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/configuracoes">Configurações</Link>
+                  <Link to="/dashboard/settings">Configurações</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
@@ -119,39 +118,7 @@ const Header = () => {
                       <>
                         <SheetClose asChild>
                           <Link 
-                            to="/dashboard" 
-                            className="text-gray-700 hover:text-finance-primary transition-colors"
-                          >
-                            Dashboard
-                          </Link>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Link 
-                            to="/transacoes" 
-                            className="text-gray-700 hover:text-finance-primary transition-colors"
-                          >
-                            Transações
-                          </Link>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Link 
-                            to="/relatorios" 
-                            className="text-gray-700 hover:text-finance-primary transition-colors"
-                          >
-                            Relatórios
-                          </Link>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Link 
-                            to="/dicas" 
-                            className="text-gray-700 hover:text-finance-primary transition-colors"
-                          >
-                            Dicas
-                          </Link>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Link 
-                            to="/perfil" 
+                            to="/dashboard/settings" 
                             className="text-gray-700 hover:text-finance-primary transition-colors"
                           >
                             Perfil
@@ -159,7 +126,7 @@ const Header = () => {
                         </SheetClose>
                         <SheetClose asChild>
                           <Link 
-                            to="/configuracoes" 
+                            to="/dashboard/settings" 
                             className="text-gray-700 hover:text-finance-primary transition-colors"
                           >
                             Configurações
