@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,7 +112,7 @@ const ExpensesPage = () => {
                         <p className="text-sm text-gray-500">Mensal - Dia {new Date(expense.date).getDate()}</p>
                       </div>
                       <p className="font-semibold text-red-600">
-                        - R$ {parseFloat(expense.amount).toFixed(2)}
+                        - R$ {expense.amount.toFixed(2)}
                       </p>
                     </div>
                   ))}
@@ -145,7 +146,7 @@ const ExpensesPage = () => {
                         <p className="text-sm text-gray-500">{formatDate(expense.date)}</p>
                       </div>
                       <p className="font-semibold text-red-600">
-                        - R$ {parseFloat(expense.amount).toFixed(2)}
+                        - R$ {expense.amount.toFixed(2)}
                       </p>
                     </div>
                   ))}

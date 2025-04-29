@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +28,7 @@ const IncomePage = () => {
       );
     });
     
-    return monthIncomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
+    return monthIncomes.reduce((sum, income) => sum + income.amount, 0);
   }, [incomes]);
 
   // Calcular distribuição por fonte
@@ -38,7 +39,7 @@ const IncomePage = () => {
     let total = 0;
     
     incomes.forEach(income => {
-      const amount = parseFloat(income.amount);
+      const amount = income.amount;
       sources[income.source] = (sources[income.source] || 0) + amount;
       total += amount;
     });
@@ -63,7 +64,7 @@ const IncomePage = () => {
     sixMonthsAgo.setMonth(now.getMonth() - 6);
     
     const recentIncomes = incomes.filter(income => new Date(income.date) >= sixMonthsAgo);
-    const total = recentIncomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
+    const total = recentIncomes.reduce((sum, income) => sum + income.amount, 0);
     
     // Calcular número de meses únicos no período
     const uniqueMonths = new Set();

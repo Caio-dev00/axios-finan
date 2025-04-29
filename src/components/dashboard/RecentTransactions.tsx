@@ -45,7 +45,7 @@ const RecentTransactions = () => {
                     transaction.type === "income" ? "text-green-600" : "text-red-600"
                   }`}>
                     {transaction.type === "income" ? "+" : "-"}
-                    R$ {parseFloat(transaction.amount).toFixed(2)}
+                    R$ {transaction.amount.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-500">{transaction.date}</p>
                 </div>

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,7 @@ const BudgetsPage = () => {
 
   const { data: expensesByCategory, isLoading: isLoadingExpenses } = useQuery({
     queryKey: ["expensesByCategory"],
-    queryFn: () => getExpensesForBudget()
+    queryFn: getExpensesForBudget
   });
 
   const isLoading = isLoadingBudgets || isLoadingExpenses;
@@ -26,7 +27,7 @@ const BudgetsPage = () => {
   const currentYear = new Date().getFullYear();
 
   // Calcular totais
-  const totalBudgeted = budgets ? budgets.reduce((acc, budget) => acc + parseFloat(budget.amount), 0) : 0;
+  const totalBudgeted = budgets ? budgets.reduce((acc, budget) => acc + budget.amount, 0) : 0;
   
   const totalSpent = expensesByCategory ? Object.values(expensesByCategory).reduce((acc, val) => acc + val, 0) : 0;
   
