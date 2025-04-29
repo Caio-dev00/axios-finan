@@ -14,7 +14,7 @@ const InvestmentDistributionItem = ({
   return <div>
       <div className="flex justify-between mb-1">
         <span>{label}</span>
-        <span className="mx-[37px]">{percentage}% (R$ {amount.toLocaleString('pt-BR', {
+        <span className="mx-[48px]">{percentage}% (R$ {amount.toLocaleString('pt-BR', {
           minimumFractionDigits: 2
         })})</span>
       </div>
