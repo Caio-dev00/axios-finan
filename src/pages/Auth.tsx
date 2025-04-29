@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -161,6 +160,7 @@ const Auth = () => {
                           placeholder="Seu Nome" 
                           {...field}
                           disabled={loading}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
