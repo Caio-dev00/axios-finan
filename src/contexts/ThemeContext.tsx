@@ -39,10 +39,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
           if (error) throw error;
           
-          // Check if theme_preference exists in the data (it might not exist yet in the database)
-          if (data && typeof data === 'object' && 'theme_preference' in data) {
-            const userTheme = data.theme_preference as Theme;
-            if (userTheme) {
+          // Check if theme_preference property exists in the data
+          if (data && typeof data === 'object') {
+            const userTheme = data.theme_preference as Theme | undefined;
+            if (userTheme && (userTheme === 'light' || userTheme === 'dark' || userTheme === 'system')) {
               setTheme(userTheme);
               localStorage.setItem('theme', userTheme);
             }
@@ -61,14 +61,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const saveUserTheme = async () => {
       if (user?.id) {
         try {
-          // Only try to update if there's a user logged in
-          const updates: Record<string, any> = {};
+          const updates: Record<string, any> = {
+            updated_at: new Date().toISOString()
+          };
           
           if (theme !== 'system') {
             updates.theme_preference = theme;
           }
           
-          if (Object.keys(updates).length > 0) {
+          if (Object.keys(updates).length > 1) { // > 1 because updated_at is always there
             await supabase
               .from('profiles')
               .update(updates)

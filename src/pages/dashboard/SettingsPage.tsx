@@ -111,16 +111,21 @@ const SettingsPage = () => {
             });
             
             // Carregar preferências gerais - checking if properties exist
-            if (data && typeof data === 'object' && 'currency_preference' in data) {
-              setCurrencyPreference(String(data.currency_preference || "BRL"));
-            }
-            
-            if (data && typeof data === 'object' && 'date_format_preference' in data) {
-              setDateFormatPreference(String(data.date_format_preference || "DD/MM/YYYY"));
-            }
-            
-            if (data && typeof data === 'object' && 'month_start_day' in data) {
-              setMonthStartDayPreference(String(data.month_start_day || "1"));
+            if (data && typeof data === 'object') {
+              const currencyPref = data.currency_preference as string | undefined;
+              if (currencyPref) {
+                setCurrencyPreference(currencyPref);
+              }
+              
+              const dateFormatPref = data.date_format_preference as string | undefined;
+              if (dateFormatPref) {
+                setDateFormatPreference(dateFormatPref);
+              }
+              
+              const monthStartPref = data.month_start_day as string | undefined;
+              if (monthStartPref) {
+                setMonthStartDayPreference(monthStartPref);
+              }
             }
           }
         } catch (error: any) {
@@ -333,14 +338,22 @@ const SettingsPage = () => {
     
     setSavingPreferences(true);
     try {
-      // Create an update object with only the properties we want to update
-      const updateData: Record<string, any> = {};
+      const updateData: Record<string, any> = {
+        updated_at: new Date().toISOString()
+      };
       
-      // Only include properties in the update if they're being used
-      updateData.currency_preference = currencyPreference;
-      updateData.date_format_preference = dateFormatPreference;
-      updateData.month_start_day = monthStartDayPreference;
-      updateData.updated_at = new Date().toISOString();
+      // Adicionar campos apenas se eles existirem
+      if (currencyPreference) {
+        updateData.currency_preference = currencyPreference;
+      }
+      
+      if (dateFormatPreference) {
+        updateData.date_format_preference = dateFormatPreference;
+      }
+      
+      if (monthStartDayPreference) {
+        updateData.month_start_day = monthStartDayPreference;
+      }
       
       const { error } = await supabase
         .from('profiles')
