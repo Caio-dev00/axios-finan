@@ -44,7 +44,7 @@ const DashboardSidebar = () => {
         <div className="flex flex-col items-center justify-center pt-6 pb-2">
           <Link to="/dashboard" className="flex items-center">
             <span className="text-2xl font-bold text-finance-primary">Axios</span>
-            <span className="text-2xl font-medium ml-1 text-slate-100">Finanças</span>
+            <span className="text-2xl font-medium ml-1 text-finance-primary">Finanças</span>
           </Link>
         </div>
       </SidebarHeader>
