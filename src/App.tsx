@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 import Index from "./pages/Index";
@@ -28,36 +29,38 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <ThemeProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/recursos" element={<Resources />} />
-              <Route path="/precos" element={<PricingPage />} />
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* Rotas protegidas */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              >
-                <Route path="expenses" element={<ExpensesPage />} />
-                <Route path="income" element={<IncomePage />} />
-                <Route path="budgets" element={<BudgetsPage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="planning" element={<PlanningPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-              </Route>
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <SubscriptionProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/recursos" element={<Resources />} />
+                <Route path="/precos" element={<PricingPage />} />
+                <Route path="/auth" element={<Auth />} />
+                
+                {/* Rotas protegidas */}
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                >
+                  <Route path="expenses" element={<ExpensesPage />} />
+                  <Route path="income" element={<IncomePage />} />
+                  <Route path="budgets" element={<BudgetsPage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="planning" element={<PlanningPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                </Route>
+                
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </SubscriptionProvider>
         </ThemeProvider>
       </AuthProvider>
     </TooltipProvider>

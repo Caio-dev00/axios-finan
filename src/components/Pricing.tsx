@@ -3,9 +3,18 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Check } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { upgradeToProPlan } from "@/services/subscriptionService";
+import { useToast } from "@/hooks/use-toast";
 
 const Pricing = () => {
+  const { user } = useAuth();
+  const { plan, refreshSubscription } = useSubscription();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const features = [
     "Registro ilimitado de transações",
     "Dashboard personalizado",
@@ -15,6 +24,36 @@ const Pricing = () => {
     "Dicas personalizadas de economia",
     "Suporte prioritário"
   ];
+
+  const handleProPlanUpgrade = async () => {
+    if (!user) {
+      navigate("/auth", { state: { returnTo: "/precos" } });
+      return;
+    }
+
+    try {
+      // Simular o processo de pagamento bem sucedido
+      // Em produção, isto seria substituído por uma integração real com Stripe ou similar
+      await upgradeToProPlan(user.id);
+      await refreshSubscription();
+      
+      toast({
+        title: "Assinatura Pro ativada!",
+        description: "Aproveite todos os recursos premium disponíveis.",
+      });
+      
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Erro ao realizar upgrade:", error);
+      toast({
+        title: "Erro ao processar assinatura",
+        description: "Não foi possível ativar sua assinatura. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isAlreadyPro = user && plan === "pro";
 
   return (
     <section className="py-16 bg-finance-gray" id="planos">
@@ -54,7 +93,9 @@ const Pricing = () => {
             </CardContent>
             <CardFooter>
               <Button variant="outline" className="w-full border-finance-primary text-finance-primary" asChild>
-                <Link to="/auth">Começar teste grátis</Link>
+                <Link to={user ? "/dashboard" : "/auth"}>
+                  {user ? "Acessar Dashboard" : "Começar teste grátis"}
+                </Link>
               </Button>
             </CardFooter>
           </Card>
@@ -79,10 +120,12 @@ const Pricing = () => {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full bg-finance-primary hover:bg-finance-primary/90 text-white">
-                <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
-                  Assinar plano Pro
-                </a>
+              <Button 
+                className="w-full bg-finance-primary hover:bg-finance-primary/90 text-white"
+                onClick={handleProPlanUpgrade}
+                disabled={isAlreadyPro}
+              >
+                {isAlreadyPro ? "Plano Ativo" : "Assinar plano Pro"}
               </Button>
             </CardFooter>
           </Card>
@@ -95,7 +138,8 @@ const Pricing = () => {
         </div>
         
         <div className="text-center mt-4 text-sm text-gray-500">
-          Pagamento processado de forma segura pela Cakto.
+          {/* Nota: Em produção, este texto seria substituído pelo provedor de pagamento real */}
+          Pagamento processado de forma segura.
         </div>
       </div>
     </section>

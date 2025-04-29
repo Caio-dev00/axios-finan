@@ -8,6 +8,7 @@ import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import ExpenseDistribution from "@/components/dashboard/ExpenseDistribution";
+import SubscriptionStatus from "@/components/dashboard/SubscriptionStatus";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
@@ -52,7 +53,8 @@ const DashboardContent = () => {
                 <div className="lg:col-span-2">
                   <RecentTransactions />
                 </div>
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 space-y-6">
+                  <SubscriptionStatus />
                   <ExpenseDistribution />
                 </div>
               </div>

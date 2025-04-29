@@ -6,9 +6,47 @@ import CallToAction from "@/components/CallToAction";
 import { CheckCircle } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { upgradeToProPlan } from "@/services/subscriptionService";
+import { useToast } from "@/hooks/use-toast";
 
 const PricingPage = () => {
+  const { user } = useAuth();
+  const { plan, refreshSubscription } = useSubscription();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const isAlreadyPro = user && plan === "pro";
+
+  const handleProPlanUpgrade = async () => {
+    if (!user) {
+      navigate("/auth", { state: { returnTo: "/precos" } });
+      return;
+    }
+
+    try {
+      // Simular o processo de pagamento bem sucedido
+      await upgradeToProPlan(user.id);
+      await refreshSubscription();
+      
+      toast({
+        title: "Assinatura Pro ativada!",
+        description: "Aproveite todos os recursos premium disponíveis.",
+      });
+      
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Erro ao realizar upgrade:", error);
+      toast({
+        title: "Erro ao processar assinatura",
+        description: "Não foi possível ativar sua assinatura. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   const plans = [
     {
       name: "Plano Gratuito",
@@ -22,7 +60,8 @@ const PricingPage = () => {
         "Sem exportação de relatórios",
         "Suporte por email",
       ],
-      cta: "Começar teste grátis",
+      cta: user ? "Acessar Dashboard" : "Começar teste grátis",
+      action: () => navigate(user ? "/dashboard" : "/auth"),
       highlight: false
     },
     {
@@ -39,8 +78,10 @@ const PricingPage = () => {
         "Dicas personalizadas de economia",
         "Suporte prioritário"
       ],
-      cta: "Assinar plano Pro",
-      highlight: true
+      cta: isAlreadyPro ? "Plano Ativo" : "Assinar plano Pro",
+      action: handleProPlanUpgrade,
+      highlight: true,
+      disabled: isAlreadyPro
     }
   ];
 
@@ -123,15 +164,10 @@ const PricingPage = () => {
                           ? "bg-finance-primary hover:bg-finance-primary/90 text-white" 
                           : "bg-white border border-finance-primary text-finance-primary hover:bg-finance-primary/10"
                       }`}
-                      asChild
+                      onClick={plan.action}
+                      disabled={plan.disabled}
                     >
-                      {plan.name === "Plano Pro" ? (
-                        <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
-                          {plan.cta}
-                        </a>
-                      ) : (
-                        <Link to="/auth">{plan.cta}</Link>
-                      )}
+                      {plan.cta}
                     </Button>
                   </CardFooter>
                 </Card>
