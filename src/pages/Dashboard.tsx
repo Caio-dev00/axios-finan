@@ -11,6 +11,7 @@ import ExpenseDistribution from "@/components/dashboard/ExpenseDistribution";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Criar um cliente QueryClient para o Dashboard
 const queryClient = new QueryClient({
@@ -26,6 +27,7 @@ const DashboardContent = () => {
   const { user } = useAuth();
   const location = useLocation();
   const isMainDashboard = location.pathname === "/dashboard";
+  const isMobile = useIsMobile();
   
   // Extrair o nome do usuário de maneira segura
   const userName = user?.user_metadata?.nome || "Usuário";
@@ -37,7 +39,7 @@ const DashboardContent = () => {
       
       <div className="flex flex-col flex-1 min-h-screen">
         <DashboardHeader />
-        <main className="flex-1 p-6">
+        <main className={`flex-1 p-6 ${isMobile ? 'pt-14' : ''}`}>
           {isMainDashboard ? (
             <>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground mb-6">
