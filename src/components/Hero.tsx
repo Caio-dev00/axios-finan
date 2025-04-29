@@ -28,11 +28,26 @@ const Hero = () => {
           </div>
           <div className="lg:w-1/2 animate-fade-in">
             <div className="glass-card p-6 rounded-xl shadow-lg">
-              <img
-                src="https://via.placeholder.com/600x400/E8F5E9/1E3A2B?text=Dashboard+Axios+Financas"
-                alt="Dashboard Axios Finanças"
-                className="w-full h-auto rounded-lg shadow-sm"
-              />
+              <div className="relative overflow-hidden rounded-lg shadow-sm">
+                <img
+                  src="/dashboard-screenshot.png"
+                  alt="Dashboard Axios Finanças"
+                  className="w-full h-auto rounded-lg shadow-sm"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg"></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <img
+                  src="/expense-chart.png"
+                  alt="Gráfico de despesas"
+                  className="w-full h-auto rounded-lg shadow-sm"
+                />
+                <img
+                  src="/budget-view.png"
+                  alt="Visão de orçamento"
+                  className="w-full h-auto rounded-lg shadow-sm"
+                />
+              </div>
             </div>
           </div>
         </div>
