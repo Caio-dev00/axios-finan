@@ -1,8 +1,9 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const registerSchema = z.object({
   nome: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
@@ -28,11 +31,14 @@ const registerSchema = z.object({
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
-  onSubmit: (values: RegisterFormValues) => Promise<void>;
-  loading: boolean;
+  returnTo?: string;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, loading }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard" }) => {
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -42,6 +48,29 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, loading }) => {
       confirmPassword: "",
     },
   });
+
+  const onSubmit = async (values: RegisterFormValues) => {
+    try {
+      setLoading(true);
+      const { email, password, nome } = values;
+      
+      const { error } = await signUp(email, password, {
+        data: { nome }
+      });
+      
+      if (error) {
+        toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+        return;
+      }
+      
+      toast.success("Conta criada com sucesso! Verifique seu email para confirmar seu cadastro.");
+      // Success will redirect via AuthContext or need to verify email
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Form {...form}>
@@ -57,7 +86,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, loading }) => {
                   placeholder="Seu Nome" 
                   {...field}
                   disabled={loading}
-                  value={field.value || ""}
                 />
               </FormControl>
               <FormMessage />

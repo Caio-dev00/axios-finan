@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -15,6 +15,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -24,11 +26,14 @@ const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
-  onSubmit: (values: LoginFormValues) => Promise<void>;
-  loading: boolean;
+  returnTo?: string;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ returnTo = "/dashboard" }) => {
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -36,6 +41,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, loading }) => {
       password: "",
     },
   });
+
+  const onSubmit = async (values: LoginFormValues) => {
+    try {
+      setLoading(true);
+      const { email, password } = values;
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        toast.error(error.message || "Erro ao entrar. Tente novamente.");
+        return;
+      }
+      
+      // Success will automatically redirect via AuthContext
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao entrar. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Form {...form}>

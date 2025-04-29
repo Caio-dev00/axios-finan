@@ -1,21 +1,21 @@
 
-import React, { ReactNode } from "react";
+import React, { ReactNode, Dispatch, SetStateAction } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface AuthContainerProps {
   children: ReactNode;
-  isLogin: boolean;
-  onToggleForm: () => void;
-  loading: boolean;
+  activeTab: "login" | "register";
+  setActiveTab: Dispatch<SetStateAction<"login" | "register">>;
 }
 
 const AuthContainer: React.FC<AuthContainerProps> = ({ 
   children, 
-  isLogin, 
-  onToggleForm, 
-  loading 
+  activeTab, 
+  setActiveTab 
 }) => {
+  const isLogin = activeTab === "login";
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -39,8 +39,8 @@ const AuthContainer: React.FC<AuthContainerProps> = ({
               <Button
                 variant="link"
                 className="ml-1 text-finance-primary"
-                onClick={onToggleForm}
-                disabled={loading}
+                onClick={() => setActiveTab(isLogin ? "register" : "login")}
+                type="button"
               >
                 {isLogin ? "Cadastre-se" : "Faça login"}
               </Button>
