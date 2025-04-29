@@ -4,11 +4,19 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+type AuthError = {
+  message: string;
+}
+
+type AuthResult = {
+  error?: AuthError | null;
+}
+
 type AuthContextType = {
   user: User | null;
   session: Session | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, nome: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string, nome: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   loading: boolean;
 };
@@ -41,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
@@ -49,21 +57,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
       
-      if (error) throw error;
+      if (error) return { error };
       
+      return {};
     } catch (error: any) {
       toast({
         title: "Erro ao entrar",
         description: error.message,
         variant: "destructive",
       });
-      throw error;
+      return { error };
     } finally {
       setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, nome: string) => {
+  const signUp = async (email: string, password: string, nome: string): Promise<AuthResult> => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signUp({
@@ -76,19 +85,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       
-      if (error) throw error;
+      if (error) return { error };
       
       toast({
         title: "Cadastro realizado com sucesso!",
         description: "Verifique seu email para confirmar sua conta.",
       });
+      
+      return {};
     } catch (error: any) {
       toast({
         title: "Erro ao cadastrar",
         description: error.message,
         variant: "destructive",
       });
-      throw error;
+      return { error };
     } finally {
       setLoading(false);
     }

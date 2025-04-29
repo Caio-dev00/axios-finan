@@ -46,10 +46,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ returnTo = "/dashboard" }) => {
     try {
       setLoading(true);
       const { email, password } = values;
-      const { error } = await signIn(email, password);
+      const result = await signIn(email, password);
       
-      if (error) {
-        toast.error(error.message || "Erro ao entrar. Tente novamente.");
+      if (result && result.error) {
+        toast.error(result.error.message || "Erro ao entrar. Tente novamente.");
         return;
       }
       

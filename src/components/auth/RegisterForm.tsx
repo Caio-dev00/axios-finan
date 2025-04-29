@@ -54,12 +54,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard" }) 
       setLoading(true);
       const { email, password, nome } = values;
       
-      const { error } = await signUp(email, password, {
-        data: { nome }
-      });
+      const result = await signUp(email, password, nome);
       
-      if (error) {
-        toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+      if (result && result.error) {
+        toast.error(result.error.message || "Erro ao criar conta. Tente novamente.");
         return;
       }
       
