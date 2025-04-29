@@ -14,7 +14,8 @@ import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Profile schema validation
 const profileSchema = z.object({
@@ -23,7 +24,18 @@ const profileSchema = z.object({
   occupation: z.string().optional(),
 });
 
+// Password schema validation
+const passwordSchema = z.object({
+  currentPassword: z.string().min(6, "A senha atual deve ter no mínimo 6 caracteres"),
+  newPassword: z.string().min(6, "A nova senha deve ter no mínimo 6 caracteres"),
+  confirmPassword: z.string().min(6, "Confirme a senha deve ter no mínimo 6 caracteres"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
+});
+
 type ProfileFormValues = z.infer<typeof profileSchema>;
+type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 // Interface para as preferências de notificação
 interface NotificationPreferences {
@@ -40,9 +52,11 @@ const SettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   
   // Initialize form with react-hook-form
   const form = useForm<ProfileFormValues>({
@@ -51,6 +65,16 @@ const SettingsPage = () => {
       nome: "",
       phone: "",
       occupation: "",
+    },
+  });
+
+  // Initialize password form with react-hook-form
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -162,6 +186,57 @@ const SettingsPage = () => {
       console.error("Erro ao atualizar perfil:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle password change submission
+  const onPasswordSubmit = async (formData: PasswordFormValues) => {
+    setPasswordLoading(true);
+    setPasswordError(null);
+    
+    try {
+      // Primeiro, verifica a senha atual tentando fazer login
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: formData.currentPassword,
+      });
+
+      // Se houve erro no login, significa que a senha atual está incorreta
+      if (signInError) {
+        setPasswordError("Senha atual incorreta");
+        throw new Error("Senha atual incorreta");
+      }
+
+      // Atualizar a senha
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: formData.newPassword
+      });
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Senha atualizada",
+        description: "Sua senha foi atualizada com sucesso",
+      });
+      
+      // Limpar o formulário
+      passwordForm.reset({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      
+    } catch (error: any) {
+      if (!passwordError) {
+        toast({
+          title: "Erro ao atualizar senha",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+      console.error("Erro ao atualizar senha:", error);
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -472,19 +547,70 @@ const SettingsPage = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <h3 className="font-medium">Alterar Senha</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Senha Atual</Label>
-                  <Input id="current-password" type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">Nova Senha</Label>
-                  <Input id="new-password" type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                  <Input id="confirm-password" type="password" />
-                </div>
-                <Button>Atualizar Senha</Button>
+                
+                {passwordError && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{passwordError}</AlertDescription>
+                  </Alert>
+                )}
+                
+                <Form {...passwordForm}>
+                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                    <FormField
+                      control={passwordForm.control}
+                      name="currentPassword"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Senha Atual</FormLabel>
+                          <FormControl>
+                            <Input id="current-password" type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={passwordForm.control}
+                      name="newPassword"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Nova Senha</FormLabel>
+                          <FormControl>
+                            <Input id="new-password" type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={passwordForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel>Confirmar Nova Senha</FormLabel>
+                          <FormControl>
+                            <Input id="confirm-password" type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button type="submit" disabled={passwordLoading}>
+                      {passwordLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Atualizando...
+                        </>
+                      ) : (
+                        "Atualizar Senha"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
               </div>
               
               {/* Removidas as seções de autenticação de dois fatores e dispositivos conectados */}
