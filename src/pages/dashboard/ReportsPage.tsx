@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FilePdf, FileSpreadsheet, Settings, Share2 } from "lucide-react";
+import { FileText, FileSpreadsheet, Settings, Share2 } from "lucide-react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import ProFeature from "@/components/ProFeature";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +52,7 @@ const ReportsPage = () => {
             <div className="flex gap-2">
               <Button size="sm">Visualizar</Button>
               <Button size="sm" variant="outline" className="gap-1">
-                <FilePdf size={16} />
+                <FileText size={16} />
                 <span>PDF</span>
               </Button>
             </div>
@@ -91,7 +91,7 @@ const ReportsPage = () => {
               <div className="flex gap-2">
                 <Button size="sm">Visualizar</Button>
                 <Button size="sm" variant="outline" className="gap-1">
-                  <FilePdf size={16} />
+                  <FileText size={16} />
                   <span>PDF</span>
                 </Button>
                 <Button size="sm" variant="outline" className="gap-1">
@@ -135,7 +135,7 @@ const ReportsPage = () => {
               <div className="flex gap-2">
                 <Button size="sm">Visualizar</Button>
                 <Button size="sm" variant="outline" className="gap-1">
-                  <FilePdf size={16} />
+                  <FileText size={16} />
                   <span>PDF</span>
                 </Button>
               </div>
@@ -190,7 +190,7 @@ const ReportsPage = () => {
                       {index === 0 || isPro ? (
                         <div className="flex justify-end gap-2">
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                            <FilePdf size={16} />
+                            <FileText size={16} />
                           </Button>
                         </div>
                       ) : (
