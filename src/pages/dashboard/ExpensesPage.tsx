@@ -185,7 +185,7 @@ const ExpensesPage = () => {
             <CardContent>
               {expenseCategories && expenseCategories.length > 0 ? <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {expenseCategories.map(category => <div key={category.name} className="p-4 bg-gray-50 rounded-md text-center">
-                      <p className="font-medium">{category.name}</p>
+                      <p className="font-medium text-slate-800">{category.name}</p>
                       <p className="text-sm text-gray-500">
                         {category.percentage}% dos gastos
                       </p>
