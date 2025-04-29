@@ -2,6 +2,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { addBudget } from "@/services/budgetService";
 
 const budgetFormSchema = z.object({
   category: z.string().min(1, "Selecione uma categoria"),
@@ -89,6 +91,7 @@ const AddBudgetDialog: React.FC<AddBudgetDialogProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
@@ -102,15 +105,17 @@ const AddBudgetDialog: React.FC<AddBudgetDialogProps> = ({
     },
   });
 
-  function onSubmit(data: BudgetFormValues) {
-    try {
-      // Aqui você implementaria a lógica para salvar o orçamento
-      console.log("Novo orçamento:", data);
+  const mutation = useMutation({
+    mutationFn: (data: BudgetFormValues) => addBudget({
+      category: data.category,
+      amount: Number(data.amount),
+      month: Number(data.month),
+      year: Number(data.year),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["currentMonthBudgets"] });
       
-      if (onAddBudget) {
-        onAddBudget(data);
-      }
-
       toast({
         title: "Orçamento adicionado",
         description: "Seu orçamento foi adicionado com sucesso",
@@ -123,6 +128,24 @@ const AddBudgetDialog: React.FC<AddBudgetDialogProps> = ({
         year: currentYear.toString(),
       });
       setOpen(false);
+    },
+    onError: (error) => {
+      console.error("Erro ao adicionar orçamento:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao adicionar o orçamento",
+        variant: "destructive",
+      });
+    }
+  });
+
+  function onSubmit(data: BudgetFormValues) {
+    try {
+      mutation.mutate(data);
+      
+      if (onAddBudget) {
+        onAddBudget(data);
+      }
     } catch (error) {
       console.error("Erro ao adicionar orçamento:", error);
       toast({
@@ -251,7 +274,12 @@ const AddBudgetDialog: React.FC<AddBudgetDialogProps> = ({
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Adicionar Orçamento</Button>
+              <Button 
+                type="submit"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "Adicionando..." : "Adicionar Orçamento"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

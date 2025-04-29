@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -5,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +44,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { addIncome } from "@/services/incomeService";
 
 const incomeFormSchema = z.object({
   description: z.string().min(3, "A descrição deve ter pelo menos 3 caracteres"),
@@ -77,6 +80,7 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<IncomeFormValues>({
     resolver: zodResolver(incomeFormSchema),
@@ -89,15 +93,14 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
     },
   });
 
-  function onSubmit(data: IncomeFormValues) {
-    try {
-      // Aqui você implementaria a lógica para salvar a receita
-      console.log("Nova receita:", data);
+  const mutation = useMutation({
+    mutationFn: addIncome,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      queryClient.invalidateQueries({ queryKey: ["recentIncomes"] });
+      queryClient.invalidateQueries({ queryKey: ["financialSummary"] });
+      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
       
-      if (onAddIncome) {
-        onAddIncome(data);
-      }
-
       toast({
         title: "Receita adicionada",
         description: "Sua receita foi adicionada com sucesso",
@@ -105,6 +108,30 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
       
       form.reset();
       setOpen(false);
+    },
+    onError: (error) => {
+      console.error("Erro ao adicionar receita:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao adicionar a receita",
+        variant: "destructive",
+      });
+    }
+  });
+
+  function onSubmit(data: IncomeFormValues) {
+    try {
+      // Converter o valor para número
+      const income = {
+        ...data,
+        amount: Number(data.amount),
+      };
+
+      mutation.mutate(income);
+      
+      if (onAddIncome) {
+        onAddIncome(data);
+      }
     } catch (error) {
       console.error("Erro ao adicionar receita:", error);
       toast({
@@ -238,7 +265,12 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
             />
             
             <DialogFooter>
-              <Button type="submit">Adicionar Receita</Button>
+              <Button 
+                type="submit" 
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "Adicionando..." : "Adicionar Receita"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

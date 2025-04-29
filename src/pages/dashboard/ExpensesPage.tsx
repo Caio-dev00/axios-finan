@@ -2,11 +2,32 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
+import { useQuery } from "@tanstack/react-query";
+import { getExpenses, getExpensesByCategory } from "@/services/expenseService";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const ExpensesPage = () => {
+  const { data: expenses, isLoading } = useQuery({
+    queryKey: ["expenses"],
+    queryFn: getExpenses
+  });
+
+  const { data: expenseCategories } = useQuery({
+    queryKey: ["expenseCategories"],
+    queryFn: getExpensesByCategory
+  });
+
+  const recurringExpenses = expenses?.filter(expense => expense.is_recurring);
+  const oneTimeExpenses = expenses?.filter(expense => !expense.is_recurring);
+
+  const formatDate = (date: Date) => {
+    return format(date, "dd 'de' MMMM, yyyy", { locale: ptBR });
+  };
+
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -18,7 +39,6 @@ const ExpensesPage = () => {
               Nova Despesa
             </Button>
           }
-          onAddExpense={(expense) => console.log("Expense added:", expense)}
         />
       </div>
 
@@ -37,33 +57,38 @@ const ExpensesPage = () => {
               <CardDescription>Visualize e gerencie suas despesas mais recentes</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                  <div>
-                    <p className="font-medium">Supermercado</p>
-                    <p className="text-sm text-gray-500">12 de maio, 2025</p>
-                  </div>
-                  <p className="font-semibold text-red-600">- R$ 235,45</p>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                  <div>
-                    <p className="font-medium">Aluguel</p>
-                    <p className="text-sm text-gray-500">05 de maio, 2025</p>
-                  </div>
-                  <p className="font-semibold text-red-600">- R$ 1.200,00</p>
+              ) : expenses && expenses.length > 0 ? (
+                <div className="space-y-4">
+                  {expenses.slice(0, 5).map((expense) => (
+                    <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
+                      <div>
+                        <p className="font-medium">{expense.description}</p>
+                        <p className="text-sm text-gray-500">{formatDate(expense.date)}</p>
+                      </div>
+                      <p className="font-semibold text-red-600">
+                        - R$ {parseFloat(expense.amount).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                  <div>
-                    <p className="font-medium">Conta de Energia</p>
-                    <p className="text-sm text-gray-500">03 de maio, 2025</p>
-                  </div>
-                  <p className="font-semibold text-red-600">- R$ 143,78</p>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nenhuma despesa encontrada</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Adicione despesas para visualizar seus gastos
+                  </p>
                 </div>
-              </div>
+              )}
             </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">Ver todas as despesas</Button>
-            </CardFooter>
+            {expenses && expenses.length > 5 && (
+              <CardFooter>
+                <Button variant="outline" className="w-full">Ver todas as despesas</Button>
+              </CardFooter>
+            )}
           </Card>
         </TabsContent>
         
@@ -74,22 +99,29 @@ const ExpensesPage = () => {
               <CardDescription>Despesas mensais ou periódicas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                  <div>
-                    <p className="font-medium">Netflix</p>
-                    <p className="text-sm text-gray-500">Mensal - Dia 15</p>
-                  </div>
-                  <p className="font-semibold text-red-600">- R$ 39,90</p>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                  <div>
-                    <p className="font-medium">Academia</p>
-                    <p className="text-sm text-gray-500">Mensal - Dia 10</p>
-                  </div>
-                  <p className="font-semibold text-red-600">- R$ 89,90</p>
+              ) : recurringExpenses && recurringExpenses.length > 0 ? (
+                <div className="space-y-4">
+                  {recurringExpenses.map((expense) => (
+                    <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
+                      <div>
+                        <p className="font-medium">{expense.description}</p>
+                        <p className="text-sm text-gray-500">Mensal - Dia {new Date(expense.date).getDate()}</p>
+                      </div>
+                      <p className="font-semibold text-red-600">
+                        - R$ {parseFloat(expense.amount).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nenhuma despesa recorrente encontrada</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -101,15 +133,29 @@ const ExpensesPage = () => {
               <CardDescription>Pagamentos não recorrentes</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
-                  <div>
-                    <p className="font-medium">Compra eletrônicos</p>
-                    <p className="text-sm text-gray-500">22 de abril, 2025</p>
-                  </div>
-                  <p className="font-semibold text-red-600">- R$ 1.459,00</p>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-              </div>
+              ) : oneTimeExpenses && oneTimeExpenses.length > 0 ? (
+                <div className="space-y-4">
+                  {oneTimeExpenses.map((expense) => (
+                    <div key={expense.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-md">
+                      <div>
+                        <p className="font-medium">{expense.description}</p>
+                        <p className="text-sm text-gray-500">{formatDate(expense.date)}</p>
+                      </div>
+                      <p className="font-semibold text-red-600">
+                        - R$ {parseFloat(expense.amount).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nenhuma despesa única encontrada</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -121,26 +167,22 @@ const ExpensesPage = () => {
               <CardDescription>Gerencie suas categorias de despesas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-gray-50 rounded-md text-center">
-                  <p className="font-medium">Alimentação</p>
+              {expenseCategories && expenseCategories.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {expenseCategories.map((category) => (
+                    <div key={category.name} className="p-4 bg-gray-50 rounded-md text-center">
+                      <p className="font-medium">{category.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {category.percentage}% dos gastos
+                      </p>
+                    </div>
+                  ))}
                 </div>
-                <div className="p-4 bg-gray-50 rounded-md text-center">
-                  <p className="font-medium">Moradia</p>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nenhuma categoria com despesas</p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-md text-center">
-                  <p className="font-medium">Transporte</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-md text-center">
-                  <p className="font-medium">Saúde</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-md text-center">
-                  <p className="font-medium">Educação</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-md text-center">
-                  <p className="font-medium">Lazer</p>
-                </div>
-              </div>
+              )}
               <div className="mt-4">
                 <Button variant="outline" className="w-full">Adicionar nova categoria</Button>
               </div>

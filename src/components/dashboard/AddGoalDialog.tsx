@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -5,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +36,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { addGoal } from "@/services/goalService";
 
 const goalFormSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
@@ -62,6 +65,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Definir data padrão para 6 meses a partir de hoje
   const defaultDate = new Date();
@@ -78,15 +82,17 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
     },
   });
 
-  function onSubmit(data: GoalFormValues) {
-    try {
-      // Aqui você implementaria a lógica para salvar a meta
-      console.log("Nova meta:", data);
+  const mutation = useMutation({
+    mutationFn: (data: GoalFormValues) => addGoal({
+      title: data.title,
+      target_amount: Number(data.targetAmount),
+      current_amount: Number(data.currentAmount),
+      target_date: data.targetDate,
+      description: data.description,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goals"] });
       
-      if (onAddGoal) {
-        onAddGoal(data);
-      }
-
       toast({
         title: "Meta adicionada",
         description: "Sua meta financeira foi adicionada com sucesso",
@@ -100,6 +106,24 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
         description: "",
       });
       setOpen(false);
+    },
+    onError: (error) => {
+      console.error("Erro ao adicionar meta:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao adicionar a meta",
+        variant: "destructive",
+      });
+    }
+  });
+
+  function onSubmit(data: GoalFormValues) {
+    try {
+      mutation.mutate(data);
+      
+      if (onAddGoal) {
+        onAddGoal(data);
+      }
     } catch (error) {
       console.error("Erro ao adicionar meta:", error);
       toast({
@@ -243,7 +267,12 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
             />
             
             <DialogFooter>
-              <Button type="submit">Adicionar Meta</Button>
+              <Button 
+                type="submit"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "Adicionando..." : "Adicionar Meta"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

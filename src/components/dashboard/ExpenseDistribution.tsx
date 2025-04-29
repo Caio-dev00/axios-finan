@@ -1,21 +1,28 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getExpensesByCategory } from "@/services/expenseService";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-type ExpenseCategory = {
-  name: string;
-  percentage: number;
-  color: string;
-};
+const COLORS = [
+  "#3B82F6", // blue-500
+  "#10B981", // green-500
+  "#F59E0B", // amber-500
+  "#EF4444", // red-500
+  "#8B5CF6", // violet-500
+  "#EC4899", // pink-500
+  "#06B6D4", // cyan-500
+  "#F97316", // orange-500
+  "#6366F1", // indigo-500
+];
 
 const ExpenseDistribution = () => {
-  // Mock data - would be replaced with real data from the API
-  const categories: ExpenseCategory[] = [
-    { name: "Alimentação", percentage: 35, color: "bg-finance-primary" },
-    { name: "Moradia", percentage: 25, color: "bg-finance-secondary" },
-    { name: "Transporte", percentage: 15, color: "bg-finance-danger" },
-    { name: "Outros", percentage: 25, color: "bg-finance-warning" }
-  ];
+  const { data: categories, isLoading } = useQuery({
+    queryKey: ["expenseCategories"],
+    queryFn: getExpensesByCategory,
+  });
 
   return (
     <Card className="shadow-sm h-full">
@@ -23,28 +30,61 @@ const ExpenseDistribution = () => {
         <CardTitle className="text-lg font-medium">Distribuição de Gastos</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-center">
-          <div className="w-full h-48 rounded-lg bg-gray-100 flex items-center justify-center">
-            {/* Circle chart placeholder - would be replaced with a real chart */}
-            <div className="relative w-32 h-32 rounded-full bg-gray-200">
-              <div className="absolute inset-4 bg-white rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium">100%</span>
-              </div>
-            </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        </div>
-
-        <div className="mt-4 space-y-2 text-sm">
-          {categories.map((category) => (
-            <div key={category.name} className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className={`w-3 h-3 ${category.color} rounded-full mr-2`}></div>
-                <span>{category.name}</span>
-              </div>
-              <span>{category.percentage}%</span>
+        ) : categories && categories.length > 0 ? (
+          <>
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categories}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    innerRadius={40}
+                    fill="#8884d8"
+                    dataKey="amount"
+                    nameKey="name"
+                  >
+                    {categories.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => `R$ ${parseFloat(value).toFixed(2)}`} 
+                    labelFormatter={(name) => `Categoria: ${name}`}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          ))}
-        </div>
+
+            <div className="mt-4 space-y-2 text-sm">
+              {categories.map((category, index) => (
+                <div key={category.name} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div 
+                      className={`w-3 h-3 rounded-full mr-2`} 
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    ></div>
+                    <span>{category.name}</span>
+                  </div>
+                  <span>{category.percentage}%</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-48 text-center">
+            <p className="text-gray-500">Nenhum dado disponível</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Adicione despesas para visualizar a distribuição
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

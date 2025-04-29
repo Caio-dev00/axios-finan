@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { addExpense } from "@/services/expenseService";
 
 const expenseFormSchema = z.object({
   description: z.string().min(3, "A descrição deve ter pelo menos 3 caracteres"),
@@ -81,6 +83,7 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
@@ -94,15 +97,15 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
     },
   });
 
-  function onSubmit(data: ExpenseFormValues) {
-    try {
-      // Aqui você implementaria a lógica para salvar a despesa
-      console.log("Nova despesa:", data);
+  const mutation = useMutation({
+    mutationFn: addExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["recentExpenses"] });
+      queryClient.invalidateQueries({ queryKey: ["financialSummary"] });
+      queryClient.invalidateQueries({ queryKey: ["expenseCategories"] });
+      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
       
-      if (onAddExpense) {
-        onAddExpense(data);
-      }
-
       toast({
         title: "Despesa adicionada",
         description: "Sua despesa foi adicionada com sucesso",
@@ -110,6 +113,30 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       
       form.reset();
       setOpen(false);
+    },
+    onError: (error) => {
+      console.error("Erro ao adicionar despesa:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao adicionar a despesa",
+        variant: "destructive",
+      });
+    }
+  });
+
+  function onSubmit(data: ExpenseFormValues) {
+    try {
+      // Converter o valor para número
+      const expense = {
+        ...data,
+        amount: Number(data.amount),
+      };
+
+      mutation.mutate(expense);
+      
+      if (onAddExpense) {
+        onAddExpense(data);
+      }
     } catch (error) {
       console.error("Erro ao adicionar despesa:", error);
       toast({
@@ -258,7 +285,12 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
               )}
             />
             <DialogFooter>
-              <Button type="submit">Adicionar Despesa</Button>
+              <Button 
+                type="submit"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "Adicionando..." : "Adicionar Despesa"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
