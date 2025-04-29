@@ -15,6 +15,16 @@ const Pricing = () => {
     "Dicas personalizadas de economia",
     "Suporte prioritário"
   ];
+  
+  const familyFeatures = [
+    "Tudo do Plano Pro",
+    "Até 5 usuários por conta",
+    "Gerenciamento compartilhado",
+    "Orçamentos familiares",
+    "Metas coletivas e individuais",
+    "Permissões personalizadas",
+    "Suporte VIP"
+  ];
 
   return (
     <section className="py-16 bg-finance-gray" id="planos">
@@ -27,7 +37,7 @@ const Pricing = () => {
         </div>
         
         <div className="flex flex-col lg:flex-row gap-8 justify-center">
-          <Card className="bg-white border-2 border-gray-100 shadow-md w-full lg:w-96 relative">
+          <Card className="bg-white border-2 border-gray-100 shadow-md w-full lg:w-80 relative">
             <div className="absolute top-0 right-0 bg-gray-200 text-gray-700 px-4 py-1 rounded-bl-lg text-sm font-medium">
               Free
             </div>
@@ -59,7 +69,7 @@ const Pricing = () => {
             </CardFooter>
           </Card>
           
-          <Card className="bg-white border-2 border-finance-primary shadow-xl w-full lg:w-96 relative transform lg:scale-105">
+          <Card className="bg-white border-2 border-finance-primary shadow-xl w-full lg:w-80 relative transform lg:scale-105">
             <div className="absolute top-0 right-0 bg-finance-primary text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
               Recomendado
             </div>
@@ -82,6 +92,34 @@ const Pricing = () => {
               <Button className="w-full bg-finance-primary hover:bg-finance-primary/90 text-white">
                 <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
                   Assinar plano Pro
+                </a>
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card className="bg-white border-2 border-gray-100 shadow-md w-full lg:w-80 relative">
+            <div className="absolute top-0 right-0 bg-yellow-500 text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
+              Família
+            </div>
+            <CardHeader>
+              <h3 className="text-xl font-bold text-finance-dark">Plano Familiar</h3>
+              <p className="text-4xl font-bold mt-4">R$ 49,90 <span className="text-base font-normal text-gray-600">/mês</span></p>
+              <p className="text-gray-500 text-sm mt-1">Até 5 usuários</p>
+            </CardHeader>
+            <CardContent className="border-t border-gray-100 pt-6">
+              <ul className="space-y-3">
+                {familyFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-start">
+                    <Check size={20} className="text-finance-primary mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full border-finance-primary text-finance-primary">
+                <a href="https://pay.cakto.com.br/4j2tn5j_365603" target="_blank" rel="noopener noreferrer">
+                  Assinar plano Familiar
                 </a>
               </Button>
             </CardFooter>
