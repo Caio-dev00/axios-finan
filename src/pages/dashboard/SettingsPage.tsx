@@ -487,36 +487,7 @@ const SettingsPage = () => {
                 <Button>Atualizar Senha</Button>
               </div>
               
-              <div className="border-t pt-6 space-y-4">
-                <h3 className="font-medium">Autenticação de Dois Fatores</h3>
-                <p className="text-sm text-gray-500">
-                  A autenticação de dois fatores adiciona uma camada extra de segurança à sua conta.
-                </p>
-                <Button variant="outline">Configurar Autenticação de Dois Fatores</Button>
-              </div>
-              
-              <div className="border-t pt-6 space-y-4">
-                <h3 className="font-medium">Dispositivos Conectados</h3>
-                <p className="text-sm text-gray-500">
-                  Dispositivos que atualmente têm acesso à sua conta.
-                </p>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                    <div>
-                      <p className="font-medium">Chrome - Windows</p>
-                      <p className="text-xs text-gray-500">Último acesso: hoje às 14:23</p>
-                    </div>
-                    <Button variant="ghost" size="sm">Desconectar</Button>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                    <div>
-                      <p className="font-medium">Safari - iPhone</p>
-                      <p className="text-xs text-gray-500">Último acesso: ontem às 19:45</p>
-                    </div>
-                    <Button variant="ghost" size="sm">Desconectar</Button>
-                  </div>
-                </div>
-              </div>
+              {/* Removidas as seções de autenticação de dois fatores e dispositivos conectados */}
             </CardContent>
           </Card>
         </TabsContent>
