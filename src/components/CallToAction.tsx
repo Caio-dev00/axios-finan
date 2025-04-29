@@ -1,10 +1,7 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-
 const CallToAction = () => {
-  return (
-    <section className="py-16 bg-finance-primary">
+  return <section className="py-16 bg-finance-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
@@ -17,7 +14,7 @@ const CallToAction = () => {
             <Button className="bg-white text-finance-primary hover:bg-white/90 text-base">
               Começar teste grátis
             </Button>
-            <Button variant="outline" className="border-white text-white hover:bg-white/10 text-base">
+            <Button variant="outline" className="border-white text-white text-base bg-gray-800 hover:bg-gray-700">
               <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
                 Assinar plano Pro - R$ 29,90/mês
               </a>
@@ -28,8 +25,6 @@ const CallToAction = () => {
           </p>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default CallToAction;
