@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 
 // Profile schema validation
 const profileSchema = z.object({
@@ -23,11 +25,24 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+// Interface para as preferências de notificação
+interface NotificationPreferences {
+  id: string;
+  user_id: string;
+  budget_alerts: boolean;
+  bill_reminders: boolean;
+  weekly_reports: boolean;
+  financial_tips: boolean;
+  app_updates: boolean;
+}
+
 const SettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
+  const [savingNotifications, setSavingNotifications] = useState(false);
   
   // Initialize form with react-hook-form
   const form = useForm<ProfileFormValues>({
@@ -71,6 +86,51 @@ const SettingsPage = () => {
     fetchProfileData();
   }, [user, form]);
 
+  // Buscar preferências de notificação
+  useEffect(() => {
+    const fetchNotificationPreferences = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('notification_preferences')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (error) {
+            throw error;
+          }
+
+          if (data) {
+            setNotificationPreferences(data);
+          } else {
+            // Se não encontrar, criar um registro com valores padrão
+            const { data: newPrefs, error: createError } = await supabase
+              .from('notification_preferences')
+              .insert([{ user_id: user.id }])
+              .select('*')
+              .single();
+
+            if (createError) {
+              throw createError;
+            }
+
+            setNotificationPreferences(newPrefs);
+          }
+        } catch (error: any) {
+          console.error("Erro ao buscar preferências de notificação:", error.message);
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar suas preferências de notificação",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+
+    fetchNotificationPreferences();
+  }, [user, toast]);
+
   // Handle form submission
   const onSubmit = async (formData: ProfileFormValues) => {
     setLoading(true);
@@ -102,6 +162,71 @@ const SettingsPage = () => {
       console.error("Erro ao atualizar perfil:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Atualizar preferências de notificação
+  const handleToggleNotification = async (field: keyof NotificationPreferences, value: boolean) => {
+    if (!user?.id || !notificationPreferences) return;
+    
+    // Atualizar state localmente para feedback imediato
+    setNotificationPreferences(prev => {
+      if (!prev) return prev;
+      return { ...prev, [field]: value };
+    });
+    
+    try {
+      const { error } = await supabase
+        .from('notification_preferences')
+        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Erro ao atualizar preferência:", error.message);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar sua preferência",
+        variant: "destructive",
+      });
+      
+      // Reverter mudança em caso de erro
+      setNotificationPreferences(prev => {
+        if (!prev) return prev;
+        return { ...prev, [field]: !value };
+      });
+    }
+  };
+
+  // Salvar todas as preferências de notificação
+  const saveNotificationPreferences = async () => {
+    if (!user?.id || !notificationPreferences) return;
+    
+    setSavingNotifications(true);
+    try {
+      const { error } = await supabase
+        .from('notification_preferences')
+        .update({
+          ...notificationPreferences,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Preferências atualizadas",
+        description: "Suas preferências de notificações foram atualizadas com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Erro ao salvar preferências:", error.message);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar suas preferências",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingNotifications(false);
     }
   };
 
@@ -264,48 +389,76 @@ const SettingsPage = () => {
               <CardDescription>Configure quais notificações deseja receber</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Alertas de orçamento</Label>
-                  <p className="text-sm text-gray-500">Notificações quando você ultrapassar 75% do orçamento</p>
+              {!notificationPreferences ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Lembretes de contas</Label>
-                  <p className="text-sm text-gray-500">Lembretes para contas próximas do vencimento</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Relatórios semanais</Label>
-                  <p className="text-sm text-gray-500">Resumo semanal das suas finanças por email</p>
-                </div>
-                <Switch />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Dicas financeiras</Label>
-                  <p className="text-sm text-gray-500">Receba dicas para melhorar suas finanças</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Novidades e atualizações</Label>
-                  <p className="text-sm text-gray-500">Notificações sobre novos recursos do aplicativo</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Alertas de orçamento</Label>
+                      <p className="text-sm text-gray-500">Notificações quando você ultrapassar 75% do orçamento</p>
+                    </div>
+                    <Switch 
+                      checked={notificationPreferences.budget_alerts}
+                      onCheckedChange={(checked) => handleToggleNotification('budget_alerts', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Lembretes de contas</Label>
+                      <p className="text-sm text-gray-500">Lembretes para contas próximas do vencimento</p>
+                    </div>
+                    <Switch 
+                      checked={notificationPreferences.bill_reminders}
+                      onCheckedChange={(checked) => handleToggleNotification('bill_reminders', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Relatórios semanais</Label>
+                      <p className="text-sm text-gray-500">Resumo semanal das suas finanças por email</p>
+                    </div>
+                    <Switch 
+                      checked={notificationPreferences.weekly_reports}
+                      onCheckedChange={(checked) => handleToggleNotification('weekly_reports', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Dicas financeiras</Label>
+                      <p className="text-sm text-gray-500">Receba dicas para melhorar suas finanças</p>
+                    </div>
+                    <Switch 
+                      checked={notificationPreferences.financial_tips}
+                      onCheckedChange={(checked) => handleToggleNotification('financial_tips', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Novidades e atualizações</Label>
+                      <p className="text-sm text-gray-500">Notificações sobre novos recursos do aplicativo</p>
+                    </div>
+                    <Switch 
+                      checked={notificationPreferences.app_updates}
+                      onCheckedChange={(checked) => handleToggleNotification('app_updates', checked)}
+                    />
+                  </div>
+                </>
+              )}
             </CardContent>
             <CardFooter>
-              <Button>Salvar Configurações</Button>
+              <Button 
+                onClick={saveNotificationPreferences} 
+                disabled={savingNotifications || !notificationPreferences}
+              >
+                {savingNotifications ? "Salvando..." : "Salvar Configurações"}
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>

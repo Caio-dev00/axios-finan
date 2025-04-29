@@ -210,6 +210,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          app_updates: boolean
+          bill_reminders: boolean
+          budget_alerts: boolean
+          created_at: string
+          financial_tips: boolean
+          id: string
+          updated_at: string
+          user_id: string
+          weekly_reports: boolean
+        }
+        Insert: {
+          app_updates?: boolean
+          bill_reminders?: boolean
+          budget_alerts?: boolean
+          created_at?: string
+          financial_tips?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+          weekly_reports?: boolean
+        }
+        Update: {
+          app_updates?: boolean
+          bill_reminders?: boolean
+          budget_alerts?: boolean
+          created_at?: string
+          financial_tips?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+          weekly_reports?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
