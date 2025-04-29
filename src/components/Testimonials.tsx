@@ -9,21 +9,21 @@ const Testimonials = () => {
       quote: "O Axios Finanças transformou minha relação com o dinheiro. Antes eu não sabia para onde ia meu salário, agora tenho total controle.",
       name: "Ana Silva",
       role: "Designer",
-      avatar: "https://i.pravatar.cc/150?img=1",
+      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=150&auto=format&fit=crop",
       initials: "AS"
     },
     {
       quote: "Consegui economizar R$ 5.000 em apenas 6 meses usando as dicas personalizadas e o controle de gastos do app.",
       name: "Carlos Mendes",
       role: "Engenheiro",
-      avatar: "https://i.pravatar.cc/150?img=8",
+      avatar: "https://images.unsplash.com/photo-1552058544-f2b08422138a?q=80&w=150&auto=format&fit=crop",
       initials: "CM"
     },
     {
       quote: "Interface super intuitiva e relatórios detalhados. O melhor app de finanças que já usei. Vale cada centavo investido.",
       name: "Marina Santos",
       role: "Professora",
-      avatar: "https://i.pravatar.cc/150?img=5",
+      avatar: "https://images.unsplash.com/photo-1554151228-14d9def656e4?q=80&w=150&auto=format&fit=crop",
       initials: "MS"
     }
   ];
