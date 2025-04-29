@@ -110,10 +110,18 @@ const SettingsPage = () => {
               occupation: data.occupation || "",
             });
             
-            // Carregar preferências gerais
-            setCurrencyPreference(data.currency_preference || "BRL");
-            setDateFormatPreference(data.date_format_preference || "DD/MM/YYYY");
-            setMonthStartDayPreference(data.month_start_day || "1");
+            // Carregar preferências gerais - checking if properties exist
+            if ('currency_preference' in data) {
+              setCurrencyPreference(data.currency_preference || "BRL");
+            }
+            
+            if ('date_format_preference' in data) {
+              setDateFormatPreference(data.date_format_preference || "DD/MM/YYYY");
+            }
+            
+            if ('month_start_day' in data) {
+              setMonthStartDayPreference(data.month_start_day || "1");
+            }
           }
         } catch (error: any) {
           console.error("Erro ao buscar perfil:", error.message);
@@ -325,14 +333,18 @@ const SettingsPage = () => {
     
     setSavingPreferences(true);
     try {
+      // Create an update object with only the properties we want to update
+      const updateData: Record<string, any> = {};
+      
+      // Only include properties in the update if they're being used
+      updateData.currency_preference = currencyPreference;
+      updateData.date_format_preference = dateFormatPreference;
+      updateData.month_start_day = monthStartDayPreference;
+      updateData.updated_at = new Date().toISOString();
+      
       const { error } = await supabase
         .from('profiles')
-        .update({
-          currency_preference: currencyPreference,
-          date_format_preference: dateFormatPreference,
-          month_start_day: monthStartDayPreference,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', user.id);
       
       if (error) throw error;
