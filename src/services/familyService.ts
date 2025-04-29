@@ -162,8 +162,15 @@ export async function inviteFamilyMember(email: string, familyPlanId: string): P
   try {
     const { data: user } = await supabase.auth.getUser();
     
+    if (!user.user) {
+      return { success: false, message: "Usuário não autenticado" };
+    }
+    
     const inviterName = user.user?.user_metadata?.nome || "Um usuário";
     const inviterEmail = user.user?.email;
+    
+    console.log("Sending invitation to:", email, "for plan:", familyPlanId);
+    console.log("Inviter:", inviterName, inviterEmail);
     
     const { data, error } = await supabase.functions.invoke("invite-family-member", {
       body: { 
@@ -173,6 +180,8 @@ export async function inviteFamilyMember(email: string, familyPlanId: string): P
         inviterEmail
       },
     });
+
+    console.log("Function response:", data, error);
 
     if (error) {
       console.error("Erro ao enviar convite:", error);
