@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ const BudgetsPage = () => {
 
   const { data: expensesByCategory, isLoading: isLoadingExpenses } = useQuery({
     queryKey: ["expensesByCategory"],
-    queryFn: getExpensesForBudget
+    queryFn: () => getExpensesForBudget()
   });
 
   const isLoading = isLoadingBudgets || isLoadingExpenses;
@@ -97,7 +96,7 @@ const BudgetsPage = () => {
                 <div className="space-y-6">
                   {budgets.map(budget => {
                     const spent = expensesByCategory?.[budget.category] || 0;
-                    const budgetAmount = parseFloat(budget.amount);
+                    const budgetAmount = budget.amount;
                     const remaining = budgetAmount - spent;
                     const percentage = budgetAmount > 0 ? Math.round((spent / budgetAmount) * 100) : 0;
                     

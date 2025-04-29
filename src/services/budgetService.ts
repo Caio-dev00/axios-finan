@@ -34,7 +34,10 @@ export const getBudgets = async (month?: number, year?: number) => {
   const { data, error } = await query.order("category");
 
   if (error) throw error;
-  return data;
+  return data.map(budget => ({
+    ...budget,
+    amount: parseFloat(budget.amount as any),
+  }));
 };
 
 export const getCurrentMonthBudgets = async () => {
@@ -45,14 +48,18 @@ export const getCurrentMonthBudgets = async () => {
   return getBudgets(month, year);
 };
 
-export const getExpensesForBudget = async (month?: number, year?: number) => {
+export const getExpensesForBudget = async () => {
   const currentDate = new Date();
-  const currentMonth = month || currentDate.getMonth() + 1;
-  const currentYear = year || currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
+  const year = currentDate.getFullYear();
+  
+  return getExpensesForMonth(month, year);
+};
 
+export const getExpensesForMonth = async (month: number, year: number) => {
   // Criar data de início e fim do mês
-  const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-  const endDate = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = new Date(year, month, 0).toISOString().split('T')[0];
 
   const { data, error } = await supabase
     .from("expenses")
@@ -70,7 +77,7 @@ export const getExpensesForBudget = async (month?: number, year?: number) => {
     if (!expensesByCategory[category]) {
       expensesByCategory[category] = 0;
     }
-    expensesByCategory[category] += parseFloat(amount);
+    expensesByCategory[category] += parseFloat(amount as any);
   });
 
   return expensesByCategory;

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
@@ -44,8 +43,8 @@ const GoalsTab = () => {
                   key={goal.id}
                   title={goal.title}
                   deadline={goal.deadline}
-                  targetAmount={parseFloat(goal.target_amount)}
-                  savedAmount={parseFloat(goal.current_amount)}
+                  targetAmount={goal.target_amount}
+                  savedAmount={goal.current_amount}
                   percentage={goal.percentage}
                 />
               ))}

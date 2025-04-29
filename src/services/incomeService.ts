@@ -34,6 +34,7 @@ export const getIncomes = async () => {
   return data.map(income => ({
     ...income,
     date: new Date(income.date),
+    amount: parseFloat(income.amount as any),
   }));
 };
 
@@ -48,5 +49,6 @@ export const getRecentIncomes = async (limit = 3) => {
   return data.map(income => ({
     ...income,
     date: new Date(income.date),
+    amount: parseFloat(income.amount as any),
   }));
 };

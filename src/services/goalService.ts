@@ -33,7 +33,7 @@ export const getGoals = async () => {
   if (error) throw error;
   
   return data.map(goal => {
-    const percentage = Math.round((parseFloat(goal.current_amount) / parseFloat(goal.target_amount)) * 100);
+    const percentage = Math.round((parseFloat(goal.current_amount as any) / parseFloat(goal.target_amount as any)) * 100);
     const targetDate = new Date(goal.target_date);
     
     // Formatar o deadline para algo como "dezembro 2025"
@@ -43,6 +43,8 @@ export const getGoals = async () => {
     return {
       ...goal,
       target_date: targetDate,
+      current_amount: parseFloat(goal.current_amount as any),
+      target_amount: parseFloat(goal.target_amount as any),
       percentage,
       deadline: `${month} ${year}`,
     };

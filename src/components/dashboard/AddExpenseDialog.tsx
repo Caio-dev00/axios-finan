@@ -128,8 +128,12 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
     try {
       // Converter o valor para número
       const expense = {
-        ...data,
+        description: data.description,
         amount: Number(data.amount),
+        category: data.category,
+        date: data.date,
+        notes: data.notes,
+        is_recurring: data.isRecurring,
       };
 
       mutation.mutate(expense);

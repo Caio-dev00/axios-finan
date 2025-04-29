@@ -123,8 +123,11 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
     try {
       // Converter o valor para número
       const income = {
-        ...data,
+        description: data.description,
         amount: Number(data.amount),
+        source: data.source,
+        date: data.date,
+        is_recurring: data.isRecurring
       };
 
       mutation.mutate(income);

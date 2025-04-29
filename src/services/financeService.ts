@@ -11,6 +11,15 @@ export interface FinancialSummary {
   lastUpdate: Date;
 }
 
+export interface Transaction {
+  id: string;
+  name: string; 
+  category: string;
+  amount: number;
+  date: string;
+  type: 'income' | 'expense';
+}
+
 export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -68,10 +77,10 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   if (lastExpenseError) throw lastExpenseError;
 
   // Calcular totais
-  const totalIncome = currentIncomes.reduce((sum, record) => sum + parseFloat(record.amount), 0);
-  const totalExpense = currentExpenses.reduce((sum, record) => sum + parseFloat(record.amount), 0);
-  const lastMonthTotalIncome = lastMonthIncomes.reduce((sum, record) => sum + parseFloat(record.amount), 0);
-  const lastMonthTotalExpense = lastMonthExpenses.reduce((sum, record) => sum + parseFloat(record.amount), 0);
+  const totalIncome = currentIncomes.reduce((sum, record) => sum + parseFloat(record.amount as any), 0);
+  const totalExpense = currentExpenses.reduce((sum, record) => sum + parseFloat(record.amount as any), 0);
+  const lastMonthTotalIncome = lastMonthIncomes.reduce((sum, record) => sum + parseFloat(record.amount as any), 0);
+  const lastMonthTotalExpense = lastMonthExpenses.reduce((sum, record) => sum + parseFloat(record.amount as any), 0);
 
   // Calcular variações percentuais
   const incomeChange = lastMonthTotalIncome === 0 ? 0 : Math.round(((totalIncome - lastMonthTotalIncome) / lastMonthTotalIncome) * 100);
@@ -87,7 +96,7 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   };
 };
 
-export const getRecentTransactions = async (limit = 4) => {
+export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> => {
   // Buscar as receitas mais recentes
   const { data: incomes, error: incomeError } = await supabase
     .from("incomes")
@@ -110,7 +119,7 @@ export const getRecentTransactions = async (limit = 4) => {
   const transactions = [...incomes, ...expenses]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit)
-    .map(transaction => {
+    .map((transaction) => {
       // Formatar a data para exibição
       const transactionDate = new Date(transaction.date);
       const today = new Date();
@@ -132,9 +141,13 @@ export const getRecentTransactions = async (limit = 4) => {
       formattedDate += `, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
       
       return {
-        ...transaction,
-        date: formattedDate
-      };
+        id: transaction.id,
+        name: transaction.name,
+        category: transaction.category,
+        amount: parseFloat(transaction.amount as any),
+        date: formattedDate,
+        type: transaction.type as 'income' | 'expense'
+      } as Transaction;
     });
 
   return transactions;

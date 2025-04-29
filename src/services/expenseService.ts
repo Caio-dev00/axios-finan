@@ -36,6 +36,7 @@ export const getExpenses = async () => {
   return data.map(expense => ({
     ...expense,
     date: new Date(expense.date),
+    amount: parseFloat(expense.amount as any),
   }));
 };
 
@@ -50,6 +51,7 @@ export const getRecentExpenses = async (limit = 3) => {
   return data.map(expense => ({
     ...expense,
     date: new Date(expense.date),
+    amount: parseFloat(expense.amount as any),
   }));
 };
 
@@ -69,8 +71,8 @@ export const getExpensesByCategory = async () => {
     if (!categories[category]) {
       categories[category] = 0;
     }
-    categories[category] += parseFloat(amount);
-    total += parseFloat(amount);
+    categories[category] += parseFloat(amount as any);
+    total += parseFloat(amount as any);
   });
 
   // Converter para porcentagens

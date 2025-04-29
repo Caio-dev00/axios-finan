@@ -55,7 +55,7 @@ const ExpenseDistribution = () => {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value) => `R$ ${parseFloat(value).toFixed(2)}`} 
+                    formatter={(value) => `R$ ${Number(value).toFixed(2)}`} 
                     labelFormatter={(name) => `Categoria: ${name}`}
                   />
                 </PieChart>
