@@ -280,31 +280,43 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          currency_preference: string | null
+          date_format_preference: string | null
           email: string | null
           id: string
+          month_start_day: string | null
           nome: string | null
           occupation: string | null
           phone: string | null
+          theme_preference: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          currency_preference?: string | null
+          date_format_preference?: string | null
           email?: string | null
           id: string
+          month_start_day?: string | null
           nome?: string | null
           occupation?: string | null
           phone?: string | null
+          theme_preference?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          currency_preference?: string | null
+          date_format_preference?: string | null
           email?: string | null
           id?: string
+          month_start_day?: string | null
           nome?: string | null
           occupation?: string | null
           phone?: string | null
+          theme_preference?: string | null
           updated_at?: string | null
         }
         Relationships: []

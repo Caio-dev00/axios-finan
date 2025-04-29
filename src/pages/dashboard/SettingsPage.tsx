@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +37,22 @@ const passwordSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
+
+// Extended profile type to include the new preference fields
+interface ProfileData {
+  id: string;
+  nome?: string;
+  email?: string;
+  phone?: string;
+  occupation?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  theme_preference?: string;
+  currency_preference?: string;
+  date_format_preference?: string;
+  month_start_day?: string;
+}
 
 // Interface para as preferências de notificação
 interface NotificationPreferences {
@@ -103,26 +118,26 @@ const SettingsPage = () => {
           }
 
           if (data) {
-            setProfileData(data);
+            setProfileData(data as ProfileData);
             form.reset({
-              nome: data.nome || user?.user_metadata?.nome || "",
-              phone: data.phone || "",
-              occupation: data.occupation || "",
+              nome: (data as ProfileData).nome || user?.user_metadata?.nome || "",
+              phone: (data as ProfileData).phone || "",
+              occupation: (data as ProfileData).occupation || "",
             });
             
             // Carregar preferências gerais - checking if properties exist
             if (data && typeof data === 'object') {
-              const currencyPref = data.currency_preference as string | undefined;
+              const currencyPref = (data as ProfileData).currency_preference;
               if (currencyPref) {
                 setCurrencyPreference(currencyPref);
               }
               
-              const dateFormatPref = data.date_format_preference as string | undefined;
+              const dateFormatPref = (data as ProfileData).date_format_preference;
               if (dateFormatPref) {
                 setDateFormatPreference(dateFormatPref);
               }
               
-              const monthStartPref = data.month_start_day as string | undefined;
+              const monthStartPref = (data as ProfileData).month_start_day;
               if (monthStartPref) {
                 setMonthStartDayPreference(monthStartPref);
               }
