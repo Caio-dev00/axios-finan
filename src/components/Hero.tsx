@@ -1,10 +1,7 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-
 const Hero = () => {
-  return (
-    <section className="bg-gradient-to-br from-finance-light to-white py-16 lg:py-24">
+  return <section className="bg-gradient-to-br from-finance-light to-white py-16 lg:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between">
           <div className="lg:w-1/2 lg:pr-12 mb-10 lg:mb-0 animate-fade-up">
@@ -29,31 +26,19 @@ const Hero = () => {
           <div className="lg:w-1/2 animate-fade-in">
             <div className="glass-card p-6 rounded-xl shadow-lg">
               <div className="relative overflow-hidden rounded-lg shadow-sm">
-                <img
-                  src="/dashboard-screenshot.png"
-                  alt="Dashboard Axios Finanças"
-                  className="w-full h-auto rounded-lg shadow-sm"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg"></div>
+                {/* Using placeholder image as fallback */}
+                <img src="https://via.placeholder.com/800x500/E8F5E9/1E3A2B?text=Dashboard+Axios+Financas" alt="Dashboard Axios Finanças" className="w-full h-auto rounded-lg shadow-sm" />
+                
               </div>
               <div className="grid grid-cols-2 gap-3 mt-3">
-                <img
-                  src="/expense-chart.png"
-                  alt="Gráfico de despesas"
-                  className="w-full h-auto rounded-lg shadow-sm"
-                />
-                <img
-                  src="/budget-view.png"
-                  alt="Visão de orçamento"
-                  className="w-full h-auto rounded-lg shadow-sm"
-                />
+                {/* Using placeholder images as fallbacks */}
+                <img src="https://via.placeholder.com/400x250/E8F5E9/1E3A2B?text=Gráfico+de+Despesas" alt="Gráfico de despesas" className="w-full h-auto rounded-lg shadow-sm" />
+                <img src="https://via.placeholder.com/400x250/E8F5E9/1E3A2B?text=Visão+de+Orçamento" alt="Visão de orçamento" className="w-full h-auto rounded-lg shadow-sm" />
               </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
