@@ -46,45 +46,36 @@ const DashboardHeader = () => {
     await signOut();
   };
 
-  // Função para buscar notificações (simulada, pois ainda não temos uma tabela de notificações)
+  // Função para buscar notificações do banco de dados
   const fetchNotifications = async () => {
+    if (!user) return;
+    
     setIsLoading(true);
-    // Em um cenário real, buscaríamos do banco de dados
-    // Por enquanto, vamos simular algumas notificações
+    
     try {
-      // Simula o tempo de carregamento
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw error;
+      }
       
-      // Dados simulados para demonstração
-      const mockNotifications: Notification[] = [
-        {
-          id: "1",
-          title: "Alerta de orçamento",
-          message: "Você atingiu 80% do seu orçamento para Alimentação este mês.",
-          type: "warning",
-          isRead: false,
-          createdAt: new Date(Date.now() - 3600000) // 1 hora atrás
-        },
-        {
-          id: "2",
-          title: "Conta próxima do vencimento",
-          message: "Você tem uma conta de Água com vencimento em 3 dias.",
-          type: "info",
-          isRead: false,
-          createdAt: new Date(Date.now() - 86400000) // 1 dia atrás
-        },
-        {
-          id: "3",
-          title: "Meta alcançada",
-          message: "Parabéns! Você alcançou 100% da sua meta de poupança.",
-          type: "success",
-          isRead: true,
-          createdAt: new Date(Date.now() - 172800000) // 2 dias atrás
-        }
-      ];
-      
-      setNotifications(mockNotifications);
-      setNotificationCount(mockNotifications.filter(n => !n.isRead).length);
+      if (data) {
+        // Converter os dados para o formato da interface Notification
+        const formattedNotifications: Notification[] = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          message: item.message,
+          type: item.type as 'info' | 'warning' | 'success',
+          isRead: item.is_read,
+          createdAt: new Date(item.created_at)
+        }));
+        
+        setNotifications(formattedNotifications);
+        setNotificationCount(formattedNotifications.filter(n => !n.isRead).length);
+      }
     } catch (error) {
       console.error("Erro ao buscar notificações:", error);
       toast({
@@ -97,32 +88,110 @@ const DashboardHeader = () => {
     }
   };
 
-  // Carregar notificações quando o componente montar
+  // Carregar notificações quando o componente montar ou usuário mudar
   useEffect(() => {
     fetchNotifications();
-  }, []);
+    
+    // Configurar escuta em tempo real para atualizações de notificações
+    const channel = supabase
+      .channel('notification_updates')
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications'
+        },
+        (payload) => {
+          // Atualizar notificações quando uma nova for inserida
+          fetchNotifications();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'notifications'
+        },
+        (payload) => {
+          // Atualizar notificações quando uma for atualizada
+          fetchNotifications();
+        }
+      )
+      .subscribe();
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(notifications.map(notif => 
-      notif.id === id ? { ...notif, isRead: true } : notif
-    ));
-    
-    setNotificationCount(prev => Math.max(0, prev - 1));
-    
-    toast({
-      title: "Notificação marcada como lida",
-      description: "Esta notificação foi marcada como lida",
-    });
+    // Limpar a subscription quando o componente for desmontado
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Atualizar o estado local
+      setNotifications(notifications.map(notif => 
+        notif.id === id ? { ...notif, isRead: true } : notif
+      ));
+      
+      setNotificationCount(prev => Math.max(0, prev - 1));
+      
+      toast({
+        title: "Notificação marcada como lida",
+        description: "Esta notificação foi marcada como lida",
+      });
+    } catch (error) {
+      console.error("Erro ao marcar notificação como lida:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a notificação",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map(notif => ({ ...notif, isRead: true })));
-    setNotificationCount(0);
+  const handleMarkAllAsRead = async () => {
+    if (notificationCount === 0) return;
     
-    toast({
-      title: "Todas as notificações lidas",
-      description: "Todas as notificações foram marcadas como lidas",
-    });
+    try {
+      const unreadNotificationIds = notifications
+        .filter(n => !n.isRead)
+        .map(n => n.id);
+        
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .in('id', unreadNotificationIds);
+        
+      if (error) {
+        throw error;
+      }
+      
+      // Atualizar o estado local
+      setNotifications(notifications.map(notif => ({ ...notif, isRead: true })));
+      setNotificationCount(0);
+      
+      toast({
+        title: "Todas as notificações lidas",
+        description: "Todas as notificações foram marcadas como lidas",
+      });
+    } catch (error) {
+      console.error("Erro ao marcar todas as notificações como lidas:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar as notificações",
+        variant: "destructive",
+      });
+    }
   };
 
   // Função para renderizar o ícone baseado no tipo de notificação
