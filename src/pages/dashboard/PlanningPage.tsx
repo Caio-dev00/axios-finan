@@ -4,16 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
+import AddGoalDialog from "@/components/dashboard/AddGoalDialog";
 
 const PlanningPage = () => {
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Planejamento Financeiro</h1>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Meta
-        </Button>
+        <AddGoalDialog 
+          trigger={
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Meta
+            </Button>
+          }
+          onAddGoal={(goal) => console.log("Goal added:", goal)}
+        />
       </div>
 
       <Tabs defaultValue="goals" className="w-full">

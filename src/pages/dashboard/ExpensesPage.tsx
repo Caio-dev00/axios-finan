@@ -4,16 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
 
 const ExpensesPage = () => {
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gerenciar Despesas</h1>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Despesa
-        </Button>
+        <AddExpenseDialog 
+          trigger={
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Despesa
+            </Button>
+          }
+          onAddExpense={(expense) => console.log("Expense added:", expense)}
+        />
       </div>
 
       <Tabs defaultValue="all" className="w-full">

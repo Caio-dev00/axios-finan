@@ -3,16 +3,22 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
+import AddIncomeDialog from "@/components/dashboard/AddIncomeDialog";
 
 const IncomePage = () => {
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gerenciar Receitas</h1>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Receita
-        </Button>
+        <AddIncomeDialog 
+          trigger={
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Receita
+            </Button>
+          }
+          onAddIncome={(income) => console.log("Income added:", income)}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
