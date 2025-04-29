@@ -1,1 +1,8 @@
+
 project_id = "yascliotrmqhvqbvrhsc"
+
+[functions.invite-family-member]
+verify_jwt = true
+
+[functions.accept-family-invite]
+verify_jwt = true

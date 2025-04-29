@@ -5,14 +5,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { acceptFamilyInvite } from "@/services/familyService";
+import { useToast } from "@/hooks/use-toast";
 
 const InvitePage: React.FC = () => {
   const { token } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [inviteData, setInviteData] = useState<{familyId: string} | null>(null);
 
   useEffect(() => {
@@ -22,7 +27,7 @@ const InvitePage: React.FC = () => {
       return;
     }
 
-    // Decode the token (in a real app, you would validate this server-side)
+    // Decodificar o token (em uma aplicação real, você validaria isso do lado do servidor)
     try {
       const decoded = atob(token);
       const [prefix, familyId] = decoded.split(':');
@@ -40,16 +45,48 @@ const InvitePage: React.FC = () => {
   }, [token]);
 
   const handleAcceptInvite = async () => {
-    // In a real application, you would:
-    // 1. Validate the token server-side
-    // 2. Add the user to the family_members table
-    // 3. Update the user's subscription to family
+    if (!token) return;
     
-    // For this demo, we'll just redirect to the dashboard
-    if (user) {
-      navigate("/dashboard");
-    } else {
-      navigate("/auth");
+    setProcessing(true);
+    
+    try {
+      const result = await acceptFamilyInvite(token);
+      
+      if (result.success) {
+        setSuccess(result.message);
+        toast({
+          title: "Sucesso!",
+          description: result.message,
+        });
+        
+        // Redirecionar para o dashboard após aceitar o convite
+        setTimeout(() => {
+          navigate("/dashboard/family");
+        }, 2000);
+      } else if (result.redirectToAuth) {
+        // Redirecionar para a página de autenticação se o usuário não estiver logado
+        toast({
+          title: "Login necessário",
+          description: "Você precisa fazer login para aceitar o convite.",
+        });
+        navigate("/auth", { state: { returnTo: `/invite/${token}` } });
+      } else {
+        setError(result.message);
+        toast({
+          title: "Erro",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || "Ocorreu um erro ao processar o convite.");
+      toast({
+        title: "Erro",
+        description: "Erro ao processar o convite. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -65,9 +102,19 @@ const InvitePage: React.FC = () => {
             </div>
           ) : error ? (
             <div>
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-red-600 mb-4">Erro</h2>
               <p className="text-gray-600 mb-6">{error}</p>
               <Button onClick={() => navigate("/")}>Voltar para a página inicial</Button>
+            </div>
+          ) : success ? (
+            <div>
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-green-600 mb-4">Sucesso!</h2>
+              <p className="text-gray-600 mb-6">{success}</p>
+              <Button onClick={() => navigate("/dashboard/family")} className="bg-finance-primary hover:bg-finance-primary/90">
+                Ir para o Dashboard
+              </Button>
             </div>
           ) : (
             <div>
@@ -82,13 +129,16 @@ const InvitePage: React.FC = () => {
                 <Button 
                   onClick={handleAcceptInvite}
                   className="w-full bg-finance-primary hover:bg-finance-primary/90"
+                  disabled={processing}
                 >
+                  {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {user ? "Aceitar Convite" : "Fazer login para continuar"}
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => navigate("/")}
                   className="w-full"
+                  disabled={processing}
                 >
                   Não agora
                 </Button>

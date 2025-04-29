@@ -160,34 +160,61 @@ export async function getFamilyMembers(familyPlanId: string): Promise<FamilyMemb
 // Função para convidar um novo membro para o plano familiar
 export async function inviteFamilyMember(email: string, familyPlanId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const { data: inviteData, error: inviteError } = await supabase.functions.invoke("invite-family-member", {
-      body: { email, familyPlanId },
+    const { data: user } = await supabase.auth.getUser();
+    
+    const inviterName = user.user?.user_metadata?.nome || "Um usuário";
+    const inviterEmail = user.user?.email;
+    
+    const { data, error } = await supabase.functions.invoke("invite-family-member", {
+      body: { 
+        email, 
+        familyPlanId,
+        inviterName,
+        inviterEmail
+      },
     });
 
-    if (inviteError) {
-      return { success: false, message: `Erro ao enviar convite: ${inviteError.message}` };
+    if (error) {
+      console.error("Erro ao enviar convite:", error);
+      return { success: false, message: `Erro ao enviar convite: ${error.message}` };
     }
 
     return { success: true, message: "Convite enviado com sucesso!" };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao convidar membro:", error);
     return { success: false, message: "Erro ao enviar convite. Tente novamente." };
   }
 }
 
 // Função para aceitar um convite para um plano familiar
-export async function acceptFamilyInvite(token: string): Promise<{ success: boolean; message: string }> {
+export async function acceptFamilyInvite(token: string): Promise<{ success: boolean; message: string; redirectToAuth?: boolean }> {
   try {
     const { data, error } = await supabase.functions.invoke("accept-family-invite", {
       body: { token },
     });
 
     if (error) {
-      return { success: false, message: `Erro ao aceitar convite: ${error.message}` };
+      return { 
+        success: false, 
+        message: `Erro ao aceitar convite: ${error.message}`,
+        redirectToAuth: error.message.includes("não autenticado")
+      };
     }
 
-    return { success: true, message: "Convite aceito com sucesso!" };
-  } catch (error) {
+    // Verificar se a resposta indica que o usuário não está autenticado
+    if (data && !data.success && data.redirectToAuth) {
+      return { 
+        success: false, 
+        message: data.error || "Você precisa fazer login para aceitar o convite", 
+        redirectToAuth: true 
+      };
+    }
+
+    return { 
+      success: true, 
+      message: data?.message || "Convite aceito com sucesso!" 
+    };
+  } catch (error: any) {
     console.error("Erro ao aceitar convite:", error);
     return { success: false, message: "Erro ao aceitar convite. Tente novamente." };
   }
@@ -234,13 +261,12 @@ export async function updateFamilyPlan(
   }
 }
 
-// Nova função para criar um link de convite
+// Função para criar um link de convite
 export function createInvitationLink(familyPlanId: string): string {
-  // Generate a token that includes the family plan ID
-  // In a real app, you might want to encrypt this or use a more secure method
+  // Gerar um token que inclua o ID do plano familiar
   const token = btoa(`invite:${familyPlanId}:${Date.now()}`);
   
-  // Create the full invitation URL
+  // Criar o URL de convite completo
   const baseUrl = window.location.origin;
   return `${baseUrl}/invite/${token}`;
 }
