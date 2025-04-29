@@ -22,18 +22,20 @@ const SavingsTab = () => {
 
   const { data: savingsData, isLoading } = useQuery({
     queryKey: ["savings"],
-    queryFn: getSavingsData,
-    onSuccess: (data) => {
-      if (data) {
-        setSavingsForm({
-          balance: data.balance,
-          monthly_saved: data.monthly_saved,
-          monthly_returns: data.monthly_returns,
-          savings_rate: data.savings_rate
-        });
-      }
-    }
+    queryFn: getSavingsData
   });
+
+  // Use useEffect to update form when data is loaded
+  useEffect(() => {
+    if (savingsData) {
+      setSavingsForm({
+        balance: savingsData.balance,
+        monthly_saved: savingsData.monthly_saved,
+        monthly_returns: savingsData.monthly_returns,
+        savings_rate: savingsData.savings_rate
+      });
+    }
+  }, [savingsData]);
 
   const updateMutation = useMutation({
     mutationFn: updateSavingsData,

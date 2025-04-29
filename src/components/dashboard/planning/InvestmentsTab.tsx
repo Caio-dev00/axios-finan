@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import InvestmentDistributionItem from "./InvestmentDistributionItem";
 import { Button } from "@/components/ui/button";
@@ -65,19 +65,21 @@ const InvestmentsTab = () => {
   
   const { data: performance, isLoading: performanceLoading } = useQuery({
     queryKey: ["investment-performance"],
-    queryFn: getInvestmentTotalAndReturns,
-    onSuccess: (data) => {
-      if (data) {
-        setPerformanceForm({
-          monthly_return_percentage: data.monthly_return_percentage,
-          monthly_return_amount: data.monthly_return_amount,
-          yearly_return_percentage: data.yearly_return_percentage,
-          yearly_return_amount: data.yearly_return_amount,
-          total_invested: data.total_invested
-        });
-      }
-    }
+    queryFn: getInvestmentTotalAndReturns
   });
+
+  // Use useEffect to update form when performance data is loaded
+  useEffect(() => {
+    if (performance) {
+      setPerformanceForm({
+        monthly_return_percentage: performance.monthly_return_percentage,
+        monthly_return_amount: performance.monthly_return_amount,
+        yearly_return_percentage: performance.yearly_return_percentage,
+        yearly_return_amount: performance.yearly_return_amount,
+        total_invested: performance.total_invested
+      });
+    }
+  }, [performance]);
   
   // Calculate total investment
   const totalInvestment = investments.reduce((sum, inv) => sum + parseFloat(String(inv.amount)), 0);
