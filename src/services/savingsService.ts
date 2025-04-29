@@ -12,7 +12,7 @@ export interface Savings {
   updated_at?: string;
 }
 
-export const getSavingsData = async () => {
+export const getSavingsData = async (): Promise<Savings> => {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
   
@@ -20,7 +20,7 @@ export const getSavingsData = async () => {
     .from("savings")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     // Se não encontrar dados, retorna um objeto vazio para inicializar
@@ -35,7 +35,12 @@ export const getSavingsData = async () => {
     throw error;
   }
   
-  return data;
+  return data || {
+    balance: 0,
+    monthly_saved: 0,
+    monthly_returns: 0,
+    savings_rate: 0
+  };
 };
 
 export const updateSavingsData = async (savings: Savings) => {

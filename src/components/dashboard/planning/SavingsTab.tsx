@@ -23,7 +23,7 @@ const SavingsTab = () => {
   const { data: savingsData, isLoading } = useQuery({
     queryKey: ["savings"],
     queryFn: getSavingsData,
-    onSuccess: (data) => {
+    onSettled: (data) => {
       if (data) {
         setSavingsForm({
           balance: data.balance,
@@ -59,7 +59,7 @@ const SavingsTab = () => {
     const { name, value } = e.target;
     setSavingsForm({
       ...savingsForm,
-      [name]: name === "savings_rate" ? parseFloat(value) : parseFloat(value)
+      [name]: parseFloat(value)
     });
   };
 

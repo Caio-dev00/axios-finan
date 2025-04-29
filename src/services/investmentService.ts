@@ -12,6 +12,18 @@ export interface Investment {
   updated_at?: string;
 }
 
+export interface InvestmentPerformance {
+  id?: string;
+  user_id?: string;
+  total_invested: number;
+  monthly_return_percentage: number;
+  monthly_return_amount: number;
+  yearly_return_percentage: number;
+  yearly_return_amount: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export const getInvestments = async () => {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
@@ -81,23 +93,31 @@ export const getInvestmentTotalAndReturns = async () => {
     .from("investment_performance")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    // Se não encontrar dados, retorna valores padrão
-    if (error.code === "PGSQL_NO_ROWS_RETURNED") {
-      return {
-        total_invested: 0,
-        monthly_return_percentage: 0,
-        monthly_return_amount: 0,
-        yearly_return_percentage: 0,
-        yearly_return_amount: 0
-      };
+    // If it's not a no-rows-returned error, then throw it
+    if (error.code !== "PGSQL_NO_ROWS_RETURNED") {
+      throw error;
     }
-    throw error;
+    
+    // If no data, return defaults
+    return {
+      total_invested: 0,
+      monthly_return_percentage: 0,
+      monthly_return_amount: 0,
+      yearly_return_percentage: 0,
+      yearly_return_amount: 0
+    };
   }
   
-  return data;
+  return data || {
+    total_invested: 0,
+    monthly_return_percentage: 0,
+    monthly_return_amount: 0,
+    yearly_return_percentage: 0,
+    yearly_return_amount: 0
+  };
 };
 
 export const updateInvestmentPerformance = async (performance: {
@@ -110,7 +130,6 @@ export const updateInvestmentPerformance = async (performance: {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
   
-  // Verificar se já existe um registro para o usuário
   const { data: existingData } = await supabase
     .from("investment_performance")
     .select("*")
@@ -119,7 +138,7 @@ export const updateInvestmentPerformance = async (performance: {
   let result;
   
   if (existingData && existingData.length > 0) {
-    // Atualizar registro existente
+    // Update existing record
     const { data, error } = await supabase
       .from("investment_performance")
       .update({
@@ -132,7 +151,7 @@ export const updateInvestmentPerformance = async (performance: {
     if (error) throw error;
     result = data;
   } else {
-    // Criar novo registro
+    // Create new record
     const { data, error } = await supabase
       .from("investment_performance")
       .insert({

@@ -141,6 +141,75 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_performance: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_return_amount: number
+          monthly_return_percentage: number
+          total_invested: number
+          updated_at: string
+          user_id: string
+          yearly_return_amount: number
+          yearly_return_percentage: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_return_amount?: number
+          monthly_return_percentage?: number
+          total_invested?: number
+          updated_at?: string
+          user_id: string
+          yearly_return_amount?: number
+          yearly_return_percentage?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_return_amount?: number
+          monthly_return_percentage?: number
+          total_invested?: number
+          updated_at?: string
+          user_id?: string
+          yearly_return_amount?: number
+          yearly_return_percentage?: number
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          amount: number
+          category: string
+          color: string
+          created_at: string
+          id: string
+          percentage: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          color?: string
+          created_at?: string
+          id?: string
+          percentage?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          color?: string
+          created_at?: string
+          id?: string
+          percentage?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -171,6 +240,39 @@ export type Database = {
           occupation?: string | null
           phone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      savings: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          monthly_returns: number
+          monthly_saved: number
+          savings_rate: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          monthly_returns?: number
+          monthly_saved?: number
+          savings_rate?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          monthly_returns?: number
+          monthly_saved?: number
+          savings_rate?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

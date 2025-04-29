@@ -10,7 +10,10 @@ import {
   getInvestments, 
   getInvestmentTotalAndReturns,
   updateInvestmentPerformance,
-  Investment 
+  addInvestment,
+  deleteInvestment,
+  Investment, 
+  InvestmentPerformance 
 } from "@/services/investmentService";
 import { Loader2, PencilIcon, CheckIcon, XIcon, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -32,7 +35,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 const InvestmentsTab = () => {
@@ -42,11 +44,12 @@ const InvestmentsTab = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [investmentToDelete, setInvestmentToDelete] = useState<string | null>(null);
   
-  const [performanceForm, setPerformanceForm] = useState({
+  const [performanceForm, setPerformanceForm] = useState<Omit<InvestmentPerformance, "id" | "user_id" | "created_at" | "updated_at">>({
     monthly_return_percentage: 0,
     monthly_return_amount: 0,
     yearly_return_percentage: 0,
-    yearly_return_amount: 0
+    yearly_return_amount: 0,
+    total_invested: 0
   });
   
   const [newInvestment, setNewInvestment] = useState<Partial<Investment>>({
@@ -64,25 +67,26 @@ const InvestmentsTab = () => {
   const { data: performance, isLoading: performanceLoading } = useQuery({
     queryKey: ["investment-performance"],
     queryFn: getInvestmentTotalAndReturns,
-    onSuccess: (data) => {
+    onSettled: (data) => {
       if (data) {
         setPerformanceForm({
           monthly_return_percentage: data.monthly_return_percentage,
           monthly_return_amount: data.monthly_return_amount,
           yearly_return_percentage: data.yearly_return_percentage,
-          yearly_return_amount: data.yearly_return_amount
+          yearly_return_amount: data.yearly_return_amount,
+          total_invested: data.total_invested
         });
       }
     }
   });
   
-  // Calcular total investido
+  // Calculate total investment
   const totalInvestment = investments.reduce((sum, inv) => sum + parseFloat(String(inv.amount)), 0);
   
   const updatePerformanceMutation = useMutation({
-    mutationFn: (data: any) => updateInvestmentPerformance({
-      total_invested: totalInvestment,
-      ...data
+    mutationFn: (data: Omit<InvestmentPerformance, "id" | "user_id" | "created_at" | "updated_at">) => updateInvestmentPerformance({
+      ...data,
+      total_invested: totalInvestment
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["investment-performance"] });
@@ -103,25 +107,7 @@ const InvestmentsTab = () => {
   });
   
   const addInvestmentMutation = useMutation({
-    mutationFn: async () => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      
-      const { data, error } = await supabase
-        .from("investments")
-        .insert({
-          user_id: userId,
-          category: newInvestment.category,
-          amount: newInvestment.amount,
-          percentage: newInvestment.percentage,
-          color: newInvestment.color
-        })
-        .select();
-        
-      if (error) throw error;
-      return data[0];
-    },
+    mutationFn: () => addInvestment(newInvestment as Required<Pick<Investment, "category" | "amount" | "percentage" | "color">>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setIsAddDialogOpen(false);
@@ -147,16 +133,7 @@ const InvestmentsTab = () => {
   });
   
   const deleteInvestmentMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { error } = await supabase
-        .from("investments")
-        .delete()
-        .eq("id", id);
-        
-      if (error) throw error;
-      return true;
-    },
+    mutationFn: (id: string) => deleteInvestment(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       toast({
@@ -200,7 +177,8 @@ const InvestmentsTab = () => {
         monthly_return_percentage: performance.monthly_return_percentage,
         monthly_return_amount: performance.monthly_return_amount,
         yearly_return_percentage: performance.yearly_return_percentage,
-        yearly_return_amount: performance.yearly_return_amount
+        yearly_return_amount: performance.yearly_return_amount,
+        total_invested: performance.total_invested
       });
     }
     setIsEditing(false);
@@ -359,8 +337,8 @@ const InvestmentsTab = () => {
                       </div>
                       <InvestmentDistributionItem
                         label={investment.category}
-                        percentage={investment.percentage as number}
-                        amount={investment.amount as number}
+                        percentage={investment.percentage}
+                        amount={investment.amount}
                         color={investment.color}
                       />
                     </div>
