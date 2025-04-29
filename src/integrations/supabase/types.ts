@@ -75,6 +75,65 @@ export type Database = {
         }
         Relationships: []
       }
+      family_members: {
+        Row: {
+          created_at: string
+          family_plan_id: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          family_plan_id: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          family_plan_id?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_family_plan_id_fkey"
+            columns: ["family_plan_id"]
+            isOneToOne: false
+            referencedRelation: "family_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_plans: {
+        Row: {
+          created_at: string
+          id: string
+          max_members: number
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_members?: number
+          name?: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_members?: number
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -349,6 +408,39 @@ export type Database = {
           monthly_returns?: number
           monthly_saved?: number
           savings_rate?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          plan_type: string
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          plan_type?: string
+          start_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          plan_type?: string
+          start_date?: string
           updated_at?: string
           user_id?: string
         }
