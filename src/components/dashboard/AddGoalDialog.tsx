@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -129,6 +128,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            
             <FormField
               control={form.control}
               name="title"
@@ -180,6 +180,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                 </FormItem>
               )}
             />
+            
             <FormField
               control={form.control}
               name="targetDate"
@@ -221,6 +222,8 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                 </FormItem>
               )}
             />
+            
+            
             <FormField
               control={form.control}
               name="description"
@@ -238,6 +241,7 @@ const AddGoalDialog: React.FC<AddGoalDialogProps> = ({
                 </FormItem>
               )}
             />
+            
             <DialogFooter>
               <Button type="submit">Adicionar Meta</Button>
             </DialogFooter>

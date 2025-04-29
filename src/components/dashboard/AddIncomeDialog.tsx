@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -196,6 +195,7 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
                 </FormItem>
               )}
             />
+            
             <FormField
               control={form.control}
               name="date"
@@ -236,6 +236,7 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
                 </FormItem>
               )}
             />
+            
             <DialogFooter>
               <Button type="submit">Adicionar Receita</Button>
             </DialogFooter>
