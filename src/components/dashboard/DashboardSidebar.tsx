@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFamilyPlan } from "@/contexts/FamilyPlanContext";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -26,7 +25,6 @@ import {
   Target,
   Settings,
   LogOut,
-  Users,
   Menu,
   X
 } from "lucide-react";
@@ -35,7 +33,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const DashboardSidebar = () => {
   const { signOut } = useAuth();
   const location = useLocation();
-  const { isFamilyPlan } = useFamilyPlan();
   const isMobile = useIsMobile();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -76,23 +73,13 @@ const DashboardSidebar = () => {
       icon: <Target className="h-5 w-5" />,
       exact: false,
     },
-  ];
-  
-  if (isFamilyPlan) {
-    menuItems.push({
-      title: "Plano Familiar",
-      href: "/dashboard/family",
-      icon: <Users className="h-5 w-5" />,
+    {
+      title: "Configurações",
+      href: "/dashboard/settings",
+      icon: <Settings className="h-5 w-5" />,
       exact: false,
-    });
-  }
-  
-  menuItems.push({
-    title: "Configurações",
-    href: "/dashboard/settings",
-    icon: <Settings className="h-5 w-5" />,
-    exact: false,
-  });
+    },
+  ];
 
   const isActive = (href: string, exact: boolean) => {
     if (exact) {
