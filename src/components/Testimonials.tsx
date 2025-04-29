@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const Testimonials = () => {
   const testimonials = [
@@ -8,19 +9,22 @@ const Testimonials = () => {
       quote: "O Axios Finanças transformou minha relação com o dinheiro. Antes eu não sabia para onde ia meu salário, agora tenho total controle.",
       name: "Ana Silva",
       role: "Designer",
-      avatar: "https://via.placeholder.com/64/E8F5E9/1E3A2B?text=AS"
+      avatar: "https://i.pravatar.cc/150?img=1",
+      initials: "AS"
     },
     {
       quote: "Consegui economizar R$ 5.000 em apenas 6 meses usando as dicas personalizadas e o controle de gastos do app.",
       name: "Carlos Mendes",
       role: "Engenheiro",
-      avatar: "https://via.placeholder.com/64/E8F5E9/1E3A2B?text=CM"
+      avatar: "https://i.pravatar.cc/150?img=8",
+      initials: "CM"
     },
     {
       quote: "Interface super intuitiva e relatórios detalhados. O melhor app de finanças que já usei. Vale cada centavo investido.",
       name: "Marina Santos",
       role: "Professora",
-      avatar: "https://via.placeholder.com/64/E8F5E9/1E3A2B?text=MS"
+      avatar: "https://i.pravatar.cc/150?img=5",
+      initials: "MS"
     }
   ];
 
@@ -36,7 +40,7 @@ const Testimonials = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="bg-white border-none shadow-md">
+            <Card key={index} className="bg-white border-none shadow-md hover:shadow-lg transition-shadow duration-300">
               <CardContent className="pt-6">
                 <div className="flex items-center mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -48,11 +52,12 @@ const Testimonials = () => {
                 <p className="text-gray-700 italic mb-4">"{testimonial.quote}"</p>
               </CardContent>
               <CardFooter className="flex items-center border-t border-gray-100 pt-4">
-                <img 
-                  src={testimonial.avatar} 
-                  alt={testimonial.name} 
-                  className="w-10 h-10 rounded-full mr-3"
-                />
+                <Avatar className="h-10 w-10 mr-3">
+                  <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
+                  <AvatarFallback className="bg-finance-primary/20 text-finance-primary">
+                    {testimonial.initials}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <p className="font-medium text-finance-dark">{testimonial.name}</p>
                   <p className="text-sm text-gray-500">{testimonial.role}</p>
