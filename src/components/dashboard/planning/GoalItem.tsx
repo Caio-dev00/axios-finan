@@ -1,32 +1,41 @@
 
 import React from "react";
 
-interface GoalItemProps {
+interface Goal {
+  id: string;
   title: string;
   deadline: string;
-  targetAmount: number;
-  savedAmount: number;
+  target_amount: number;
+  current_amount: number;
   percentage: number;
+  target_date: Date;
+  description?: string;
+  user_id: string;
+  created_at: string;
 }
 
-const GoalItem = ({ title, deadline, targetAmount, savedAmount, percentage }: GoalItemProps) => {
+interface GoalItemProps {
+  goal: Goal;
+}
+
+const GoalItem = ({ goal }: GoalItemProps) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between">
         <div>
-          <h3 className="text-lg font-medium">{title}</h3>
-          <p className="text-sm text-gray-500">Meta para {deadline}</p>
+          <h3 className="text-lg font-medium">{goal.title}</h3>
+          <p className="text-sm text-gray-500">Meta para {goal.deadline}</p>
         </div>
-        <p className="font-semibold">R$ {targetAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+        <p className="font-semibold">R$ {goal.target_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
       </div>
       <div className="flex justify-between items-center text-sm">
-        <span>R$ {savedAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} economizados</span>
-        <span>{percentage}%</span>
+        <span>R$ {goal.current_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} economizados</span>
+        <span>{goal.percentage}%</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2.5">
         <div 
           className="bg-blue-600 h-2.5 rounded-full" 
-          style={{ width: `${percentage}%` }}
+          style={{ width: `${goal.percentage}%` }}
         ></div>
       </div>
     </div>
