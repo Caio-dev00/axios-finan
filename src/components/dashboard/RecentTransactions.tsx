@@ -20,52 +20,68 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { convertCurrency, formatCurrency } from "@/services/currencyService";
 
 const RecentTransactions = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { activeCurrency } = useCurrency();
   
-  const { data: transactions, isLoading } = useQuery({
-    queryKey: ["recentTransactions"],
+  const {
+    data: transactions,
+    isLoading
+  } = useQuery({
+    queryKey: ["recentTransactions", activeCurrency],
     queryFn: () => getRecentTransactions(4),
   });
 
   const deleteIncomeMutation = useMutation({
     mutationFn: deleteIncome,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
-      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      queryClient.invalidateQueries({
+        queryKey: ["recentTransactions"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["incomes"]
+      });
       toast({
         title: "Receita excluída",
-        description: "A receita foi excluída com sucesso.",
+        description: "A receita foi excluída com sucesso."
       });
     },
     onError: () => {
       toast({
         title: "Erro",
         description: "Não foi possível excluir a receita. Tente novamente.",
-        variant: "destructive",
+        variant: "destructive"
       });
+      console.error("Erro ao excluir receita:");
     },
   });
 
   const deleteExpenseMutation = useMutation({
     mutationFn: deleteExpense,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["recentTransactions"] });
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({
+        queryKey: ["recentTransactions"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["expenses"]
+      });
       toast({
         title: "Despesa excluída",
-        description: "A despesa foi excluída com sucesso.",
+        description: "A despesa foi excluída com sucesso."
       });
     },
     onError: () => {
       toast({
         title: "Erro",
         description: "Não foi possível excluir a despesa. Tente novamente.",
-        variant: "destructive",
+        variant: "destructive"
       });
+      console.error("Erro ao excluir despesa:");
     },
   });
 
@@ -76,6 +92,16 @@ const RecentTransactions = () => {
       deleteExpenseMutation.mutate(transaction.id);
     }
   };
+
+  // Convert transaction amounts based on active currency
+  const convertedTransactions = React.useMemo(() => {
+    if (!transactions) return [];
+    
+    return transactions.map(transaction => ({
+      ...transaction,
+      amount: convertCurrency(transaction.amount, 'BRL', activeCurrency)
+    }));
+  }, [transactions, activeCurrency]);
 
   return (
     <Card className="shadow-sm h-full">
@@ -94,9 +120,9 @@ const RecentTransactions = () => {
           <div className="flex justify-center items-center h-40">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        ) : transactions && transactions.length > 0 ? (
+        ) : convertedTransactions && convertedTransactions.length > 0 ? (
           <div className="space-y-4">
-            {transactions.map((transaction) => (
+            {convertedTransactions.map((transaction) => (
               <div key={transaction.id} className="flex justify-between p-3 border-b">
                 <div>
                   <p className="font-medium">{transaction.name}</p>
@@ -107,7 +133,7 @@ const RecentTransactions = () => {
                     transaction.type === "income" ? "text-green-600" : "text-red-600"
                   }`}>
                     {transaction.type === "income" ? "+" : "-"}
-                    R$ {transaction.amount.toFixed(2)}
+                    {formatCurrency(transaction.amount, activeCurrency)}
                   </p>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>

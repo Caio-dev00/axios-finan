@@ -5,6 +5,8 @@ import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getExpensesByCategory } from "@/services/expenseService";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { convertCurrency, formatCurrency } from "@/services/currencyService";
 
 const COLORS = [
   "#3B82F6", // blue-500
@@ -19,10 +21,23 @@ const COLORS = [
 ];
 
 const ExpenseDistribution = () => {
+  const { activeCurrency } = useCurrency();
+  
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["expenseCategories"],
+    queryKey: ["expenseCategories", activeCurrency],
     queryFn: getExpensesByCategory,
   });
+
+  // Convert category amounts to the active currency
+  const convertedCategories = React.useMemo(() => {
+    if (!categories) return [];
+    
+    return categories.map(category => ({
+      ...category,
+      amount: convertCurrency(category.amount, 'BRL', activeCurrency),
+      // Percentage stays the same regardless of currency
+    }));
+  }, [categories, activeCurrency]);
 
   return (
     <Card className="shadow-sm h-full">
@@ -34,13 +49,13 @@ const ExpenseDistribution = () => {
           <div className="flex justify-center items-center h-48">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        ) : categories && categories.length > 0 ? (
+        ) : convertedCategories && convertedCategories.length > 0 ? (
           <>
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categories}
+                    data={convertedCategories}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -50,12 +65,12 @@ const ExpenseDistribution = () => {
                     dataKey="amount"
                     nameKey="name"
                   >
-                    {categories.map((entry, index) => (
+                    {convertedCategories.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value) => `R$ ${Number(value).toFixed(2)}`} 
+                    formatter={(value) => formatCurrency(Number(value), activeCurrency)} 
                     labelFormatter={(name) => `Categoria: ${name}`}
                   />
                 </PieChart>
@@ -63,7 +78,7 @@ const ExpenseDistribution = () => {
             </div>
 
             <div className="mt-4 space-y-2 text-sm">
-              {categories.map((category, index) => (
+              {convertedCategories.map((category, index) => (
                 <div key={category.name} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div 

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowUpCircle, ArrowDownCircle, Wallet } from "lucide-react";
@@ -5,14 +6,22 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { getFinancialSummary } from "@/services/financeService";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { convertCurrency, formatCurrency } from "@/services/currencyService";
+
 const FinancialSummary = () => {
+  const { activeCurrency, isLoading: currencyLoading } = useCurrency();
+  
   const {
     data,
-    isLoading
+    isLoading: dataLoading
   } = useQuery({
-    queryKey: ["financialSummary"],
+    queryKey: ["financialSummary", activeCurrency],
     queryFn: getFinancialSummary
   });
+
+  const isLoading = dataLoading || currencyLoading;
+  
   if (isLoading) {
     return <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[1, 2, 3].map(i => <Card key={i} className="bg-white shadow-sm animate-pulse">
@@ -27,10 +36,17 @@ const FinancialSummary = () => {
           </Card>)}
       </div>;
   }
+
   const currentMonth = format(new Date(), 'MMMM/yyyy', {
     locale: ptBR
   });
   const lastUpdated = data?.lastUpdate ? format(new Date(data.lastUpdate), "'hoje às' HH:mm") : "";
+
+  // Convert values based on active currency
+  const currentBalanceConverted = data ? convertCurrency(data.currentBalance, 'BRL', activeCurrency) : 0;
+  const totalIncomeConverted = data ? convertCurrency(data.totalIncome, 'BRL', activeCurrency) : 0;
+  const totalExpenseConverted = data ? convertCurrency(data.totalExpense, 'BRL', activeCurrency) : 0;
+
   return <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card className="bg-white shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -39,9 +55,7 @@ const FinancialSummary = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-finance-primary">
-            R$ {data?.currentBalance.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2
-          }) || "0,00"}
+            {formatCurrency(currentBalanceConverted, activeCurrency)}
           </div>
           <p className="text-xs text-muted-foreground">
             Atualizado: {lastUpdated}
@@ -56,9 +70,7 @@ const FinancialSummary = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600">
-            R$ {data?.totalIncome.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2
-          }) || "0,00"}
+            {formatCurrency(totalIncomeConverted, activeCurrency)}
           </div>
           <p className="text-xs text-muted-foreground">
             {data?.incomeChange > 0 ? "+" : ""}{data?.incomeChange}% em relação ao mês anterior
@@ -73,9 +85,7 @@ const FinancialSummary = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-red-600">
-            R$ {data?.totalExpense.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2
-          }) || "0,00"}
+            {formatCurrency(totalExpenseConverted, activeCurrency)}
           </div>
           <p className="text-xs text-muted-foreground">
             {data?.expenseChange < 0 ? "" : "+"}{data?.expenseChange}% em relação ao mês anterior
@@ -84,4 +94,5 @@ const FinancialSummary = () => {
       </Card>
     </div>;
 };
+
 export default FinancialSummary;

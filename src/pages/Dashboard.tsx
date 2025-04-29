@@ -9,8 +9,8 @@ import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import ExpenseDistribution from "@/components/dashboard/ExpenseDistribution";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useTheme } from "@/contexts/ThemeContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
 // Criar um cliente QueryClient para o Dashboard
 const queryClient = new QueryClient({
@@ -24,7 +24,6 @@ const queryClient = new QueryClient({
 
 const DashboardContent = () => {
   const { user } = useAuth();
-  const { isDarkMode } = useTheme();
   const location = useLocation();
   const isMainDashboard = location.pathname === "/dashboard";
   
@@ -69,9 +68,11 @@ const Dashboard = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <SidebarProvider>
-          <DashboardContent />
-        </SidebarProvider>
+        <CurrencyProvider>
+          <SidebarProvider>
+            <DashboardContent />
+          </SidebarProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
