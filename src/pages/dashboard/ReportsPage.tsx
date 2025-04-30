@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,8 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { formatCurrency } from "@/services/currencyService";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   BarChart,
   Bar,
