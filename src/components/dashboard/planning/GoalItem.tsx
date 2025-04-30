@@ -1,4 +1,6 @@
+
 import React from "react";
+
 interface Goal {
   id: string;
   title: string;
@@ -11,13 +13,16 @@ interface Goal {
   user_id: string;
   created_at: string;
 }
+
 interface GoalItemProps {
   goal: Goal;
 }
+
 const GoalItem = ({
   goal
 }: GoalItemProps) => {
-  return <div className="space-y-4">
+  return (
+    <div className="space-y-4">
       <div className="flex justify-between">
         <div>
           <h3 className="text-lg font-medium">{goal.title}</h3>
@@ -35,9 +40,11 @@ const GoalItem = ({
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2.5">
         <div className="bg-blue-600 h-2.5 rounded-full" style={{
-        width: `${goal.percentage}%`
-      }}></div>
+          width: `${goal.percentage}%`
+        }}></div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default GoalItem;
