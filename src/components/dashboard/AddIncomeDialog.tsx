@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -71,13 +72,22 @@ const incomeSources = [
 interface AddIncomeDialogProps {
   trigger?: React.ReactNode;
   onAddIncome?: (income: IncomeFormValues) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSubmitSuccess?: () => void;
 }
 
 const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
   trigger,
   onAddIncome,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  onSubmitSuccess,
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = setControlledOpen || setInternalOpen;
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -108,6 +118,10 @@ const AddIncomeDialog: React.FC<AddIncomeDialogProps> = ({
       
       form.reset();
       setOpen(false);
+      
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      }
     },
     onError: (error) => {
       console.error("Erro ao adicionar receita:", error);

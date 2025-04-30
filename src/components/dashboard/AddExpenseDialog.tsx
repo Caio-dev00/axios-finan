@@ -77,13 +77,22 @@ const defaultCategories = [
 interface AddExpenseDialogProps {
   trigger?: React.ReactNode;
   onAddExpense?: (expense: ExpenseFormValues) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSubmitSuccess?: () => void;
 }
 
 const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
   trigger,
   onAddExpense,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  onSubmitSuccess
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = setControlledOpen || setInternalOpen;
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -116,6 +125,10 @@ const AddExpenseDialog: React.FC<AddExpenseDialogProps> = ({
       
       form.reset();
       setOpen(false);
+      
+      if (onSubmitSuccess) {
+        onSubmitSuccess();
+      }
     },
     onError: (error) => {
       console.error("Erro ao adicionar despesa:", error);

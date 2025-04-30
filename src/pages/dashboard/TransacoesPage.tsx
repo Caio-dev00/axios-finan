@@ -50,8 +50,36 @@ import { formatCurrency } from "@/services/currencyService";
 import AddIncomeDialog from "@/components/dashboard/AddIncomeDialog";
 import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
 
+// Definindo interfaces para os tipos de transações
+interface ExpenseTransaction {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  date: Date;
+  notes: string;
+  is_recurring: boolean;
+  created_at: string;
+  user_id: string;
+  type: 'expense';
+}
+
+interface IncomeTransaction {
+  id: string;
+  description: string;
+  amount: number;
+  source: string;
+  date: Date;
+  is_recurring: boolean;
+  created_at: string;
+  user_id: string;
+  type: 'income';
+}
+
+type Transaction = ExpenseTransaction | IncomeTransaction;
+
 // Componente para exibir detalhes de uma transação
-const TransactionDetails = ({ transaction, type }) => {
+const TransactionDetails = ({ transaction, type }: { transaction: any, type: 'income' | 'expense' }) => {
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
@@ -130,9 +158,9 @@ const TransacoesPage = () => {
   // Combina despesas e receitas em um único array de transações
   const transactions = useMemo(() => {
     const allTransactions = [
-      ...expenses.map(expense => ({ ...expense, type: 'expense' })),
-      ...incomes.map(income => ({ ...income, type: 'income' }))
-    ];
+      ...expenses.map(expense => ({ ...expense, type: 'expense' as const })),
+      ...incomes.map(income => ({ ...income, type: 'income' as const }))
+    ] as Transaction[];
     
     // Ordena por data, mais recente primeiro
     return allTransactions.sort((a, b) => 
@@ -149,9 +177,9 @@ const TransacoesPage = () => {
       // Filtra por termo de busca (descrição ou categoria)
       const searchMatch = !searchTerm || 
         transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (transaction.type === 'expense' ? 
-          transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) :
-          transaction.source.toLowerCase().includes(searchTerm.toLowerCase()));
+        (transaction.type === 'expense' 
+          ? (transaction as ExpenseTransaction).category.toLowerCase().includes(searchTerm.toLowerCase())
+          : (transaction as IncomeTransaction).source.toLowerCase().includes(searchTerm.toLowerCase()));
         
       return typeMatch && searchMatch;
     });
@@ -296,12 +324,16 @@ const TransacoesPage = () => {
                     <TableCell>
                       <div className="font-medium">{transaction.description}</div>
                       <div className="hidden sm:block md:hidden text-sm text-muted-foreground">
-                        {transaction.type === 'expense' ? transaction.category : transaction.source}
+                        {transaction.type === 'expense' 
+                          ? (transaction as ExpenseTransaction).category 
+                          : (transaction as IncomeTransaction).source}
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant="outline">
-                        {transaction.type === 'expense' ? transaction.category : transaction.source}
+                        {transaction.type === 'expense' 
+                          ? (transaction as ExpenseTransaction).category 
+                          : (transaction as IncomeTransaction).source}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
@@ -358,17 +390,15 @@ const TransacoesPage = () => {
       {/* Diálogos para adicionar novas transações */}
       {showAddIncomeDialog && (
         <AddIncomeDialog 
-          open={showAddIncomeDialog}
-          onOpenChange={setShowAddIncomeDialog}
-          onSubmitSuccess={handleIncomeAdded}
+          trigger={null}
+          onAddIncome={handleIncomeAdded} 
         />
       )}
       
       {showAddExpenseDialog && (
         <AddExpenseDialog 
-          open={showAddExpenseDialog}
-          onOpenChange={setShowAddExpenseDialog}
-          onSubmitSuccess={handleExpenseAdded}
+          trigger={null}
+          onAddExpense={handleExpenseAdded}
         />
       )}
     </div>
