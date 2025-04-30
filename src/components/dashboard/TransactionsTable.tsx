@@ -21,34 +21,7 @@ import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "@/services/currencyService";
 import TransactionDetails from "./TransactionDetails";
-
-// Definindo interfaces para os tipos de transações
-interface ExpenseTransaction {
-  id: string;
-  description: string;
-  amount: number;
-  category: string;
-  date: Date;
-  notes?: string;
-  is_recurring?: boolean;
-  created_at: string;
-  user_id: string;
-  type: 'expense';
-}
-
-interface IncomeTransaction {
-  id: string;
-  description: string;
-  amount: number;
-  source: string;
-  date: Date;
-  is_recurring?: boolean;
-  created_at: string;
-  user_id: string;
-  type: 'income';
-}
-
-type Transaction = ExpenseTransaction | IncomeTransaction;
+import { Transaction, ExpenseTransaction, IncomeTransaction } from "@/types/transactions";
 
 interface TransactionsTableProps {
   transactions: Transaction[];

@@ -6,7 +6,7 @@ export interface ExpenseTransaction {
   amount: number;
   category: string;
   date: Date;
-  notes?: string;
+  notes?: string; // Mantendo como opcional conforme definição original
   is_recurring?: boolean;
   created_at: string;
   user_id: string;

@@ -10,34 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency } from "@/services/currencyService";
-
-// Definindo interfaces para os tipos de transações
-interface ExpenseTransaction {
-  id: string;
-  description: string;
-  amount: number;
-  category: string;
-  date: Date;
-  notes: string;
-  is_recurring: boolean;
-  created_at: string;
-  user_id: string;
-  type: 'expense';
-}
-
-interface IncomeTransaction {
-  id: string;
-  description: string;
-  amount: number;
-  source: string;
-  date: Date;
-  is_recurring: boolean;
-  created_at: string;
-  user_id: string;
-  type: 'income';
-}
-
-type Transaction = ExpenseTransaction | IncomeTransaction;
+import { Transaction, ExpenseTransaction, IncomeTransaction } from "@/types/transactions";
 
 // Componente para exibir detalhes de uma transação
 const TransactionDetails = ({ transaction, type }: { transaction: Transaction, type: 'income' | 'expense' }) => {

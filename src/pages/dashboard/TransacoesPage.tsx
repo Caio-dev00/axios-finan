@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import {
   Card,
@@ -21,7 +20,7 @@ import TransactionFilter from "@/components/dashboard/TransactionFilter";
 import TransactionsTable from "@/components/dashboard/TransactionsTable";
 import EditTransactionDialog from "@/components/dashboard/EditTransactionDialog";
 import ExportOptions from "@/components/dashboard/ExportOptions";
-import { Transaction, ExpenseTransaction, IncomeTransaction } from "@/types/transactions";
+import { ExpenseTransaction, IncomeTransaction, Transaction } from "@/types/transactions";
 
 const TransacoesPage = () => {
   const { toast } = useToast();
