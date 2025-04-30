@@ -18,7 +18,7 @@ const LearnMorePage = () => {
               Conheça o <span className="text-finance-primary">Axios Finanças</span>
             </h1>
             <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-              Desenvolvido para transformar sua relação com o dinheiro e ajudar você a conquistar seus objetivos financeiros.
+              Uma plataforma completa para controlar suas finanças pessoais e alcançar seus objetivos financeiros.
             </p>
           </div>
         </section>
@@ -29,8 +29,9 @@ const LearnMorePage = () => {
             <div className="max-w-3xl mx-auto mb-16 text-center">
               <h2 className="text-3xl font-bold text-finance-dark mb-6">Por que escolher o Axios Finanças?</h2>
               <p className="text-lg text-gray-700">
-                O Axios Finanças é uma plataforma completa para gerenciamento financeiro pessoal que combina facilidade de uso com recursos poderosos.
-                Nossa missão é simplificar o controle financeiro e ajudar você a tomar decisões mais inteligentes sobre seu dinheiro.
+                O Axios Finanças oferece tudo que você precisa para organizar sua vida financeira 
+                em um só lugar. Com uma interface intuitiva, você consegue visualizar e gerenciar 
+                receitas e despesas de forma simples.
               </p>
             </div>
 
@@ -41,9 +42,10 @@ const LearnMorePage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-finance-dark mb-2">Visão Financeira Completa</h3>
+                <h3 className="text-xl font-semibold text-finance-dark mb-2">Controle Completo</h3>
                 <p className="text-gray-700">
-                  Tenha uma visão geral do seu dinheiro em um único lugar. Acompanhe receitas, despesas e investimentos com gráficos intuitivos e relatórios personalizados.
+                  Gerencie todas as suas transações em um único lugar. Veja seu balanço mensal, 
+                  acompanhe receitas e despesas com gráficos claros.
                 </p>
               </div>
 
@@ -53,9 +55,9 @@ const LearnMorePage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-finance-dark mb-2">Orçamentos Inteligentes</h3>
+                <h3 className="text-xl font-semibold text-finance-dark mb-2">Orçamentos</h3>
                 <p className="text-gray-700">
-                  Crie orçamentos personalizados para diferentes categorias e receba alertas quando estiver próximo de atingir seus limites de gastos.
+                  Crie orçamentos para diferentes categorias e acompanhe seus gastos para manter suas finanças sob controle.
                 </p>
               </div>
 
@@ -65,9 +67,9 @@ const LearnMorePage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-finance-dark mb-2">Metas Financeiras</h3>
+                <h3 className="text-xl font-semibold text-finance-dark mb-2">Planejamento Financeiro</h3>
                 <p className="text-gray-700">
-                  Estabeleça metas financeiras claras e acompanhe seu progresso. Seja para comprar uma casa, viajar ou criar uma reserva de emergência.
+                  Defina metas financeiras claras e acompanhe seu progresso ao longo do tempo para alcançar seus objetivos.
                 </p>
               </div>
             </div>
@@ -77,7 +79,7 @@ const LearnMorePage = () => {
         {/* Features Section */}
         <section className="py-16 bg-finance-gray">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-finance-dark mb-12 text-center">Recursos Exclusivos</h2>
+            <h2 className="text-3xl font-bold text-finance-dark mb-12 text-center">Recursos Disponíveis</h2>
             
             <div className="space-y-20">
               <div className="flex flex-col lg:flex-row items-center gap-8">
@@ -91,23 +93,22 @@ const LearnMorePage = () => {
                   </div>
                 </div>
                 <div className="lg:w-1/2">
-                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Dashboard Intuitivo</h3>
+                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Dashboard Completo</h3>
                   <p className="text-gray-700 mb-6">
-                    Nosso dashboard foi projetado para fornecer informações claras e acionáveis sobre suas finanças. 
-                    Visualize sua situação financeira atual, tendências de gastos e oportunidades de economia com apenas alguns cliques.
+                    Visualize sua situação financeira atual em um painel intuitivo que mostra todas as informações importantes.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Visão geral personalizada das suas finanças</span>
+                      <span className="text-gray-700">Resumo das suas finanças em um único lugar</span>
                     </li>
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Gráficos e indicadores financeiros em tempo real</span>
+                      <span className="text-gray-700">Gráficos de receitas e despesas</span>
                     </li>
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Alertas personalizados sobre gastos e receitas</span>
+                      <span className="text-gray-700">Lista de transações recentes</span>
                     </li>
                   </ul>
                 </div>
@@ -118,29 +119,28 @@ const LearnMorePage = () => {
                   <div className="bg-white p-6 rounded-lg shadow-lg">
                     <img 
                       src="/placeholder.svg" 
-                      alt="Categorização Automática" 
+                      alt="Gestão de Transações" 
                       className="w-full h-auto rounded" 
                     />
                   </div>
                 </div>
                 <div className="lg:w-1/2">
-                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Categorização Automática</h3>
+                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Gestão de Transações</h3>
                   <p className="text-gray-700 mb-6">
-                    Economize tempo com nossa categorização automática de transações. 
-                    Nosso sistema inteligente aprende com seus hábitos e categoriza automaticamente suas receitas e despesas.
+                    Registre e categorize suas receitas e despesas para ter um controle detalhado do seu dinheiro.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Categorizador inteligente baseado em IA</span>
+                      <span className="text-gray-700">Registro de receitas e despesas</span>
                     </li>
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Possibilidade de criar categorias personalizadas</span>
+                      <span className="text-gray-700">Categorização de transações</span>
                     </li>
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Regras de categorização automática definidas por você</span>
+                      <span className="text-gray-700">Filtros e pesquisas avançadas</span>
                     </li>
                   </ul>
                 </div>
@@ -151,29 +151,28 @@ const LearnMorePage = () => {
                   <div className="bg-white p-6 rounded-lg shadow-lg">
                     <img 
                       src="/placeholder.svg" 
-                      alt="Relatórios Detalhados" 
+                      alt="Planejamento Financeiro" 
                       className="w-full h-auto rounded" 
                     />
                   </div>
                 </div>
                 <div className="lg:w-1/2">
-                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Relatórios Detalhados</h3>
+                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Metas e Planejamento</h3>
                   <p className="text-gray-700 mb-6">
-                    Gere relatórios detalhados para análise profunda das suas finanças. 
-                    Identifique tendências, compare períodos e exporte seus dados em formatos variados.
+                    Estabeleça metas financeiras e acompanhe seu progresso para alcançar seus objetivos.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Relatórios mensais, trimestrais e anuais</span>
+                      <span className="text-gray-700">Definição de metas financeiras</span>
                     </li>
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Comparativo entre períodos diferentes</span>
+                      <span className="text-gray-700">Acompanhamento de poupança</span>
                     </li>
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Exportação para PDF, CSV e Excel</span>
+                      <span className="text-gray-700">Planejamento de investimentos</span>
                     </li>
                   </ul>
                 </div>
@@ -251,7 +250,7 @@ const LearnMorePage = () => {
                     </tr>
                     <tr>
                       <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                        Dashboard personalizado
+                        Metas financeiras
                       </td>
                       <td className="py-4 px-6 text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -266,7 +265,7 @@ const LearnMorePage = () => {
                     </tr>
                     <tr>
                       <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                        Categorização automática
+                        Planejamento de orçamentos
                       </td>
                       <td className="py-4 px-6 text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -281,7 +280,7 @@ const LearnMorePage = () => {
                     </tr>
                     <tr>
                       <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                        Exportação para PDF e CSV
+                        Relatórios detalhados
                       </td>
                       <td className="py-4 px-6 text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -296,22 +295,7 @@ const LearnMorePage = () => {
                     </tr>
                     <tr>
                       <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                        Dicas financeiras personalizadas
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </td>
-                      <td className="py-4 px-6 text-center bg-finance-light/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="py-4 px-6 text-sm font-medium text-gray-900">
-                        Suporte prioritário
+                        Dicas financeiras
                       </td>
                       <td className="py-4 px-6 text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -350,79 +334,40 @@ const LearnMorePage = () => {
           </div>
         </section>
         
-        {/* Resources Section */}
-        <section className="py-16 bg-finance-gray">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-finance-dark mb-12 text-center">Recursos e Materiais</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="flex gap-4 bg-white p-6 rounded-lg shadow-md">
-                <div className="flex-shrink-0">
-                  <FileText className="h-12 w-12 text-finance-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-finance-dark mb-2">Guias Financeiros</h3>
-                  <p className="text-gray-700 mb-4">
-                    Acesse nossa biblioteca de guias financeiros com dicas práticas para melhorar sua relação com o dinheiro.
-                  </p>
-                  <Link to="/recursos" className="text-finance-primary hover:text-finance-primary/90 font-medium">
-                    Ver guias financeiros
-                  </Link>
-                </div>
-              </div>
-              
-              <div className="flex gap-4 bg-white p-6 rounded-lg shadow-md">
-                <div className="flex-shrink-0">
-                  <BookOpen className="h-12 w-12 text-finance-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-finance-dark mb-2">Planilhas e Modelos</h3>
-                  <p className="text-gray-700 mb-4">
-                    Baixe planilhas e modelos prontos para complementar sua experiência no Axios Finanças.
-                  </p>
-                  <Link to="/recursos" className="text-finance-primary hover:text-finance-primary/90 font-medium">
-                    Acessar planilhas
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-        
         {/* FAQ Section */}
-        <section className="py-16 bg-white">
+        <section className="py-16 bg-finance-gray">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-finance-dark mb-12 text-center">Perguntas Frequentes</h2>
             
             <div className="max-w-3xl mx-auto divide-y divide-gray-200">
               <div className="py-6">
-                <h3 className="text-lg font-medium text-finance-dark">Como posso começar a usar o Axios Finanças?</h3>
+                <h3 className="text-lg font-medium text-finance-dark">Como começar a usar o Axios Finanças?</h3>
                 <p className="mt-2 text-gray-700">
-                  Para começar, basta criar uma conta gratuita no nosso site. Após o cadastro, você terá acesso imediato ao dashboard e poderá começar a registrar suas transações financeiras.
+                  Para começar, basta criar uma conta gratuita em nosso site. Após o cadastro, você terá acesso imediato ao dashboard e poderá começar a registrar suas transações.
                 </p>
               </div>
               <div className="py-6">
-                <h3 className="text-lg font-medium text-finance-dark">Posso conectar minha conta bancária ao Axios Finanças?</h3>
+                <h3 className="text-lg font-medium text-finance-dark">Como registrar minhas receitas e despesas?</h3>
                 <p className="mt-2 text-gray-700">
-                  No momento, o Axios Finanças não oferece integração direta com bancos, priorizando sua segurança e privacidade. Todas as transações são registradas manualmente ou por importação de arquivos CSV.
+                  No dashboard, você encontra botões para adicionar novas receitas e despesas. Basta preencher os campos necessários como valor, data e categoria.
                 </p>
               </div>
               <div className="py-6">
-                <h3 className="text-lg font-medium text-finance-dark">É seguro inserir meus dados financeiros no sistema?</h3>
+                <h3 className="text-lg font-medium text-finance-dark">Posso criar orçamentos para categorias específicas?</h3>
                 <p className="mt-2 text-gray-700">
-                  Absolutamente. Utilizamos criptografia de ponta a ponta e não armazenamos informações sensíveis como senhas bancárias ou números de cartão de crédito completos. Sua privacidade e segurança são nossas prioridades.
+                  Sim, na seção de orçamentos você pode criar limites de gastos para diferentes categorias e acompanhar quanto já foi utilizado do valor planejado.
+                </p>
+              </div>
+              <div className="py-6">
+                <h3 className="text-lg font-medium text-finance-dark">Como criar uma meta financeira?</h3>
+                <p className="mt-2 text-gray-700">
+                  Na seção de planejamento, você encontra a opção para criar metas financeiras. Defina o valor desejado, prazo e acompanhe seu progresso ao longo do tempo.
                 </p>
               </div>
               <div className="py-6">
                 <h3 className="text-lg font-medium text-finance-dark">Posso cancelar minha assinatura a qualquer momento?</h3>
                 <p className="mt-2 text-gray-700">
-                  Sim, você pode cancelar sua assinatura do plano Pro a qualquer momento. O cancelamento será efetivado ao final do período faturado atual, e você não será cobrado novamente.
-                </p>
-              </div>
-              <div className="py-6">
-                <h3 className="text-lg font-medium text-finance-dark">O que acontece com meus dados se eu cancelar minha assinatura?</h3>
-                <p className="mt-2 text-gray-700">
-                  Seus dados financeiros permanecerão em nosso sistema por 30 dias após o cancelamento. Durante esse período, você pode optar por reativar sua conta ou solicitar a exclusão completa dos seus dados.
+                  Sim, você pode cancelar sua assinatura do plano Pro a qualquer momento na seção de configurações. O cancelamento será efetivado ao final do período faturado.
                 </p>
               </div>
             </div>
@@ -432,9 +377,9 @@ const LearnMorePage = () => {
         {/* CTA Section */}
         <section className="py-16 bg-finance-primary">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-white mb-6">Comece a transformar suas finanças hoje</h2>
+            <h2 className="text-3xl font-bold text-white mb-6">Comece a controlar suas finanças hoje</h2>
             <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
-              Junte-se a milhares de pessoas que já estão no controle de suas finanças com o Axios Finanças.
+              Organize sua vida financeira de forma simples e eficiente com o Axios Finanças.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button className="bg-white text-finance-primary hover:bg-gray-100" size="lg" asChild>
@@ -457,3 +402,4 @@ const LearnMorePage = () => {
 };
 
 export default LearnMorePage;
+
