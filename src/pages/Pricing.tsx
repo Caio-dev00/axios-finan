@@ -1,4 +1,3 @@
-
 import React from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -26,25 +25,8 @@ const PricingPage = () => {
       return;
     }
 
-    try {
-      // Simular o processo de pagamento bem sucedido
-      await upgradeToProPlan(user.id);
-      await refreshSubscription();
-      
-      toast({
-        title: "Assinatura Pro ativada!",
-        description: "Aproveite todos os recursos premium disponíveis.",
-      });
-      
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Erro ao realizar upgrade:", error);
-      toast({
-        title: "Erro ao processar assinatura",
-        description: "Não foi possível ativar sua assinatura. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-    }
+    // Redirecionamento para o link de pagamento externo
+    window.location.href = "https://pay.cakto.com.br/3bnjhuj_366904";
   };
   
   const plans = [
@@ -66,7 +48,7 @@ const PricingPage = () => {
     },
     {
       name: "Plano Pro",
-      price: "R$ 29,90",
+      price: "R$ 24,90",
       period: "por mês",
       description: "Nosso plano completo com todas as ferramentas para gerenciar suas finanças.",
       features: [

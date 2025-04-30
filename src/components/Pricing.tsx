@@ -31,26 +31,8 @@ const Pricing = () => {
       return;
     }
 
-    try {
-      // Simular o processo de pagamento bem sucedido
-      // Em produção, isto seria substituído por uma integração real com Stripe ou similar
-      await upgradeToProPlan(user.id);
-      await refreshSubscription();
-      
-      toast({
-        title: "Assinatura Pro ativada!",
-        description: "Aproveite todos os recursos premium disponíveis.",
-      });
-      
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Erro ao realizar upgrade:", error);
-      toast({
-        title: "Erro ao processar assinatura",
-        description: "Não foi possível ativar sua assinatura. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-    }
+    // Redirecionamento para o link de pagamento externo
+    window.location.href = "https://pay.cakto.com.br/3bnjhuj_366904";
   };
 
   const isAlreadyPro = user && plan === "pro";
@@ -106,7 +88,7 @@ const Pricing = () => {
             </div>
             <CardHeader>
               <h3 className="text-xl font-bold text-finance-dark">Plano Pro</h3>
-              <p className="text-4xl font-bold mt-4">R$ 29,90 <span className="text-base font-normal text-gray-600">/mês</span></p>
+              <p className="text-4xl font-bold mt-4">R$ 24,90 <span className="text-base font-normal text-gray-600">/mês</span></p>
               <p className="text-gray-500 text-sm mt-1">Cancele quando quiser</p>
             </CardHeader>
             <CardContent className="border-t border-gray-100 pt-6">
@@ -138,7 +120,6 @@ const Pricing = () => {
         </div>
         
         <div className="text-center mt-4 text-sm text-gray-500">
-          {/* Nota: Em produção, este texto seria substituído pelo provedor de pagamento real */}
           Pagamento processado de forma segura.
         </div>
       </div>
