@@ -8,7 +8,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import ProFeature from "@/components/ProFeature";
 
 const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
-  const { onSidebarClose, isMobile } = useSidebar();
+  const { isMobile } = useSidebar();
   
   // Para items que são Pro, mas o usuário não é Pro, mostrar o ProFeature ou não mostrar o item
   if (isProFeature && !isPro) {
@@ -18,7 +18,7 @@ const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
   return (
     <NavLink
       to={to}
-      onClick={isMobile ? onSidebarClose : undefined}
+      onClick={isMobile ? () => useSidebar().setOpenMobile(false) : undefined}
       className={({ isActive }) => `
         flex items-center gap-4 px-4 py-3 rounded-md text-base transition-colors
         ${isActive 

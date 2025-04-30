@@ -63,7 +63,7 @@ const TransactionDetails = ({ transaction, type }) => {
       <div className="space-y-4 pt-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Tipo</span>
-          <Badge variant={type === 'income' ? "success" : "destructive"}>
+          <Badge variant={type === 'income' ? "outline" : "destructive"}>
             {type === 'income' ? 'Receita' : 'Despesa'}
           </Badge>
         </div>
@@ -79,7 +79,7 @@ const TransactionDetails = ({ transaction, type }) => {
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Categoria</span>
-          <span>{transaction.category}</span>
+          <span>{type === 'income' ? transaction.source : transaction.category}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Data</span>
@@ -149,7 +149,9 @@ const TransacoesPage = () => {
       // Filtra por termo de busca (descrição ou categoria)
       const searchMatch = !searchTerm || 
         transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
+        (transaction.type === 'expense' ? 
+          transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) :
+          transaction.source.toLowerCase().includes(searchTerm.toLowerCase()));
         
       return typeMatch && searchMatch;
     });
@@ -294,11 +296,13 @@ const TransacoesPage = () => {
                     <TableCell>
                       <div className="font-medium">{transaction.description}</div>
                       <div className="hidden sm:block md:hidden text-sm text-muted-foreground">
-                        {transaction.category}
+                        {transaction.type === 'expense' ? transaction.category : transaction.source}
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <Badge variant="outline">{transaction.category}</Badge>
+                      <Badge variant="outline">
+                        {transaction.type === 'expense' ? transaction.category : transaction.source}
+                      </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {format(new Date(transaction.date), "dd/MM/yyyy")}
@@ -354,15 +358,17 @@ const TransacoesPage = () => {
       {/* Diálogos para adicionar novas transações */}
       {showAddIncomeDialog && (
         <AddIncomeDialog 
-          onSuccess={handleIncomeAdded} 
-          onCancel={() => setShowAddIncomeDialog(false)}
+          open={showAddIncomeDialog}
+          onOpenChange={setShowAddIncomeDialog}
+          onSubmitSuccess={handleIncomeAdded}
         />
       )}
       
       {showAddExpenseDialog && (
         <AddExpenseDialog 
-          onSuccess={handleExpenseAdded}
-          onCancel={() => setShowAddExpenseDialog(false)}
+          open={showAddExpenseDialog}
+          onOpenChange={setShowAddExpenseDialog}
+          onSubmitSuccess={handleExpenseAdded}
         />
       )}
     </div>
