@@ -39,7 +39,7 @@ const DashboardContent = () => {
   // Verificar se o email é o especificado e atualizar para pro
   useEffect(() => {
     const checkAndUpgradeUser = async () => {
-      if (user && user.email === "caiohenrique1146@gmail.com") {
+      if (user && (user.email === "caiohenrique1146@gmail.com" || user.email === "luana@gmail.com")) {
         try {
           await upgradeToPro(user.id);
           console.log("Usuário atualizado para plano Pro");
