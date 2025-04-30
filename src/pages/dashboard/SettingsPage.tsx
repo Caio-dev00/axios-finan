@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateProfile } from '@/services/profileService';
-import { updateUserNotificationPreferences, getUserNotificationPreferences } from '@/services/notificationService';
+import { updateProfile, getProfile } from '@/services/profileService';
+import { updateUserNotificationPreferences, getUserNotificationPreferences, NotificationPreferences } from '@/services/notificationService';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from "@/integrations/supabase/client";
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -46,11 +46,7 @@ const SettingsPage = () => {
       // Carregar dados adicionais do perfil
       const fetchProfileData = async () => {
         try {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('phone, occupation, theme_preference, currency_preference, date_format_preference, month_start_day')
-            .eq('id', user.id)
-            .single();
+          const profiles = await getProfile();
           
           if (profiles) {
             setPhone(profiles.phone || '');
@@ -74,7 +70,7 @@ const SettingsPage = () => {
     queryKey: ['notificationPreferences', user?.id],
     queryFn: getUserNotificationPreferences,
     enabled: !!user,
-    onSuccess: (data) => {
+    onSettled: (data) => {
       if (data) {
         setBillReminders(data.bill_reminders);
         setBudgetAlerts(data.budget_alerts);

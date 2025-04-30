@@ -45,12 +45,17 @@ export const updateProfile = async (profile: any) => {
   // Adicionamos o timestamp de atualização
   updateData.updated_at = new Date().toISOString();
   
+  console.log("Atualizando perfil com:", updateData);
+  
   const { error } = await supabase
     .from("profiles")
     .update(updateData)
     .eq("id", user.id);
   
-  if (error) throw error;
+  if (error) {
+    console.error("Erro ao atualizar perfil:", error);
+    throw error;
+  }
   
   return { success: true };
 };
