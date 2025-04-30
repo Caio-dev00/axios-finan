@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -391,7 +390,7 @@ const LearnMorePage = () => {
                   Criar conta gratuita
                 </Link>
               </Button>
-              <Button variant="outline" className="border-white text-white hover:bg-white/10" size="lg" asChild>
+              <Button variant="outline" className="border-white text-white bg-finance-dark/50 hover:bg-finance-dark/70" size="lg" asChild>
                 <Link to="/precos">
                   Ver planos e preços
                 </Link>
