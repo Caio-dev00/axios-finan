@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
@@ -149,6 +148,13 @@ const EditTransactionDialog = ({
 }) => {
   const [editedTransaction, setEditedTransaction] = useState<Transaction>({...transaction});
   
+  // Resetar o estado quando o transaction prop mudar
+  useEffect(() => {
+    if (transaction) {
+      setEditedTransaction({...transaction});
+    }
+  }, [transaction]);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -178,7 +184,9 @@ const EditTransactionDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) onClose();
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Editar {transaction.type === 'income' ? 'Receita' : 'Despesa'}</DialogTitle>
@@ -270,7 +278,7 @@ const TransacoesPage = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const { isPro } = useSubscription();
   
-  // Mutações para atualizar transações
+  // Mutações para atualizar transações - Corrigidas para resolver o problema de congelamento
   const updateIncomeMutation = useMutation({
     mutationFn: (income: IncomeTransaction) => updateIncome(income),
     onSuccess: () => {
@@ -284,6 +292,7 @@ const TransacoesPage = () => {
         title: "Receita atualizada",
         description: "A receita foi atualizada com sucesso."
       });
+      // Importante: Limpar o estado para fechar o diálogo
       setEditingTransaction(null);
     },
     onError: (error) => {
@@ -293,6 +302,8 @@ const TransacoesPage = () => {
         variant: "destructive"
       });
       console.error('Erro ao atualizar receita:', error);
+      // Importante: Limpar o estado mesmo em caso de erro
+      setEditingTransaction(null);
     }
   });
 
@@ -309,6 +320,7 @@ const TransacoesPage = () => {
         title: "Despesa atualizada",
         description: "A despesa foi atualizada com sucesso."
       });
+      // Importante: Limpar o estado para fechar o diálogo
       setEditingTransaction(null);
     },
     onError: (error) => {
@@ -318,6 +330,8 @@ const TransacoesPage = () => {
         variant: "destructive"
       });
       console.error('Erro ao atualizar despesa:', error);
+      // Importante: Limpar o estado mesmo em caso de erro
+      setEditingTransaction(null);
     }
   });
   
@@ -434,7 +448,7 @@ const TransacoesPage = () => {
     setEditingTransaction(transaction);
   };
 
-  // Função para salvar uma transação editada
+  // Função para salvar uma transação editada - Corrigida para resolver o problema de congelamento
   const handleSaveEdit = (updatedTransaction: Transaction) => {
     try {
       if (updatedTransaction.type === 'income') {
@@ -449,7 +463,14 @@ const TransacoesPage = () => {
         description: "Ocorreu um erro ao salvar as alterações.",
         variant: "destructive"
       });
+      // Importante: Limpar o estado em caso de erro para fechar o diálogo
+      setEditingTransaction(null);
     }
+  };
+
+  // Função para fechar o diálogo de edição - Adicionada para resolver o problema de congelamento
+  const handleCloseEdit = () => {
+    setEditingTransaction(null);
   };
 
   // Função para lidar com a adição de uma nova receita
@@ -871,12 +892,12 @@ const TransacoesPage = () => {
         />
       )}
 
-      {/* Diálogo para editar transação */}
+      {/* Diálogo para editar transação - Corrigido para resolver o problema de congelamento */}
       {editingTransaction && (
         <EditTransactionDialog
           transaction={editingTransaction}
           isOpen={!!editingTransaction}
-          onClose={() => setEditingTransaction(null)}
+          onClose={handleCloseEdit}
           onSave={handleSaveEdit}
         />
       )}
