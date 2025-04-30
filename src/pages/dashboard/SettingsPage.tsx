@@ -70,17 +70,19 @@ const SettingsPage = () => {
   const { data: notificationPrefs } = useQuery({
     queryKey: ['notificationPreferences', user?.id],
     queryFn: getUserNotificationPreferences,
-    enabled: !!user,
-    onSuccess: (data) => {
-      if (data) {
-        setBillReminders(data.bill_reminders);
-        setBudgetAlerts(data.budget_alerts);
-        setWeeklyReports(data.weekly_reports);
-        setFinancialTips(data.financial_tips);
-        setAppUpdates(data.app_updates);
-      }
-    }
+    enabled: !!user
   });
+
+  // Aplicar preferências de notificações quando os dados forem carregados
+  useEffect(() => {
+    if (notificationPrefs) {
+      setBillReminders(notificationPrefs.bill_reminders);
+      setBudgetAlerts(notificationPrefs.budget_alerts);
+      setWeeklyReports(notificationPrefs.weekly_reports);
+      setFinancialTips(notificationPrefs.financial_tips);
+      setAppUpdates(notificationPrefs.app_updates);
+    }
+  }, [notificationPrefs]);
 
   // Salvar perfil
   const handleSaveProfile = async () => {
