@@ -237,7 +237,7 @@ const RecentTransactions = () => {
               ${convertedTransactions.map(transaction => {
                 const categoryOrSource = transaction.type === 'expense'
                   ? transaction.category
-                  : transaction.source;
+                  : (transaction.category || ''); // Use category as fallback for any transaction
                 
                 return `
                   <tr>

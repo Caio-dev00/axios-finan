@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
@@ -139,7 +140,7 @@ export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> =
   const incomes = incomesData.map(income => ({
     id: income.id,
     name: income.description,
-    category: income.source,
+    category: income.source, // Map source to category for consistency
     amount: parseFloat(income.amount.toString()),
     date: income.date,
     type: 'income' as const
