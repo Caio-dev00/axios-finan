@@ -32,9 +32,10 @@ export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
   returnTo?: string;
+  initialEmail?: string;  // Added initialEmail prop
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard" }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard", initialEmail = "" }) => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard" }) 
     resolver: zodResolver(registerSchema),
     defaultValues: {
       nome: "",
-      email: "",
+      email: initialEmail, // Use initialEmail as default value
       password: "",
       confirmPassword: "",
     },
