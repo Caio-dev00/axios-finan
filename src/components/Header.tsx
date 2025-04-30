@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,13 +42,13 @@ const Header = () => {
               <Link to="/dashboard" className="text-gray-700 hover:text-finance-primary transition-colors">
                 Dashboard
               </Link>
-              <Link to="/transacoes" className="text-gray-700 hover:text-finance-primary transition-colors">
+              <Link to="/dashboard/transacoes" className="text-gray-700 hover:text-finance-primary transition-colors">
                 Transações
               </Link>
-              <Link to="/relatorios" className="text-gray-700 hover:text-finance-primary transition-colors">
+              <Link to="/dashboard/reports" className="text-gray-700 hover:text-finance-primary transition-colors">
                 Relatórios
               </Link>
-              <Link to="/dicas" className="text-gray-700 hover:text-finance-primary transition-colors">
+              <Link to="/dashboard/dicas" className="text-gray-700 hover:text-finance-primary transition-colors">
                 Dicas
               </Link>
             </>
