@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -124,13 +123,10 @@ const RecentTransactions = () => {
     
     // Formata os dados
     const csvData = convertedTransactions.map(transaction => {
-      const categoryOrSource = transaction.type === 'expense' 
-        ? transaction.category 
-        : transaction.source;
-      
+      // Fix: Use only category as we've standardized everything to use category
       return [
         transaction.name,
-        categoryOrSource,
+        transaction.category,
         format(new Date(transaction.date), 'dd/MM/yyyy'),
         transaction.amount.toFixed(2),
         transaction.type === 'income' ? 'Receita' : 'Despesa'
@@ -235,14 +231,11 @@ const RecentTransactions = () => {
             </thead>
             <tbody>
               ${convertedTransactions.map(transaction => {
-                const categoryOrSource = transaction.type === 'expense'
-                  ? transaction.category
-                  : (transaction.category || ''); // Use category as fallback for any transaction
-                
+                // Fix: Use only category as we've standardized everything to use category
                 return `
                   <tr>
                     <td>${transaction.name}</td>
-                    <td>${categoryOrSource}</td>
+                    <td>${transaction.category || ''}</td>
                     <td>${format(new Date(transaction.date), 'dd/MM/yyyy')}</td>
                     <td class="${transaction.type === 'income' ? 'income' : 'expense'}">
                       ${transaction.type === 'income' ? '+' : '-'} ${formatCurrency(transaction.amount, activeCurrency)}
