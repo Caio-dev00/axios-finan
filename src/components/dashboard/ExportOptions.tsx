@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { formatCurrency } from "@/services/currencyService";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import ProFeature from "@/components/ProFeature";
 
 // Definindo interfaces para os tipos de transações
@@ -44,6 +45,7 @@ interface ExportOptionsProps {
 const ExportOptions: React.FC<ExportOptionsProps> = ({ transactions }) => {
   const { toast } = useToast();
   const { isPro } = useSubscription();
+  const { isDarkMode } = useTheme();
 
   // Exportar dados para CSV
   const exportToCSV = () => {
@@ -147,8 +149,13 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ transactions }) => {
         <head>
           <title>Relatório de Transações</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; text-align: center; }
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px; 
+              color: #333;
+              background-color: #fff;
+            }
+            h1 { color: #0F9D58; text-align: center; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
             th { background-color: #f2f2f2; }
@@ -216,19 +223,19 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ transactions }) => {
   return (
     <div className="flex flex-wrap gap-2">
       {/* PDF exportação disponível para todos */}
-      <Button variant="outline" size="sm" onClick={exportToPDF}>
+      <Button variant="outline" size="sm" onClick={exportToPDF} className="dark:border-gray-700 dark:hover:bg-gray-700">
         <Download className="mr-2 h-4 w-4" />
         Exportar PDF
       </Button>
       
       {/* CSV exportação exclusiva para PRO */}
       <ProFeature fallback={
-        <Button variant="outline" size="sm" className="opacity-70 cursor-not-allowed">
+        <Button variant="outline" size="sm" className="opacity-70 cursor-not-allowed dark:border-gray-700">
           <FileText className="mr-2 h-4 w-4" />
-          Exportar CSV <span className="ml-2 text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">Pro</span>
+          Exportar CSV <span className="ml-2 text-xs bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded">Pro</span>
         </Button>
       }>
-        <Button variant="outline" size="sm" onClick={exportToCSV}>
+        <Button variant="outline" size="sm" onClick={exportToCSV} className="dark:border-gray-700 dark:hover:bg-gray-700">
           <FileText className="mr-2 h-4 w-4" />
           Exportar CSV
         </Button>
@@ -236,12 +243,12 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ transactions }) => {
       
       {/* Excel exportação exclusiva para PRO */}
       <ProFeature fallback={
-        <Button variant="outline" size="sm" className="opacity-70 cursor-not-allowed">
+        <Button variant="outline" size="sm" className="opacity-70 cursor-not-allowed dark:border-gray-700">
           <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Exportar Excel <span className="ml-2 text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">Pro</span>
+          Exportar Excel <span className="ml-2 text-xs bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded">Pro</span>
         </Button>
       }>
-        <Button variant="outline" size="sm" onClick={exportToExcel}>
+        <Button variant="outline" size="sm" onClick={exportToExcel} className="dark:border-gray-700 dark:hover:bg-gray-700">
           <FileSpreadsheet className="mr-2 h-4 w-4" />
           Exportar Excel
         </Button>

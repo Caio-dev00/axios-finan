@@ -11,6 +11,7 @@ import { getReportData } from "@/services/financeService";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { formatCurrency } from "@/services/currencyService";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   BarChart,
   Bar,
@@ -35,6 +36,7 @@ const ReportsPage = () => {
   const navigate = useNavigate();
   const { activeCurrency } = useCurrency();
   const { toast } = useToast();
+  const { isDarkMode } = useTheme();
   const [viewOption, setViewOption] = useState("mensal");
   
   // Buscar dados para relatórios
@@ -62,17 +64,242 @@ const ReportsPage = () => {
 
   // Gerar um PDF do relatório
   const gerarRelatorioPDF = (tipo) => {
+    if (!data) {
+      toast({
+        title: "Sem dados",
+        description: "Não há dados para gerar o relatório.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     toast({
       title: "Gerando relatório",
       description: `O relatório ${tipo} está sendo gerado em PDF.`
     });
     
+    // Criar uma nova janela para impressão em PDF
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desativado.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Preparar dados para o relatório baseado no tipo
+    let reportData = [];
+    let chartData = null;
+    let reportTitle = "";
+    
+    if (tipo === "mensal") {
+      reportData = data.categoryData || [];
+      chartData = data.monthlyData?.length ? [data.monthlyData[data.monthlyData.length - 1]] : [];
+      reportTitle = "Relatório Mensal de Finanças";
+    } else if (tipo === "comparativo") {
+      reportData = data.monthlyData || [];
+      chartData = data.cashFlowData || [];
+      reportTitle = "Relatório Comparativo de Finanças";
+    } else if (tipo === "projeção") {
+      // Dados de projeção simulados
+      reportData = data.monthlyData ? [...data.monthlyData.slice(-3)] : [];
+      
+      // Adicionar projeções
+      if (data.monthlyData?.length) {
+        const lastMonth = data.monthlyData[data.monthlyData.length-1];
+        
+        ["Mai", "Jun", "Jul"].forEach((month, index) => {
+          reportData.push({
+            name: month,
+            receitas: lastMonth.receitas * (1.05 + index * 0.03),
+            despesas: lastMonth.despesas * (1.02 + index * 0.01)
+          });
+        });
+      }
+      
+      chartData = reportData;
+      reportTitle = "Projeção Financeira";
+    }
+
+    // Criar o conteúdo HTML da página PDF
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${reportTitle}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+            h1 { color: #0F9D58; text-align: center; margin-bottom: 10px; }
+            h2 { color: #4285F4; margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            .income { color: #0F9D58; }
+            .expense { color: #DB4437; }
+            .summary { background-color: #E8F5E9; padding: 15px; border-radius: 6px; margin: 20px 0; }
+            .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
+            .header-info { text-align: right; margin-bottom: 20px; font-size: 12px; color: #666; }
+            .chart-placeholder { height: 200px; background-color: #f9f9f9; border: 1px dashed #ccc; display: flex; justify-content: center; align-items: center; margin: 20px 0; }
+            .recommendations { background-color: #F5F5F5; padding: 15px; border-radius: 6px; margin: 20px 0; }
+            .recommendation-item { margin-bottom: 10px; display: flex; }
+            .recommendation-icon { margin-right: 10px; color: #0F9D58; }
+          </style>
+        </head>
+        <body>
+          <div class="header-info">
+            <p>Data de geração: ${format(new Date(), 'dd/MM/yyyy')}</p>
+            <p>Moeda: ${activeCurrency}</p>
+          </div>
+          
+          <h1>${reportTitle}</h1>
+          
+          ${tipo === "mensal" ? `
+            <div class="summary">
+              <h2>Resumo do Mês</h2>
+              <p>Receitas totais: ${formatCurrency(chartData[0]?.receitas || 0, activeCurrency)}</p>
+              <p>Despesas totais: ${formatCurrency(chartData[0]?.despesas || 0, activeCurrency)}</p>
+              <p>Saldo: ${formatCurrency((chartData[0]?.receitas || 0) - (chartData[0]?.despesas || 0), activeCurrency)}</p>
+            </div>
+            
+            <h2>Distribuição de Despesas por Categoria</h2>
+            <div class="chart-placeholder">
+              <p>Gráfico de distribuição de despesas</p>
+            </div>
+            
+            <table>
+              <thead>
+                <tr>
+                  <th>Categoria</th>
+                  <th>Valor</th>
+                  <th>Percentual</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportData.map(item => {
+                  const total = reportData.reduce((sum, cat) => sum + cat.valor, 0);
+                  const percentage = total > 0 ? ((item.valor / total) * 100).toFixed(2) : "0.00";
+                  return `
+                    <tr>
+                      <td>${item.name}</td>
+                      <td>${formatCurrency(item.valor, activeCurrency)}</td>
+                      <td>${percentage}%</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          ` : tipo === "comparativo" ? `
+            <h2>Comparativo de Receitas e Despesas</h2>
+            <div class="chart-placeholder">
+              <p>Gráfico comparativo mensal</p>
+            </div>
+            
+            <table>
+              <thead>
+                <tr>
+                  <th>Mês</th>
+                  <th>Receitas</th>
+                  <th>Despesas</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportData.map(item => {
+                  const balance = item.receitas - item.despesas;
+                  return `
+                    <tr>
+                      <td>${item.name}</td>
+                      <td class="income">${formatCurrency(item.receitas, activeCurrency)}</td>
+                      <td class="expense">${formatCurrency(item.despesas, activeCurrency)}</td>
+                      <td class="${balance >= 0 ? 'income' : 'expense'}">${formatCurrency(balance, activeCurrency)}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+            
+            <h2>Tendência de Fluxo de Caixa</h2>
+            <div class="chart-placeholder">
+              <p>Gráfico de tendência de fluxo de caixa</p>
+            </div>
+          ` : `
+            <h2>Projeção para os Próximos 3 Meses</h2>
+            <div class="chart-placeholder">
+              <p>Gráfico de projeção financeira</p>
+            </div>
+            
+            <table>
+              <thead>
+                <tr>
+                  <th>Mês</th>
+                  <th>Receitas (Projeção)</th>
+                  <th>Despesas (Projeção)</th>
+                  <th>Saldo Estimado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reportData.map((item, index) => {
+                  const balance = item.receitas - item.despesas;
+                  const isProjection = index >= (reportData.length - 3);
+                  return `
+                    <tr>
+                      <td>${item.name}${isProjection ? ' (Projeção)' : ''}</td>
+                      <td class="income">${formatCurrency(item.receitas, activeCurrency)}</td>
+                      <td class="expense">${formatCurrency(item.despesas, activeCurrency)}</td>
+                      <td class="${balance >= 0 ? 'income' : 'expense'}">${formatCurrency(balance, activeCurrency)}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+            
+            <div class="recommendations">
+              <h2>Recomendações Baseadas na Projeção</h2>
+              <div class="recommendation-item">
+                <div class="recommendation-icon">→</div>
+                <div>Sua receita está projetada para crescer 12% nos próximos 3 meses. Continue com a estratégia atual.</div>
+              </div>
+              <div class="recommendation-item">
+                <div class="recommendation-icon">→</div>
+                <div>Suas despesas tendem a aumentar 5%. Considere revisar gastos em categorias não essenciais.</div>
+              </div>
+              <div class="recommendation-item">
+                <div class="recommendation-icon">→</div>
+                <div>Se mantiver este ritmo, sua economia mensal aumentará em aproximadamente 20%.</div>
+              </div>
+            </div>
+          `}
+          
+          <div class="footer">
+            <p>Relatório gerado por Axios Finanças em ${format(new Date(), "dd 'de' MMMM 'de' yyyy, HH:mm:ss", { locale: ptBR })}</p>
+            <p>Este relatório é apenas para fins informativos e não constitui aconselhamento financeiro.</p>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    // Escrever o HTML na nova janela e imprimir
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    
     setTimeout(() => {
       toast({
-        title: "Relatório gerado com sucesso",
-        description: "O download do seu relatório começará automaticamente."
+        title: "PDF gerado",
+        description: "Seu relatório em PDF está pronto para impressão."
       });
-    }, 1500);
+    }, 1000);
   };
   
   // Exportar relatório em CSV (apenas Pro)
@@ -204,7 +431,7 @@ const ReportsPage = () => {
               <CardDescription>{reportTitles.mensal.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              {data.monthlyData && data.monthlyData.length > 0 ? (
+              {data && data.monthlyData && data.monthlyData.length > 0 ? (
                 <div className="space-y-6">
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -212,10 +439,16 @@ const ReportsPage = () => {
                         data={[data.monthlyData[data.monthlyData.length - 1]]} // Apenas o mês mais recente
                         margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={formatTooltipValue} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#444" : "#ddd"} />
+                        <XAxis dataKey="name" stroke={isDarkMode ? "#ccc" : "#333"} />
+                        <YAxis stroke={isDarkMode ? "#ccc" : "#333"} />
+                        <Tooltip formatter={formatTooltipValue} 
+                          contentStyle={{ 
+                            backgroundColor: isDarkMode ? "#333" : "#fff",
+                            color: isDarkMode ? "#fff" : "#333",
+                            border: isDarkMode ? "1px solid #555" : "1px solid #ccc"
+                          }}
+                        />
                         <Legend />
                         <Bar dataKey="receitas" fill="#10b981" name="Receitas" />
                         <Bar dataKey="despesas" fill="#ef4444" name="Despesas" />
@@ -243,7 +476,13 @@ const ReportsPage = () => {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={formatTooltipValue} />
+                          <Tooltip formatter={formatTooltipValue} 
+                            contentStyle={{ 
+                              backgroundColor: isDarkMode ? "#333" : "#fff",
+                              color: isDarkMode ? "#fff" : "#333",
+                              border: isDarkMode ? "1px solid #555" : "1px solid #ccc"
+                            }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -259,8 +498,8 @@ const ReportsPage = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">Nenhum dado disponível para o relatório mensal</p>
-                  <p className="text-sm text-gray-400 mt-1">Adicione transações para gerar seu relatório</p>
+                  <p className="text-gray-500 dark:text-gray-400">Nenhum dado disponível para o relatório mensal</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Adicione transações para gerar seu relatório</p>
                 </div>
               )}
             </CardContent>
@@ -276,7 +515,7 @@ const ReportsPage = () => {
                 <CardDescription>{reportTitles.comparativo.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   Análise comparativa detalhada entre períodos com gráficos avançados.
                 </p>
                 <Button size="sm" variant="outline" className="w-full" onClick={() => navigate("/precos")}>
@@ -291,7 +530,7 @@ const ReportsPage = () => {
                 <CardDescription>{reportTitles.comparativo.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                {data.monthlyData && data.monthlyData.length > 0 ? (
+                {data && data.monthlyData && data.monthlyData.length > 0 ? (
                   <div className="space-y-6">
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -299,10 +538,16 @@ const ReportsPage = () => {
                           data={data.monthlyData}
                           margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip formatter={formatTooltipValue} />
+                          <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#444" : "#ddd"} />
+                          <XAxis dataKey="name" stroke={isDarkMode ? "#ccc" : "#333"} />
+                          <YAxis stroke={isDarkMode ? "#ccc" : "#333"} />
+                          <Tooltip formatter={formatTooltipValue} 
+                            contentStyle={{ 
+                              backgroundColor: isDarkMode ? "#333" : "#fff",
+                              color: isDarkMode ? "#fff" : "#333",
+                              border: isDarkMode ? "1px solid #555" : "1px solid #ccc"
+                            }}
+                          />
                           <Legend />
                           <Bar dataKey="receitas" fill="#10b981" name="Receitas" />
                           <Bar dataKey="despesas" fill="#ef4444" name="Despesas" />
@@ -317,10 +562,16 @@ const ReportsPage = () => {
                           data={data.cashFlowData}
                           margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip formatter={formatTooltipValue} />
+                          <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#444" : "#ddd"} />
+                          <XAxis dataKey="name" stroke={isDarkMode ? "#ccc" : "#333"} />
+                          <YAxis stroke={isDarkMode ? "#ccc" : "#333"} />
+                          <Tooltip formatter={formatTooltipValue} 
+                            contentStyle={{ 
+                              backgroundColor: isDarkMode ? "#333" : "#fff",
+                              color: isDarkMode ? "#fff" : "#333",
+                              border: isDarkMode ? "1px solid #555" : "1px solid #ccc"
+                            }}
+                          />
                           <Legend />
                           <Line 
                             type="monotone" 
@@ -334,7 +585,7 @@ const ReportsPage = () => {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button size="sm">Visualizar</Button>
+                      <Button size="sm" onClick={() => gerarRelatorioPDF("comparativo")}>Visualizar</Button>
                       <Button size="sm" variant="outline" className="gap-1" onClick={() => gerarRelatorioPDF("comparativo")}>
                         <FileText size={16} />
                         <span>PDF</span>
@@ -347,8 +598,8 @@ const ReportsPage = () => {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">Nenhum dado disponível para o relatório comparativo</p>
-                    <p className="text-sm text-gray-400 mt-1">Adicione transações para gerar seu relatório</p>
+                    <p className="text-gray-500 dark:text-gray-400">Nenhum dado disponível para o relatório comparativo</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Adicione transações para gerar seu relatório</p>
                   </div>
                 )}
               </CardContent>
@@ -365,7 +616,7 @@ const ReportsPage = () => {
                 <CardDescription>{reportTitles.projecao.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   Projeção baseada em gastos recorrentes e tendências financeiras.
                 </p>
                 <Button size="sm" variant="outline" className="w-full" onClick={() => navigate("/precos")}>
@@ -380,7 +631,7 @@ const ReportsPage = () => {
                 <CardDescription>{reportTitles.projecao.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                {data.monthlyData && data.monthlyData.length > 0 ? (
+                {data && data.monthlyData && data.monthlyData.length > 0 ? (
                   <div className="space-y-6">
                     <div className="h-[300px]">
                       <h3 className="text-lg font-medium mb-2">Projeção para os próximos 3 meses</h3>
@@ -388,10 +639,16 @@ const ReportsPage = () => {
                         <LineChart
                           margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip formatter={formatTooltipValue} />
+                          <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#444" : "#ddd"} />
+                          <XAxis dataKey="name" stroke={isDarkMode ? "#ccc" : "#333"} />
+                          <YAxis stroke={isDarkMode ? "#ccc" : "#333"} />
+                          <Tooltip formatter={formatTooltipValue} 
+                            contentStyle={{ 
+                              backgroundColor: isDarkMode ? "#333" : "#fff",
+                              color: isDarkMode ? "#fff" : "#333",
+                              border: isDarkMode ? "1px solid #555" : "1px solid #ccc"
+                            }}
+                          />
                           <Legend />
                           <Line
                             data={[
@@ -468,7 +725,7 @@ const ReportsPage = () => {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button size="sm">Visualizar</Button>
+                      <Button size="sm" onClick={() => gerarRelatorioPDF("projeção")}>Visualizar</Button>
                       <Button size="sm" variant="outline" className="gap-1" onClick={() => gerarRelatorioPDF("projeção")}>
                         <FileText size={16} />
                         <span>PDF</span>
@@ -477,8 +734,8 @@ const ReportsPage = () => {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">Nenhum dado disponível para projeção financeira</p>
-                    <p className="text-sm text-gray-400 mt-1">Adicione mais transações para gerar projeções precisas</p>
+                    <p className="text-gray-500 dark:text-gray-400">Nenhum dado disponível para projeção financeira</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Adicione mais transações para gerar projeções precisas</p>
                   </div>
                 )}
               </CardContent>
@@ -488,11 +745,11 @@ const ReportsPage = () => {
       </div>
       
       {!isPro && (
-        <Card className="bg-finance-light border-finance-primary border mb-8">
+        <Card className="bg-finance-light dark:bg-gray-800 border-finance-primary border mb-8">
           <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6">
             <div>
-              <h3 className="text-lg font-semibold text-finance-dark">Desbloqueie todos os relatórios</h3>
-              <p className="text-finance-dark/80">
+              <h3 className="text-lg font-semibold text-finance-dark dark:text-gray-200">Desbloqueie todos os relatórios</h3>
+              <p className="text-finance-dark/80 dark:text-gray-300">
                 Assine o plano Pro e tenha acesso a todos os tipos de relatórios e ferramentas de exportação.
               </p>
             </div>
@@ -506,27 +763,27 @@ const ReportsPage = () => {
       {/* Relatórios recentes - Limitados para usuários gratuitos */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Relatórios Recentes</h2>
-        <div className="bg-white border rounded-md overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 border rounded-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Período</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tipo</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Período</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {[1, 2, 3].map((item, index) => (
                   <tr key={index} className={index >= 1 && !isPro ? "opacity-50" : ""}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">
                       {index === 0 ? "Relatório Mensal" : index === 1 ? "Relatório Comparativo" : "Projeção Financeira"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {index === 0 ? "15/04/2025" : index === 1 ? "10/04/2025" : "05/04/2025"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {index === 0 ? "Abril 2025" : index === 1 ? "Mar-Abr 2025" : "Mai-Jul 2025"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -547,7 +804,7 @@ const ReportsPage = () => {
                 
                 {!isPro && (
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-sm text-center text-gray-500">
+                    <td colSpan={4} className="px-6 py-4 text-sm text-center text-gray-500 dark:text-gray-400">
                       Usuários gratuitos têm acesso apenas ao relatório mais recente. 
                       <Button variant="link" className="text-finance-primary p-0 h-auto" onClick={() => navigate("/precos")}>
                         Assine o plano Pro

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { convertCurrency, formatCurrency } from "@/services/currencyService";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import ProFeature from "@/components/ProFeature";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -32,6 +34,7 @@ const RecentTransactions = () => {
   const queryClient = useQueryClient();
   const { activeCurrency } = useCurrency();
   const { isPro } = useSubscription();
+  const { isDarkMode } = useTheme();
   
   const {
     data: transactions,
@@ -206,8 +209,13 @@ const RecentTransactions = () => {
         <head>
           <title>Relatório de Transações Recentes</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; text-align: center; }
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px; 
+              color: #333;
+              background-color: #fff;
+            }
+            h1 { color: #0F9D58; text-align: center; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
             th { background-color: #f2f2f2; }
@@ -270,7 +278,7 @@ const RecentTransactions = () => {
   };
 
   return (
-    <Card className="shadow-sm h-full">
+    <Card className="shadow-sm h-full dark:border-gray-700">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">Transações Recentes</CardTitle>
         
@@ -281,7 +289,7 @@ const RecentTransactions = () => {
               <Button 
                 size="sm" 
                 variant="outline"
-                className="flex items-center text-xs px-2 py-1 h-auto"
+                className="flex items-center text-xs px-2 py-1 h-auto dark:border-gray-700 dark:hover:bg-gray-700"
                 onClick={exportToPDF}
               >
                 <Download className="h-3 w-3 mr-1" />
@@ -293,17 +301,17 @@ const RecentTransactions = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex items-center text-xs px-2 py-1 h-auto opacity-70"
+                  className="flex items-center text-xs px-2 py-1 h-auto opacity-70 dark:border-gray-700"
                 >
                   <FileText className="h-3 w-3 mr-1" />
                   CSV
-                  <span className="ml-1 text-[10px] bg-amber-200 text-amber-800 px-1 rounded">Pro</span>
+                  <span className="ml-1 text-[10px] bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1 rounded">Pro</span>
                 </Button>
               }>
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="flex items-center text-xs px-2 py-1 h-auto"
+                  className="flex items-center text-xs px-2 py-1 h-auto dark:border-gray-700 dark:hover:bg-gray-700"
                   onClick={exportToCSV}
                 >
                   <FileText className="h-3 w-3 mr-1" />
@@ -316,17 +324,17 @@ const RecentTransactions = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex items-center text-xs px-2 py-1 h-auto opacity-70"
+                  className="flex items-center text-xs px-2 py-1 h-auto opacity-70 dark:border-gray-700"
                 >
                   <FileSpreadsheet className="h-3 w-3 mr-1" />
                   XLS
-                  <span className="ml-1 text-[10px] bg-amber-200 text-amber-800 px-1 rounded">Pro</span>
+                  <span className="ml-1 text-[10px] bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1 rounded">Pro</span>
                 </Button>
               }>
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="flex items-center text-xs px-2 py-1 h-auto"
+                  className="flex items-center text-xs px-2 py-1 h-auto dark:border-gray-700 dark:hover:bg-gray-700"
                   onClick={exportToExcel}
                 >
                   <FileSpreadsheet className="h-3 w-3 mr-1" />
@@ -340,6 +348,7 @@ const RecentTransactions = () => {
             size="sm" 
             variant="outline" 
             onClick={() => navigate("/dashboard/transacoes")}
+            className="dark:border-gray-700 dark:hover:bg-gray-700"
           >
             Ver todas
           </Button>
@@ -348,42 +357,42 @@ const RecentTransactions = () => {
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center items-center h-40">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Loader2 className="h-6 w-6 animate-spin text-finance-primary" />
           </div>
         ) : convertedTransactions && convertedTransactions.length > 0 ? (
           <div className="space-y-4">
             {convertedTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex justify-between p-3 border-b">
+              <div key={transaction.id} className="flex justify-between p-3 border-b dark:border-gray-700">
                 <div>
-                  <p className="font-medium">{transaction.name}</p>
-                  <p className="text-sm text-gray-500">{transaction.category}</p>
+                  <p className="font-medium dark:text-gray-200">{transaction.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.category}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <p className={`font-medium ${
-                    transaction.type === "income" ? "text-green-600" : "text-red-600"
+                    transaction.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                   }`}>
                     {transaction.type === "income" ? "+" : "-"}
                     {formatCurrency(transaction.amount, activeCurrency)}
                   </p>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-600 p-0 h-auto">
+                      <Button variant="ghost" size="sm" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 p-0 h-auto">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="dark:bg-gray-800 dark:text-gray-100">
                       <AlertDialogHeader>
                         <AlertDialogTitle>
                           Excluir {transaction.type === "income" ? "receita" : "despesa"}
                         </AlertDialogTitle>
-                        <AlertDialogDescription>
+                        <AlertDialogDescription className="dark:text-gray-300">
                           Tem certeza que deseja excluir "{transaction.name}"? Esta ação não pode ser desfeita.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogCancel className="dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">Cancelar</AlertDialogCancel>
                         <AlertDialogAction 
-                          className="bg-red-600 text-white hover:bg-red-700"
+                          className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
                           onClick={() => handleDelete(transaction)}
                         >
                           Excluir
@@ -391,15 +400,15 @@ const RecentTransactions = () => {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  <p className="text-xs text-gray-500 ml-1">{transaction.date}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-1">{transaction.date}</p>
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500">Nenhuma transação encontrada</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-gray-500 dark:text-gray-400">Nenhuma transação encontrada</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
               Adicione receitas ou despesas para visualizar suas transações recentes
             </p>
           </div>

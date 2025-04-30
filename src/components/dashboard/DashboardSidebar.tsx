@@ -5,10 +5,12 @@ import { Settings, BarChart3, PieChart, CreditCard, LineChart, Receipt, Lightbul
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
   const { isMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
+  const { isDarkMode } = useTheme();
   
   // Check if the current route matches exactly with the NavItem's route
   const isExactActive = location.pathname === to;
@@ -26,12 +28,15 @@ const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
         flex items-center gap-4 px-4 py-3 rounded-md text-base transition-colors
         ${isExactActive 
           ? "bg-finance-primary text-white" 
-          : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"}
+          : isDarkMode 
+            ? "text-gray-200 hover:bg-gray-800" 
+            : "text-gray-700 hover:bg-gray-100"
+        }
       `}
     >
       <Icon size={20} />
       <span>{label}</span>
-      {isProFeature && <span className="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded ml-auto">Pro</span>}
+      {isProFeature && <span className="text-xs bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded ml-auto">Pro</span>}
     </NavLink>
   );
 };
@@ -39,6 +44,7 @@ const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
 const DashboardSidebar = () => {
   const { user } = useAuth();
   const { isPro } = useSubscription();
+  const { isDarkMode } = useTheme();
   
   // Simplificar o nome para exibição
   const displayName = user?.user_metadata?.nome
@@ -46,7 +52,7 @@ const DashboardSidebar = () => {
     : "Usuário";
   
   return (
-    <div className="hidden md:flex min-h-screen w-64 border-r border-gray-200 dark:border-gray-800 flex-col transition-all duration-300">
+    <div className="hidden md:flex min-h-screen w-64 border-r border-gray-200 dark:border-gray-800 flex-col transition-all duration-300 bg-white dark:bg-gray-900">
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-full bg-finance-primary/20 text-finance-primary font-bold flex items-center justify-center">
@@ -129,9 +135,9 @@ const DashboardSidebar = () => {
       
       {!isPro && (
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="bg-finance-light rounded-md p-3">
-            <h4 className="font-medium text-sm text-finance-dark">Atualize para o Pro</h4>
-            <p className="text-xs text-gray-600 my-1">
+          <div className="bg-finance-light dark:bg-gray-800 rounded-md p-3">
+            <h4 className="font-medium text-sm text-finance-dark dark:text-gray-200">Atualize para o Pro</h4>
+            <p className="text-xs text-gray-600 dark:text-gray-400 my-1">
               Desbloqueie recursos avançados e mais visualizações.
             </p>
             <NavLink 
