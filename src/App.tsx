@@ -42,6 +42,7 @@ const App: React.FC = () => {
               path="/dashboard" 
               element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
             >
+              <Route index element={<Navigate to="/dashboard/transacoes" replace />} />
               <Route path="transacoes" element={<TransacoesPage />} />
               <Route path="despesas" element={<ExpensesPage />} />
               <Route path="receitas" element={<IncomePage />} />
