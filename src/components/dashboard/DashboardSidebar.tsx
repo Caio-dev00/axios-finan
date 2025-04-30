@@ -1,201 +1,146 @@
 
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import { Settings, BarChart3, PieChart, CreditCard, LineChart, Receipt, Lightbulb } from "lucide-react";
+import { useSidebarContext } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarGroup,
-} from "@/components/ui/sidebar";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-  DrawerClose
-} from "@/components/ui/drawer";
-import {
-  CreditCard,
-  DollarSign,
-  BarChart2,
-  PieChart,
-  Target,
-  Settings,
-  LogOut,
-  Menu,
-  X
-} from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import ProFeature from "@/components/ProFeature";
+
+const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
+  const { onSidebarClose, isMobile } = useSidebarContext();
+  
+  // Para items que são Pro, mas o usuário não é Pro, mostrar o ProFeature ou não mostrar o item
+  if (isProFeature && !isPro) {
+    return null;
+  }
+  
+  return (
+    <NavLink
+      to={to}
+      onClick={isMobile ? onSidebarClose : undefined}
+      className={({ isActive }) => `
+        flex items-center gap-4 px-4 py-3 rounded-md text-base transition-colors
+        ${isActive 
+          ? "bg-finance-primary text-white" 
+          : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"}
+      `}
+    >
+      <Icon size={20} />
+      <span>{label}</span>
+      {isProFeature && <span className="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded ml-auto">Pro</span>}
+    </NavLink>
+  );
+};
 
 const DashboardSidebar = () => {
-  const { signOut } = useAuth();
-  const location = useLocation();
-  const isMobile = useIsMobile();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const menuItems = [
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-      icon: <BarChart2 className="h-5 w-5" />,
-      exact: true,
-    },
-    {
-      title: "Despesas",
-      href: "/dashboard/expenses",
-      icon: <CreditCard className="h-5 w-5" />,
-      exact: false,
-    },
-    {
-      title: "Receitas",
-      href: "/dashboard/income",
-      icon: <DollarSign className="h-5 w-5" />,
-      exact: false,
-    },
-    {
-      title: "Orçamentos",
-      href: "/dashboard/budgets",
-      icon: <PieChart className="h-5 w-5" />,
-      exact: false,
-    },
-    {
-      title: "Relatórios",
-      href: "/dashboard/reports",
-      icon: <BarChart2 className="h-5 w-5" />,
-      exact: false,
-    },
-    {
-      title: "Planejamento",
-      href: "/dashboard/planning",
-      icon: <Target className="h-5 w-5" />,
-      exact: false,
-    },
-    {
-      title: "Configurações",
-      href: "/dashboard/settings",
-      icon: <Settings className="h-5 w-5" />,
-      exact: false,
-    },
-  ];
-
-  const isActive = (href: string, exact: boolean) => {
-    if (exact) {
-      return location.pathname === href;
-    }
-    return location.pathname.startsWith(href);
-  };
-
-  // Renderiza o botão do menu para mobile e a sidebar para desktop
-  if (isMobile) {
-    return (
-      <>
-        <div className="md:hidden fixed top-0 left-0 z-30 p-4">
-          <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-            <DrawerTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="h-[80vh] p-0">
-              <div className="flex flex-col h-full">
-                <div className="p-4 border-b flex items-center justify-between">
-                  <Link to="/" className="flex items-center" onClick={() => setDrawerOpen(false)}>
-                    <span className="text-xl font-bold text-finance-primary">Axios</span>
-                    <span className="text-xl font-bold ml-1">Finanças</span>
-                  </Link>
-                  <DrawerClose asChild>
-                    <Button variant="ghost" size="icon">
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </DrawerClose>
-                </div>
-                
-                <div className="flex-1 overflow-auto py-4">
-                  <div className="space-y-1 px-2">
-                    {menuItems.map((item, index) => (
-                      <DrawerClose key={index} asChild>
-                        <Link
-                          to={item.href}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-md text-sm transition-colors
-                            ${isActive(item.href, item.exact) 
-                              ? "bg-finance-primary text-white" 
-                              : "hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-                        >
-                          {item.icon}
-                          <span>{item.title}</span>
-                        </Link>
-                      </DrawerClose>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="p-4 border-t">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => {
-                      setDrawerOpen(false);
-                      signOut();
-                    }}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
-                  </Button>
-                </div>
-              </div>
-            </DrawerContent>
-          </Drawer>
-        </div>
-      </>
-    );
-  }
-
-  // Versão desktop da sidebar
+  const { user } = useAuth();
+  const { isPro } = useSubscription();
+  
+  // Simplificar o nome para exibição
+  const displayName = user?.user_metadata?.nome
+    ? user.user_metadata.nome.split(' ')[0]
+    : "Usuário";
+  
   return (
-    <Sidebar className="border-r border-border hidden md:block">
-      <div className="flex flex-col h-full">
-        <div className="p-4 border-b">
-          <Link to="/" className="flex items-center">
-            <span className="text-xl font-bold text-finance-primary">Axios</span>
-            <span className="text-xl font-bold ml-1">Finanças</span>
-          </Link>
-        </div>
-
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarMenu>
-              {menuItems.map((item, index) => (
-                <SidebarMenuItem key={index}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive(item.href, item.exact)}
-                  >
-                    <Link to={item.href}>
-                      {item.icon}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-
-        <div className="mt-auto p-4 border-t">
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => signOut()}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
+    <div className="hidden md:flex min-h-screen w-64 border-r border-gray-200 dark:border-gray-800 flex-col transition-all duration-300">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-finance-primary/20 text-finance-primary font-bold flex items-center justify-center">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h3 className="font-medium text-gray-900 dark:text-gray-100">{displayName}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{isPro ? 'Plano Pro' : 'Plano Gratuito'}</p>
+          </div>
         </div>
       </div>
-    </Sidebar>
+      
+      <div className="p-4 flex-1">
+        <div className="space-y-1">
+          <NavItem 
+            to="/dashboard" 
+            icon={BarChart3} 
+            label="Visão Geral" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+          <NavItem 
+            to="/dashboard/transacoes" 
+            icon={Receipt} 
+            label="Transações" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+          <NavItem 
+            to="/dashboard/expenses" 
+            icon={CreditCard} 
+            label="Despesas" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+          <NavItem 
+            to="/dashboard/income" 
+            icon={BarChart3} 
+            label="Receitas" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+          <NavItem 
+            to="/dashboard/budgets" 
+            icon={PieChart} 
+            label="Orçamentos" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+          <NavItem 
+            to="/dashboard/reports" 
+            icon={LineChart} 
+            label="Relatórios" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+          <NavItem 
+            to="/dashboard/dicas" 
+            icon={Lightbulb} 
+            label="Dicas" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+          <NavItem 
+            to="/dashboard/planning" 
+            icon={BarChart3} 
+            label="Planejamento" 
+            isPro={isPro}
+            isProFeature={true}
+          />
+          <NavItem 
+            to="/dashboard/settings" 
+            icon={Settings} 
+            label="Configurações" 
+            isPro={isPro}
+            isProFeature={false}
+          />
+        </div>
+      </div>
+      
+      {!isPro && (
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+          <div className="bg-finance-light rounded-md p-3">
+            <h4 className="font-medium text-sm text-finance-dark">Atualize para o Pro</h4>
+            <p className="text-xs text-gray-600 my-1">
+              Desbloqueie recursos avançados e mais visualizações.
+            </p>
+            <NavLink 
+              to="/precos"
+              className="block text-center text-xs bg-finance-primary text-white rounded py-1.5 mt-2 hover:bg-finance-primary/90"
+            >
+              Ver planos
+            </NavLink>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
