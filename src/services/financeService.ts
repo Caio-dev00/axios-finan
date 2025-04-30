@@ -42,6 +42,13 @@ export interface ExpenseCategory {
 }
 
 export const getFinancialSummary = async (): Promise<FinancialSummary> => {
+  // Check if we're on the demo page
+  const isDemo = window.location.pathname.includes('saiba-mais');
+  
+  if (isDemo) {
+    return getDemoFinancialSummary();
+  }
+
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -117,7 +124,26 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   };
 };
 
+// Function to generate demo financial data for the "Learn More" page
+export const getDemoFinancialSummary = (): FinancialSummary => {
+  return {
+    currentBalance: 4500,
+    totalIncome: 8000,
+    totalExpense: 3500,
+    incomeChange: 15,
+    expenseChange: -5,
+    lastUpdate: new Date()
+  };
+};
+
 export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> => {
+  // Check if we're on the demo page
+  const isDemo = window.location.pathname.includes('saiba-mais');
+  
+  if (isDemo) {
+    return getDemoTransactions(limit);
+  }
+  
   // Buscar as receitas mais recentes
   const { data: incomesData, error: incomeError } = await supabase
     .from("incomes")
@@ -190,7 +216,63 @@ export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> =
   return transactions;
 };
 
-// Nova função para obter dados para relatórios
+// Function to generate demo transactions for the "Learn More" page
+export const getDemoTransactions = (limit = 4): Transaction[] => {
+  const demoTransactions: Transaction[] = [
+    {
+      id: "demo-t1",
+      name: "Salário Mensal",
+      category: "Emprego",
+      amount: 5000,
+      date: "Hoje, 09:15",
+      type: 'income'
+    },
+    {
+      id: "demo-t2",
+      name: "Aluguel Apartamento",
+      category: "Moradia",
+      amount: 1200,
+      date: "Hoje, 14:30",
+      type: 'expense'
+    },
+    {
+      id: "demo-t3",
+      name: "Freelance Design",
+      category: "Trabalho Extra",
+      amount: 1500,
+      date: "Ontem, 18:45",
+      type: 'income'
+    },
+    {
+      id: "demo-t4",
+      name: "Supermercado Mensal",
+      category: "Alimentação",
+      amount: 750,
+      date: "30/04/2025, 11:20",
+      type: 'expense'
+    },
+    {
+      id: "demo-t5",
+      name: "Fatura Cartão de Crédito",
+      category: "Finanças",
+      amount: 950,
+      date: "29/04/2025, 09:30",
+      type: 'expense'
+    },
+    {
+      id: "demo-t6",
+      name: "Dividendos",
+      category: "Investimentos",
+      amount: 1500,
+      date: "28/04/2025, 10:15",
+      type: 'income'
+    },
+  ];
+
+  return demoTransactions.slice(0, limit);
+};
+
+// Function to generate demo data for reports
 export const getReportData = async () => {
   const now = new Date();
   const monthlyData: MonthlyData[] = [];

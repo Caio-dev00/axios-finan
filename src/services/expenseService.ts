@@ -84,6 +84,13 @@ export const getRecentExpenses = async (limit = 3) => {
 };
 
 export const getExpensesByCategory = async () => {
+  // Check if we're on the demo page
+  const isDemo = window.location.pathname.includes('saiba-mais');
+  
+  if (isDemo) {
+    return getDemoExpenseCategories();
+  }
+  
   const { data, error } = await supabase
     .from("expenses")
     .select("category, amount");
@@ -109,4 +116,18 @@ export const getExpensesByCategory = async () => {
     amount: categories[category],
     percentage: Math.round((categories[category] / total) * 100),
   }));
+};
+
+// Function to generate demo data for expense categories
+export const getDemoExpenseCategories = () => {
+  return [
+    { name: "Moradia", amount: 1500, percentage: 30 },
+    { name: "Alimentação", amount: 1000, percentage: 20 },
+    { name: "Transporte", amount: 750, percentage: 15 },
+    { name: "Lazer", amount: 500, percentage: 10 },
+    { name: "Saúde", amount: 400, percentage: 8 },
+    { name: "Educação", amount: 350, percentage: 7 },
+    { name: "Serviços", amount: 300, percentage: 6 },
+    { name: "Outros", amount: 200, percentage: 4 }
+  ];
 };
