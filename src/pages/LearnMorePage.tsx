@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -86,9 +85,9 @@ const LearnMorePage = () => {
                 <div className="lg:w-1/2">
                   <div className="bg-white p-6 rounded-lg shadow-lg">
                     <img 
-                      src="/placeholder.svg" 
-                      alt="Dashboard Intuitivo" 
-                      className="w-full h-auto rounded" 
+                      src="/images/dashboard-overview.jpg" 
+                      alt="Dashboard Completo" 
+                      className="w-full h-auto rounded object-cover aspect-video" 
                     />
                   </div>
                 </div>
@@ -118,9 +117,9 @@ const LearnMorePage = () => {
                 <div className="lg:w-1/2">
                   <div className="bg-white p-6 rounded-lg shadow-lg">
                     <img 
-                      src="/placeholder.svg" 
+                      src="/images/transactions.jpg" 
                       alt="Gestão de Transações" 
-                      className="w-full h-auto rounded" 
+                      className="w-full h-auto rounded object-cover aspect-video" 
                     />
                   </div>
                 </div>
@@ -150,9 +149,9 @@ const LearnMorePage = () => {
                 <div className="lg:w-1/2">
                   <div className="bg-white p-6 rounded-lg shadow-lg">
                     <img 
-                      src="/placeholder.svg" 
+                      src="/images/goals-planning.jpg" 
                       alt="Planejamento Financeiro" 
-                      className="w-full h-auto rounded" 
+                      className="w-full h-auto rounded object-cover aspect-video" 
                     />
                   </div>
                 </div>
@@ -402,4 +401,3 @@ const LearnMorePage = () => {
 };
 
 export default LearnMorePage;
-
