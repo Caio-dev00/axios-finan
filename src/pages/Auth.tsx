@@ -17,6 +17,7 @@ const Auth: React.FC = () => {
   // Check if there's a return path in the location state
   const returnTo = location.state?.returnTo || "/dashboard";
   const redirectToPurchase = location.state?.redirectToPurchase || false;
+  const suggestedEmail = location.state?.suggestedEmail || "";
 
   // If user is already logged in, redirect to dashboard or returnTo path
   React.useEffect(() => {
@@ -37,10 +38,10 @@ const Auth: React.FC = () => {
     }
   }, [user, navigate, returnTo, redirectToPurchase, toast]);
 
-  // Set the active tab based on the presence of redirectToPurchase
+  // Set the active tab based on the presence of redirectToPurchase or suggestedEmail
   useEffect(() => {
-    if (location.state?.redirectToPurchase) {
-      // Se o usuário foi redirecionado para comprar, mostrar o registro por padrão
+    if (location.state?.redirectToPurchase || location.state?.suggestedEmail) {
+      // Se o usuário foi redirecionado para comprar ou tem um email sugerido, mostrar o registro por padrão
       setActiveTab("register");
     }
   }, [location]);
@@ -61,7 +62,7 @@ const Auth: React.FC = () => {
           {activeTab === "login" ? (
             <LoginForm returnTo={returnTo} />
           ) : (
-            <RegisterForm returnTo={returnTo} />
+            <RegisterForm returnTo={returnTo} initialEmail={suggestedEmail} />
           )}
         </AuthContainer>
       </div>
