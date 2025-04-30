@@ -36,8 +36,10 @@ const Pricing = () => {
       return;
     }
 
-    // Redirecionamento para o link de pagamento externo
-    window.location.href = "https://pay.cakto.com.br/3bnjhuj_366904";
+    // Redirecionar para o link de pagamento externo com identificação do usuário
+    const paymentUrl = "https://pay.cakto.com.br/3bnjhuj_366904";
+    const finalUrl = `${paymentUrl}?user_id=${encodeURIComponent(user.id)}&origin=${encodeURIComponent(window.location.origin)}`;
+    window.location.href = finalUrl;
   };
 
   const isAlreadyPro = user && plan === "pro";

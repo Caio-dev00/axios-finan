@@ -29,18 +29,26 @@ serve(async (req) => {
       );
     }
 
+    console.log("Processando atualização de assinatura para usuário:", user_id);
+    
     // Verificar se o usuário já tem uma assinatura ativa
-    const { data: existingSubscription } = await supabaseClient
+    const { data: existingSubscription, error: fetchError } = await supabaseClient
       .from("user_subscriptions")
       .select("*")
       .eq("user_id", user_id)
       .maybeSingle();
+      
+    if (fetchError) {
+      console.error("Erro ao buscar assinatura:", fetchError);
+      throw fetchError;
+    }
 
     let result;
 
     if (existingSubscription) {
       // Atualizar a assinatura existente
-      result = await supabaseClient
+      console.log("Atualizando assinatura existente para o usuário:", user_id);
+      const { data, error } = await supabaseClient
         .from("user_subscriptions")
         .update({
           plan_type,
@@ -49,9 +57,17 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", user_id);
+        
+      if (error) {
+        console.error("Erro ao atualizar assinatura:", error);
+        throw error;
+      }
+      
+      result = data;
     } else {
       // Criar uma nova assinatura
-      result = await supabaseClient
+      console.log("Criando nova assinatura para o usuário:", user_id);
+      const { data, error } = await supabaseClient
         .from("user_subscriptions")
         .insert({
           user_id,
@@ -59,10 +75,17 @@ serve(async (req) => {
           is_active: true,
           payment_id: payment_id || null,
         });
+        
+      if (error) {
+        console.error("Erro ao criar assinatura:", error);
+        throw error;
+      }
+      
+      result = data;
     }
 
     // Criar uma notificação para o usuário
-    await supabaseClient
+    const { error: notificationError } = await supabaseClient
       .from("notifications")
       .insert({
         user_id,
@@ -70,12 +93,21 @@ serve(async (req) => {
         message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos!",
         type: "subscription",
       });
+      
+    if (notificationError) {
+      console.error("Erro ao criar notificação:", notificationError);
+      // Não lançamos o erro aqui para não interromper o fluxo principal
+    }
 
+    console.log("Assinatura atualizada com sucesso para o usuário:", user_id);
+    
     return new Response(
       JSON.stringify({ success: true, message: "Assinatura atualizada com sucesso" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("Erro ao processar requisição:", error.message);
+    
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

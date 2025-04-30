@@ -1,74 +1,64 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { Toaster } from "@/components/ui/toaster";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-import Index from "./pages/Index";
-import Resources from "./pages/Resources";
-import PricingPage from "./pages/Pricing";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import ExpensesPage from "./pages/dashboard/ExpensesPage";
-import IncomePage from "./pages/dashboard/IncomePage";
-import BudgetsPage from "./pages/dashboard/BudgetsPage";
-import ReportsPage from "./pages/dashboard/ReportsPage";
-import PlanningPage from "./pages/dashboard/PlanningPage";
-import SettingsPage from "./pages/dashboard/SettingsPage";
-import TransacoesPage from "./pages/dashboard/TransacoesPage";
-import DicasPage from "./pages/dashboard/DicasPage";
-import NotFound from "./pages/NotFound";
+// Páginas
+import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
+import Dashboard from "@/pages/Dashboard";
+import TransacoesPage from "@/pages/dashboard/TransacoesPage";
+import ExpensesPage from "@/pages/dashboard/ExpensesPage";
+import IncomePage from "@/pages/dashboard/IncomePage";
+import BudgetsPage from "@/pages/dashboard/BudgetsPage";
+import PlanningPage from "@/pages/dashboard/PlanningPage";
+import ReportsPage from "@/pages/dashboard/ReportsPage";
+import DicasPage from "@/pages/dashboard/DicasPage";
+import SettingsPage from "@/pages/dashboard/SettingsPage";
+import NotFound from "@/pages/NotFound";
+import Resources from "@/pages/Resources";
+import PricingPage from "@/pages/Pricing";
+import PaymentSuccess from "@/pages/PaymentSuccess";
 
-const queryClient = new QueryClient();
+import "./App.css";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <SubscriptionProvider>
         <ThemeProvider>
-          <SubscriptionProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/recursos" element={<Resources />} />
-                <Route path="/precos" element={<PricingPage />} />
-                <Route path="/auth" element={<Auth />} />
-                
-                {/* Rotas protegidas */}
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                >
-                  <Route path="expenses" element={<ExpensesPage />} />
-                  <Route path="income" element={<IncomePage />} />
-                  <Route path="budgets" element={<BudgetsPage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="transacoes" element={<TransacoesPage />} />
-                  <Route path="dicas" element={<DicasPage />} />
-                  <Route path="planning" element={<PlanningPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                </Route>
-                
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </SubscriptionProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/precos" element={<PricingPage />} />
+            <Route path="/recursos" element={<Resources />} />
+            <Route path="/pagamento-sucesso" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+            
+            <Route 
+              path="/dashboard" 
+              element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
+            >
+              <Route path="transacoes" element={<TransacoesPage />} />
+              <Route path="despesas" element={<ExpensesPage />} />
+              <Route path="receitas" element={<IncomePage />} />
+              <Route path="orcamentos" element={<BudgetsPage />} />
+              <Route path="planejamento" element={<PlanningPage />} />
+              <Route path="relatorios" element={<ReportsPage />} />
+              <Route path="dicas" element={<DicasPage />} />
+              <Route path="configuracoes" element={<SettingsPage />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
         </ThemeProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </SubscriptionProvider>
+    </AuthProvider>
+  );
+};
 
 export default App;

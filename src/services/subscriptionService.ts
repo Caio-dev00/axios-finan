@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Atualizar a assinatura para o Plano Pro
@@ -109,6 +108,31 @@ export const setUserSubscriptionStatus = async (userId: string, planType: "free"
     return { success: true };
   } catch (error) {
     console.error("Erro ao definir status da assinatura:", error);
+    throw error;
+  }
+};
+
+// Processar a conclusão de pagamento e atualizar a assinatura
+export const processPaymentCompletion = async (userId: string) => {
+  try {
+    // Atualize o status da assinatura para pro
+    await setUserSubscriptionStatus(userId, "pro");
+    
+    // Crie uma notificação para o usuário
+    const { error } = await supabase
+      .from("notifications")
+      .insert({
+        user_id: userId,
+        title: "Bem-vindo ao Plano Pro!",
+        message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos!",
+        type: "subscription",
+      });
+    
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao processar conclusão de pagamento:", error);
     throw error;
   }
 };
