@@ -5,10 +5,9 @@ import { Settings, BarChart3, PieChart, CreditCard, LineChart, Receipt, Lightbul
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import ProFeature from "@/components/ProFeature";
 
 const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
-  const { isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
   
   // Para items que são Pro, mas o usuário não é Pro, mostrar o ProFeature ou não mostrar o item
   if (isProFeature && !isPro) {
@@ -18,7 +17,7 @@ const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
   return (
     <NavLink
       to={to}
-      onClick={isMobile ? () => useSidebar().setOpenMobile(false) : undefined}
+      onClick={isMobile ? () => setOpenMobile(false) : undefined}
       className={({ isActive }) => `
         flex items-center gap-4 px-4 py-3 rounded-md text-base transition-colors
         ${isActive 

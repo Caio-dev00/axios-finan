@@ -107,7 +107,11 @@ const TransactionDetails = ({ transaction, type }: { transaction: any, type: 'in
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Categoria</span>
-          <span>{type === 'income' ? transaction.source : transaction.category}</span>
+          <span>
+            {type === 'income' 
+              ? (transaction as IncomeTransaction).source 
+              : (transaction as ExpenseTransaction).category}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Data</span>
@@ -117,10 +121,10 @@ const TransactionDetails = ({ transaction, type }: { transaction: any, type: 'in
             })}
           </span>
         </div>
-        {transaction.notes && (
+        {type === 'expense' && (transaction as ExpenseTransaction).notes && (
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium">Observações</span>
-            <span className="text-sm text-gray-600">{transaction.notes}</span>
+            <span className="text-sm text-gray-600">{(transaction as ExpenseTransaction).notes}</span>
           </div>
         )}
       </div>
@@ -391,14 +395,18 @@ const TransacoesPage = () => {
       {showAddIncomeDialog && (
         <AddIncomeDialog 
           trigger={null}
-          onAddIncome={handleIncomeAdded} 
+          onOpenChange={setShowAddIncomeDialog}
+          open={showAddIncomeDialog}
+          onSubmitSuccess={handleIncomeAdded} 
         />
       )}
       
       {showAddExpenseDialog && (
         <AddExpenseDialog 
           trigger={null}
-          onAddExpense={handleExpenseAdded}
+          onOpenChange={setShowAddExpenseDialog}
+          open={showAddExpenseDialog}
+          onSubmitSuccess={handleExpenseAdded}
         />
       )}
     </div>
