@@ -23,6 +23,7 @@ import NotFound from "@/pages/NotFound";
 import Resources from "@/pages/Resources";
 import PricingPage from "@/pages/Pricing";
 import PaymentSuccess from "@/pages/PaymentSuccess";
+import LearnMorePage from "@/pages/LearnMorePage";
 
 import "./App.css";
 
@@ -36,6 +37,7 @@ const App: React.FC = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/precos" element={<PricingPage />} />
             <Route path="/recursos" element={<Resources />} />
+            <Route path="/saiba-mais" element={<LearnMorePage />} />
             <Route path="/pagamento-sucesso" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
             
             <Route 

@@ -1,5 +1,5 @@
-
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/services/currencyService";
 import { Bar, Line, LineChart, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -76,8 +76,14 @@ const Hero = () => {
               <Button className="finance-btn-primary text-base">
                 Comece agora gratuitamente
               </Button>
-              <Button variant="outline" className="border-finance-primary text-finance-primary hover:bg-finance-light text-base">
-                Saiba mais
+              <Button 
+                variant="outline" 
+                className="border-finance-primary text-finance-primary hover:bg-finance-light text-base"
+                asChild
+              >
+                <Link to="/saiba-mais">
+                  Saiba mais
+                </Link>
               </Button>
             </div>
             <div className="mt-6 text-sm text-gray-500">
