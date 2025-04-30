@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateProfile, getProfile } from '@/services/profileService';
-import { updateUserNotificationPreferences, getUserNotificationPreferences, NotificationPreferences } from '@/services/notificationService';
+import { NotificationPreferences, getUserNotificationPreferences, updateUserNotificationPreferences } from '@/services/notificationService';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -70,7 +71,7 @@ const SettingsPage = () => {
     queryKey: ['notificationPreferences', user?.id],
     queryFn: getUserNotificationPreferences,
     enabled: !!user,
-    onSettled: (data) => {
+    onSuccess: (data) => {
       if (data) {
         setBillReminders(data.bill_reminders);
         setBudgetAlerts(data.budget_alerts);
