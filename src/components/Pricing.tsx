@@ -6,12 +6,11 @@ import { Check } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { upgradeToProPlan } from "@/services/subscriptionService";
 import { useToast } from "@/hooks/use-toast";
 
 const Pricing = () => {
   const { user } = useAuth();
-  const { plan, refreshSubscription } = useSubscription();
+  const { plan } = useSubscription();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -32,13 +31,14 @@ const Pricing = () => {
 
   const handleProPlanUpgrade = async () => {
     if (!user) {
-      navigate("/auth", { state: { returnTo: "/precos" } });
+      // Redireciona para a autenticação com parâmetro de retorno para a página de preços
+      navigate("/auth", { state: { returnTo: "/precos", redirectToPurchase: true } });
       return;
     }
 
     // Redirecionar para o link de pagamento externo com identificação do usuário
     const paymentUrl = "https://pay.cakto.com.br/3bnjhuj_366904";
-    const finalUrl = `${paymentUrl}?user_id=${encodeURIComponent(user.id)}&origin=${encodeURIComponent(window.location.origin)}`;
+    const finalUrl = `${paymentUrl}?user_id=${encodeURIComponent(user.id)}&origin=${encodeURIComponent(window.location.origin)}&email=${encodeURIComponent(user.email)}`;
     window.location.href = finalUrl;
   };
 

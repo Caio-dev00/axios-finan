@@ -18,24 +18,48 @@ const PaymentSuccess = () => {
   
   useEffect(() => {
     const processPayment = async () => {
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-
       try {
-        // Extrair o ID do usuário da URL ou usar o ID do usuário logado
+        // Extrair parâmetros da URL
         const queryParams = new URLSearchParams(location.search);
-        const userId = queryParams.get("user_id") || user.id;
+        const userId = queryParams.get("user_id");
+        const email = queryParams.get("email");
         
-        await processPaymentCompletion(userId);
-        await refreshSubscription();
+        if (!user && !userId) {
+          toast({
+            title: "Erro ao processar pagamento",
+            description: "Não foi possível identificar o usuário para ativação do plano.",
+            variant: "destructive",
+          });
+          setIsProcessing(false);
+          return;
+        }
         
-        toast({
-          title: "Pagamento processado com sucesso!",
-          description: "Seu plano Pro foi ativado.",
-          variant: "default",
-        });
+        // Usar o ID do usuário da URL ou do usuário logado
+        const effectiveUserId = userId || user?.id;
+        
+        if (effectiveUserId) {
+          await processPaymentCompletion(effectiveUserId);
+          await refreshSubscription();
+          
+          toast({
+            title: "Pagamento processado com sucesso!",
+            description: "Seu plano Pro foi ativado.",
+            variant: "default",
+          });
+        } else {
+          // Caso não tenha usuário nem ID
+          toast({
+            title: "Atenção",
+            description: "Para ativar seu plano Pro, você precisa criar uma conta ou fazer login.",
+            variant: "default",
+          });
+          
+          // Se tiver email, sugerir criar conta com esse email
+          if (email) {
+            navigate("/auth", { state: { suggestedEmail: email } });
+            return;
+          }
+        }
       } catch (error) {
         console.error("Erro ao processar pagamento:", error);
         toast({
