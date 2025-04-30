@@ -16,12 +16,17 @@ const Pricing = () => {
   const { toast } = useToast();
   
   const features = [
-    "Registro ilimitado de transações",
+    "Registro de transações",
+    "Dashboard básico",
+    "Categorização manual",
+    "Orçamento mensal",
+    "Análises financeiras básicas",
+    "Transações ilimitadas",
     "Dashboard personalizado",
-    "Gráficos e relatórios detalhados",
-    "Exportação de relatórios em PDF",
     "Categorização automática",
-    "Dicas personalizadas de economia",
+    "Exportação para PDF e CSV",
+    "Relatórios detalhados",
+    "Dicas financeiras personalizadas",
     "Suporte prioritário"
   ];
 
@@ -59,13 +64,13 @@ const Pricing = () => {
             </CardHeader>
             <CardContent className="border-t border-gray-100 pt-6">
               <ul className="space-y-3">
-                {features.slice(0, 3).map((feature, index) => (
+                {features.slice(0, 5).map((feature, index) => (
                   <li key={index} className="flex items-start">
                     <Check size={20} className="text-finance-primary mr-2 mt-0.5 flex-shrink-0" />
                     <span className="text-gray-700">{feature}</span>
                   </li>
                 ))}
-                {features.slice(3).map((feature, index) => (
+                {features.slice(5).map((feature, index) => (
                   <li key={index} className="flex items-start opacity-50">
                     <Check size={20} className="text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
                     <span className="text-gray-500 line-through">{feature}</span>

@@ -1,3 +1,4 @@
+
 import React from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -39,8 +40,8 @@ const PricingPage = () => {
         "Registro de até 20 transações",
         "Dashboard básico",
         "Categorização manual",
-        "Sem exportação de relatórios",
-        "Suporte por email",
+        "Orçamento mensal simples",
+        "Análises financeiras básicas",
       ],
       cta: user ? "Acessar Dashboard" : "Começar teste grátis",
       action: () => navigate(user ? "/dashboard" : "/auth"),
@@ -52,12 +53,14 @@ const PricingPage = () => {
       period: "por mês",
       description: "Nosso plano completo com todas as ferramentas para gerenciar suas finanças.",
       features: [
-        "Registro ilimitado de transações",
+        "Transações ilimitadas",
         "Dashboard personalizado",
         "Categorização automática",
-        "Gráficos e relatórios detalhados",
-        "Exportação de relatórios em PDF",
-        "Dicas personalizadas de economia",
+        "Orçamentos avançados",
+        "Análises detalhadas por categoria",
+        "Exportação de relatórios (PDF/CSV)",
+        "Alertas de gastos personalizados",
+        "Dicas financeiras personalizadas",
         "Suporte prioritário"
       ],
       cta: isAlreadyPro ? "Plano Ativo" : "Assinar plano Pro",
@@ -188,9 +191,14 @@ const PricingPage = () => {
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">Automática</td>
                   </tr>
                   <tr>
-                    <td className="py-3 px-6 text-gray-800">Relatórios</td>
-                    <td className="py-3 px-6 text-center">Não</td>
-                    <td className="py-3 px-6 text-center font-medium text-finance-primary">Sim</td>
+                    <td className="py-3 px-6 text-gray-800">Orçamentos</td>
+                    <td className="py-3 px-6 text-center">Simples</td>
+                    <td className="py-3 px-6 text-center font-medium text-finance-primary">Avançados</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-6 text-gray-800">Análises financeiras</td>
+                    <td className="py-3 px-6 text-center">Básicas</td>
+                    <td className="py-3 px-6 text-center font-medium text-finance-primary">Detalhadas</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Exportação de dados</td>
@@ -198,9 +206,14 @@ const PricingPage = () => {
                     <td className="py-3 px-6 text-center font-medium text-finance-primary">PDF, CSV</td>
                   </tr>
                   <tr>
-                    <td className="py-3 px-6 text-gray-800">Dicas personalizadas</td>
+                    <td className="py-3 px-6 text-gray-800">Alertas de gastos</td>
+                    <td className="py-3 px-6 text-center">Não</td>
+                    <td className="py-3 px-6 text-center font-medium text-finance-primary">Personalizados</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-6 text-gray-800">Dicas financeiras</td>
                     <td className="py-3 px-6 text-center">Básicas</td>
-                    <td className="py-3 px-6 text-center font-medium text-finance-primary">Avançadas</td>
+                    <td className="py-3 px-6 text-center font-medium text-finance-primary">Personalizadas</td>
                   </tr>
                   <tr>
                     <td className="py-3 px-6 text-gray-800">Suporte</td>
