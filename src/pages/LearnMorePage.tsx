@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -8,6 +9,18 @@ import DashboardDemo from "@/components/DashboardDemo";
 import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import ExpenseDistribution from "@/components/dashboard/ExpenseDistribution";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
+
+// Create a QueryClient for the Learn More page
+const learnMoreQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
 
 const LearnMorePage = () => {
   return (
@@ -85,11 +98,15 @@ const LearnMorePage = () => {
             <h2 className="text-3xl font-bold text-finance-dark mb-12 text-center">Recursos Disponíveis</h2>
             
             <div className="space-y-20">
-              {/* Dashboard Overview - Using real component */}
+              {/* Dashboard Overview - Using real component with QueryClientProvider */}
               <div className="bg-white p-6 rounded-lg shadow-lg">
                 <h3 className="text-2xl font-bold text-finance-dark mb-6 text-center">Dashboard Completo</h3>
                 <div className="max-w-5xl mx-auto">
-                  <FinancialSummary />
+                  <QueryClientProvider client={learnMoreQueryClient}>
+                    <CurrencyProvider>
+                      <FinancialSummary />
+                    </CurrencyProvider>
+                  </QueryClientProvider>
                 </div>
                 <div className="mt-6">
                   <ul className="space-y-2 max-w-2xl mx-auto">
@@ -109,11 +126,15 @@ const LearnMorePage = () => {
                 </div>
               </div>
               
-              {/* Transactions - Using real component */}
+              {/* Transactions - Using real component with QueryClientProvider */}
               <div className="bg-white p-6 rounded-lg shadow-lg">
                 <h3 className="text-2xl font-bold text-finance-dark mb-6 text-center">Gestão de Transações</h3>
                 <div className="max-w-5xl mx-auto">
-                  <RecentTransactions />
+                  <QueryClientProvider client={learnMoreQueryClient}>
+                    <CurrencyProvider>
+                      <RecentTransactions />
+                    </CurrencyProvider>
+                  </QueryClientProvider>
                 </div>
                 <div className="mt-6">
                   <ul className="space-y-2 max-w-2xl mx-auto">
@@ -133,11 +154,15 @@ const LearnMorePage = () => {
                 </div>
               </div>
               
-              {/* Planning and Expense Distribution - Using real component */}
+              {/* Planning and Expense Distribution - Using real component with QueryClientProvider */}
               <div className="bg-white p-6 rounded-lg shadow-lg">
                 <h3 className="text-2xl font-bold text-finance-dark mb-6 text-center">Metas e Planejamento</h3>
                 <div className="max-w-5xl mx-auto">
-                  <ExpenseDistribution />
+                  <QueryClientProvider client={learnMoreQueryClient}>
+                    <CurrencyProvider>
+                      <ExpenseDistribution />
+                    </CurrencyProvider>
+                  </QueryClientProvider>
                 </div>
                 <div className="mt-6">
                   <ul className="space-y-2 max-w-2xl mx-auto">
