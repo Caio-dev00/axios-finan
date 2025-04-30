@@ -68,3 +68,47 @@ export const cancelSubscription = async (userId: string) => {
     throw error;
   }
 };
+
+// Atualizar diretamente o status de assinatura do usuário (para uso administrativo)
+export const setUserSubscriptionStatus = async (userId: string, planType: "free" | "pro") => {
+  try {
+    // Verificar se já existe uma assinatura para o usuário
+    const { data: existingSubscription, error: fetchError } = await supabase
+      .from("user_subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+    
+    if (fetchError) throw fetchError;
+    
+    if (existingSubscription) {
+      // Atualizar a assinatura existente
+      const { error: updateError } = await supabase
+        .from("user_subscriptions")
+        .update({
+          plan_type: planType,
+          is_active: true,
+          end_date: planType === "pro" ? null : existingSubscription.end_date,
+        })
+        .eq("user_id", userId);
+      
+      if (updateError) throw updateError;
+    } else {
+      // Criar uma nova assinatura
+      const { error: insertError } = await supabase
+        .from("user_subscriptions")
+        .insert({
+          user_id: userId,
+          plan_type: planType,
+          is_active: true,
+        });
+      
+      if (insertError) throw insertError;
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao definir status da assinatura:", error);
+    throw error;
+  }
+};

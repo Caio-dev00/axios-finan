@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 // Criar um cliente QueryClient para o Dashboard
 const queryClient = new QueryClient({
@@ -29,10 +30,27 @@ const DashboardContent = () => {
   const location = useLocation();
   const isMainDashboard = location.pathname === "/dashboard";
   const isMobile = useIsMobile();
+  const { upgradeToPro } = useSubscription();
   
   // Extrair o nome do usuário de maneira segura
   const userName = user?.user_metadata?.nome || "Usuário";
   const firstName = userName.split(" ")[0];
+  
+  // Verificar se o email é o especificado e atualizar para pro
+  useEffect(() => {
+    const checkAndUpgradeUser = async () => {
+      if (user && user.email === "caiohenrique1146@gmail.com") {
+        try {
+          await upgradeToPro(user.id);
+          console.log("Usuário atualizado para plano Pro");
+        } catch (error) {
+          console.error("Erro ao atualizar usuário para Pro:", error);
+        }
+      }
+    };
+    
+    checkAndUpgradeUser();
+  }, [user]);
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-background w-full">

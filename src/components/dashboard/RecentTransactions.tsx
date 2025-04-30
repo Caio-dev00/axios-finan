@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRecentTransactions } from "@/services/financeService";
 import { deleteIncome } from "@/services/incomeService";
@@ -22,12 +22,17 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { convertCurrency, formatCurrency } from "@/services/currencyService";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import ProFeature from "@/components/ProFeature";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const RecentTransactions = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeCurrency } = useCurrency();
+  const { isPro } = useSubscription();
   
   const {
     data: transactions,
@@ -103,17 +108,249 @@ const RecentTransactions = () => {
     }));
   }, [transactions, activeCurrency]);
 
+  // Exportar dados para CSV
+  const exportToCSV = () => {
+    if (!convertedTransactions || convertedTransactions.length === 0) {
+      toast({
+        title: "Sem dados",
+        description: "Não há transações para exportar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Cria cabeçalhos para o CSV
+    const headers = ['Descrição', 'Categoria/Fonte', 'Data', 'Valor', 'Tipo'];
+    
+    // Formata os dados
+    const csvData = convertedTransactions.map(transaction => {
+      const categoryOrSource = transaction.type === 'expense' 
+        ? transaction.category 
+        : transaction.source;
+      
+      return [
+        transaction.name,
+        categoryOrSource,
+        format(new Date(transaction.date), 'dd/MM/yyyy'),
+        transaction.amount.toFixed(2),
+        transaction.type === 'income' ? 'Receita' : 'Despesa'
+      ].join(',');
+    });
+
+    // Monta o conteúdo do CSV
+    const csvContent = [
+      headers.join(','),
+      ...csvData
+    ].join('\n');
+
+    // Cria o blob e o link para download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `transacoes_recentes_${format(new Date(), 'dd-MM-yyyy')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download iniciado",
+      description: "Seu arquivo CSV está sendo baixado."
+    });
+  };
+
+  // Exportar dados para Excel (XLSX)
+  const exportToExcel = () => {
+    if (!convertedTransactions || convertedTransactions.length === 0) {
+      toast({
+        title: "Sem dados",
+        description: "Não há transações para exportar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Como não podemos usar bibliotecas externas, vamos usar o formato CSV que o Excel abre
+    exportToCSV();
+    
+    toast({
+      title: "Download iniciado",
+      description: "Seu arquivo Excel está sendo baixado. Abra-o com o Excel."
+    });
+  };
+
+  // Exportar dados para PDF
+  const exportToPDF = () => {
+    if (!convertedTransactions || convertedTransactions.length === 0) {
+      toast({
+        title: "Sem dados",
+        description: "Não há transações para exportar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Criar uma nova janela para impressão em PDF
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está desativado.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Criar o conteúdo HTML da página PDF
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Relatório de Transações Recentes</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background-color: #f2f2f2; }
+            .income { color: green; }
+            .expense { color: red; }
+            .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <h1>Relatório de Transações Recentes</h1>
+          <p>Data de geração: ${format(new Date(), 'dd/MM/yyyy')}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Descrição</th>
+                <th>Categoria/Fonte</th>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Tipo</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${convertedTransactions.map(transaction => {
+                const categoryOrSource = transaction.type === 'expense'
+                  ? transaction.category
+                  : transaction.source;
+                
+                return `
+                  <tr>
+                    <td>${transaction.name}</td>
+                    <td>${categoryOrSource}</td>
+                    <td>${format(new Date(transaction.date), 'dd/MM/yyyy')}</td>
+                    <td class="${transaction.type === 'income' ? 'income' : 'expense'}">
+                      ${transaction.type === 'income' ? '+' : '-'} ${formatCurrency(transaction.amount, activeCurrency)}
+                    </td>
+                    <td>${transaction.type === 'income' ? 'Receita' : 'Despesa'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+          <div class="footer">
+            <p>Gerado em ${format(new Date(), "dd 'de' MMMM 'de' yyyy, HH:mm:ss", { locale: ptBR })}</p>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    // Escrever o HTML na nova janela e imprimir
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    
+    toast({
+      title: "PDF gerado",
+      description: "Seu relatório em PDF está pronto para impressão."
+    });
+  };
+
   return (
     <Card className="shadow-sm h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">Transações Recentes</CardTitle>
-        <Button 
-          size="sm" 
-          variant="outline" 
-          onClick={() => navigate("/dashboard/expenses")}
-        >
-          Ver todas
-        </Button>
+        
+        <div className="flex items-center gap-2">
+          {convertedTransactions && convertedTransactions.length > 0 && (
+            <>
+              {/* PDF disponível para todos */}
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="flex items-center text-xs px-2 py-1 h-auto"
+                onClick={exportToPDF}
+              >
+                <Download className="h-3 w-3 mr-1" />
+                PDF
+              </Button>
+              
+              {/* CSV apenas para PRO */}
+              <ProFeature fallback={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center text-xs px-2 py-1 h-auto opacity-70"
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  CSV
+                  <span className="ml-1 text-[10px] bg-amber-200 text-amber-800 px-1 rounded">Pro</span>
+                </Button>
+              }>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="flex items-center text-xs px-2 py-1 h-auto"
+                  onClick={exportToCSV}
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  CSV
+                </Button>
+              </ProFeature>
+              
+              {/* Excel apenas para PRO */}
+              <ProFeature fallback={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center text-xs px-2 py-1 h-auto opacity-70"
+                >
+                  <FileSpreadsheet className="h-3 w-3 mr-1" />
+                  XLS
+                  <span className="ml-1 text-[10px] bg-amber-200 text-amber-800 px-1 rounded">Pro</span>
+                </Button>
+              }>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="flex items-center text-xs px-2 py-1 h-auto"
+                  onClick={exportToExcel}
+                >
+                  <FileSpreadsheet className="h-3 w-3 mr-1" />
+                  XLS
+                </Button>
+              </ProFeature>
+            </>
+          )}
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => navigate("/dashboard/transacoes")}
+          >
+            Ver todas
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (

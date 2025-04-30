@@ -50,6 +50,8 @@ import { getIncomes, deleteIncome, updateIncome } from "@/services/incomeService
 import { formatCurrency } from "@/services/currencyService";
 import AddIncomeDialog from "@/components/dashboard/AddIncomeDialog";
 import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import ProFeature from "@/components/ProFeature";
 
 // Definindo interfaces para os tipos de transações
 interface ExpenseTransaction {
@@ -266,6 +268,7 @@ const TransacoesPage = () => {
   const [showAddIncomeDialog, setShowAddIncomeDialog] = useState(false);
   const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const { isPro } = useSubscription();
   
   // Mutações para atualizar transações
   const updateIncomeMutation = useMutation({
@@ -433,10 +436,19 @@ const TransacoesPage = () => {
 
   // Função para salvar uma transação editada
   const handleSaveEdit = (updatedTransaction: Transaction) => {
-    if (updatedTransaction.type === 'income') {
-      updateIncomeMutation.mutate(updatedTransaction as IncomeTransaction);
-    } else {
-      updateExpenseMutation.mutate(updatedTransaction as ExpenseTransaction);
+    try {
+      if (updatedTransaction.type === 'income') {
+        updateIncomeMutation.mutate(updatedTransaction as IncomeTransaction);
+      } else {
+        updateExpenseMutation.mutate(updatedTransaction as ExpenseTransaction);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar edição:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar as alterações.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -701,18 +713,37 @@ const TransacoesPage = () => {
 
           {filteredTransactions.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={exportToCSV}>
-                <FileText className="mr-2 h-4 w-4" />
-                Exportar CSV
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportToExcel}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Exportar Excel
-              </Button>
+              {/* PDF exportação disponível para todos */}
               <Button variant="outline" size="sm" onClick={exportToPDF}>
                 <Download className="mr-2 h-4 w-4" />
                 Exportar PDF
               </Button>
+              
+              {/* CSV exportação exclusiva para PRO */}
+              <ProFeature fallback={
+                <Button variant="outline" size="sm" className="opacity-70 cursor-not-allowed">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exportar CSV <span className="ml-2 text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">Pro</span>
+                </Button>
+              }>
+                <Button variant="outline" size="sm" onClick={exportToCSV}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exportar CSV
+                </Button>
+              </ProFeature>
+              
+              {/* Excel exportação exclusiva para PRO */}
+              <ProFeature fallback={
+                <Button variant="outline" size="sm" className="opacity-70 cursor-not-allowed">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Exportar Excel <span className="ml-2 text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">Pro</span>
+                </Button>
+              }>
+                <Button variant="outline" size="sm" onClick={exportToExcel}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Exportar Excel
+                </Button>
+              </ProFeature>
             </div>
           )}
 

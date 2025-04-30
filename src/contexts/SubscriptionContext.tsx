@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { checkSubscription, setUserSubscriptionStatus } from "@/services/subscriptionService";
 
 type SubscriptionPlan = "free" | "pro";
 
@@ -11,6 +12,7 @@ type SubscriptionContextType = {
   isLoading: boolean;
   isPro: boolean;
   refreshSubscription: () => Promise<void>;
+  upgradeToPro: (userId: string) => Promise<void>;
 };
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -32,18 +34,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from("user_subscriptions")
-        .select("plan_type, is_active")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        throw error;
-      }
-
-      if (data && data.is_active) {
-        setPlan(data.plan_type as SubscriptionPlan);
+      const { isPro, subscription } = await checkSubscription(user.id);
+      
+      if (isPro) {
+        setPlan("pro");
       } else {
         setPlan("free");
       }
@@ -59,13 +53,39 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     await fetchSubscription();
   };
 
+  // Função para atualizar o plano do usuário para Pro
+  const upgradeToPro = async (userId: string) => {
+    try {
+      await setUserSubscriptionStatus(userId, "pro");
+      setPlan("pro");
+      toast({
+        title: "Plano atualizado",
+        description: "Seu plano foi atualizado para Pro com sucesso!"
+      });
+      await refreshSubscription();
+    } catch (error) {
+      console.error("Erro ao atualizar para o plano Pro:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar seu plano. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Buscar a assinatura sempre que o usuário mudar
   useEffect(() => {
     fetchSubscription();
   }, [user]);
 
   return (
-    <SubscriptionContext.Provider value={{ plan, isLoading, isPro, refreshSubscription }}>
+    <SubscriptionContext.Provider value={{ 
+      plan, 
+      isLoading, 
+      isPro, 
+      refreshSubscription,
+      upgradeToPro 
+    }}>
       {children}
     </SubscriptionContext.Provider>
   );
