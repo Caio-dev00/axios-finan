@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { checkSubscription, setUserSubscriptionStatus } from "@/services/subscriptionService";
+import { checkSubscriptionStatus, upgradeToProPlan } from "@/services/subscriptionService";
 
 type SubscriptionPlan = "free" | "pro";
 
@@ -34,9 +34,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       setIsLoading(true);
-      const { isPro, subscription } = await checkSubscription(user.id);
+      const subscription = await checkSubscriptionStatus(user.id);
       
-      if (isPro) {
+      if (subscription && subscription.is_active && subscription.plan_type === 'pro') {
         setPlan("pro");
       } else {
         setPlan("free");
@@ -56,7 +56,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Função para atualizar o plano do usuário para Pro
   const upgradeToPro = async (userId: string) => {
     try {
-      await setUserSubscriptionStatus(userId, "pro");
+      await upgradeToProPlan(userId);
       setPlan("pro");
       toast({
         title: "Plano atualizado",

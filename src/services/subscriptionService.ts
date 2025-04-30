@@ -1,9 +1,9 @@
 
-import { supabaseClient } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export const upgradeToProPlan = async (userId: string) => {
   try {
-    const { data, error } = await supabaseClient.functions.invoke('update-subscription', {
+    const { data, error } = await supabase.functions.invoke('update-subscription', {
       body: { user_id: userId }
     });
     
@@ -18,7 +18,7 @@ export const upgradeToProPlan = async (userId: string) => {
 
 export const processPaymentCompletion = async (userId: string) => {
   try {
-    const { data, error } = await supabaseClient.functions.invoke('update-subscription', {
+    const { data, error } = await supabase.functions.invoke('update-subscription', {
       body: { 
         user_id: userId,
         plan_type: 'pro'
@@ -36,7 +36,7 @@ export const processPaymentCompletion = async (userId: string) => {
 
 export const checkSubscriptionStatus = async (userId: string) => {
   try {
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabase
       .from('user_subscriptions')
       .select('*')
       .eq('user_id', userId)
