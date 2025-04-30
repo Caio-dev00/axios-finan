@@ -76,28 +76,28 @@ const DashboardSidebar = () => {
             isProFeature={false}
           />
           <NavItem 
-            to="/dashboard/expenses" 
+            to="/dashboard/despesas" 
             icon={CreditCard} 
             label="Despesas" 
             isPro={isPro}
             isProFeature={false}
           />
           <NavItem 
-            to="/dashboard/income" 
+            to="/dashboard/receitas" 
             icon={BarChart3} 
             label="Receitas" 
             isPro={isPro}
             isProFeature={false}
           />
           <NavItem 
-            to="/dashboard/budgets" 
+            to="/dashboard/orcamentos" 
             icon={PieChart} 
             label="Orçamentos" 
             isPro={isPro}
             isProFeature={false}
           />
           <NavItem 
-            to="/dashboard/reports" 
+            to="/dashboard/relatorios" 
             icon={LineChart} 
             label="Relatórios" 
             isPro={isPro}
@@ -111,14 +111,14 @@ const DashboardSidebar = () => {
             isProFeature={false}
           />
           <NavItem 
-            to="/dashboard/planning" 
+            to="/dashboard/planejamento" 
             icon={BarChart3} 
             label="Planejamento" 
             isPro={isPro}
             isProFeature={true}
           />
           <NavItem 
-            to="/dashboard/settings" 
+            to="/dashboard/configuracoes" 
             icon={Settings} 
             label="Configurações" 
             isPro={isPro}
