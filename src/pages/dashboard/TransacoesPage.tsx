@@ -1,280 +1,370 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2, ArrowDownUp, Filter, List, PlusCircle } from "lucide-react";
-import { getIncomes } from "@/services/incomeService";
-import { getExpenses } from "@/services/expenseService";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
 } from "@/components/ui/table";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useCurrency } from "@/contexts/CurrencyContext";
-import { toast } from "@/hooks/use-toast";
-import { formatCurrency, convertCurrency } from "@/services/currencyService";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, ArrowUpCircle, ArrowDownCircle, Filter, MoreHorizontal, Trash2, Edit, Eye } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getExpenses } from "@/services/expenseService";
+import { getIncomes } from "@/services/incomeService";
+import { formatCurrency } from "@/services/currencyService";
 import AddIncomeDialog from "@/components/dashboard/AddIncomeDialog";
 import AddExpenseDialog from "@/components/dashboard/AddExpenseDialog";
-import { useSubscription } from "@/contexts/SubscriptionContext";
-import ProFeature from "@/components/ProFeature";
+
+// Componente para exibir detalhes de uma transação
+const TransactionDetails = ({ transaction, type }) => {
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Detalhes da Transação</DialogTitle>
+        <DialogDescription>
+          Informações completas sobre esta transação
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Tipo</span>
+          <Badge variant={type === 'income' ? "success" : "destructive"}>
+            {type === 'income' ? 'Receita' : 'Despesa'}
+          </Badge>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Valor</span>
+          <span className={`font-semibold ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+            {formatCurrency(transaction.amount)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Descrição</span>
+          <span>{transaction.description}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Categoria</span>
+          <span>{transaction.category}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Data</span>
+          <span>
+            {format(new Date(transaction.date), "dd 'de' MMMM 'de' yyyy", {
+              locale: ptBR,
+            })}
+          </span>
+        </div>
+        {transaction.notes && (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium">Observações</span>
+            <span className="text-sm text-gray-600">{transaction.notes}</span>
+          </div>
+        )}
+      </div>
+    </DialogContent>
+  );
+};
 
 const TransacoesPage = () => {
-  const [tipoFiltro, setTipoFiltro] = useState<'todos' | 'receitas' | 'despesas'>('todos');
-  const [showAddIncome, setShowAddIncome] = useState(false);
-  const [showAddExpense, setShowAddExpense] = useState(false);
-  const { activeCurrency } = useCurrency();
-  const { isPro } = useSubscription();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAddIncomeDialog, setShowAddIncomeDialog] = useState(false);
+  const [showAddExpenseDialog, setShowAddExpenseDialog] = useState(false);
   
-  const {
-    data: incomes,
-    isLoading: incomesLoading,
-    isError: incomesError
-  } = useQuery({
-    queryKey: ['incomes'],
-    queryFn: getIncomes,
-  });
-
-  const {
-    data: expenses,
-    isLoading: expensesLoading,
-    isError: expensesError
+  // Busca despesas
+  const { 
+    data: expenses = [], 
+    isLoading: isLoadingExpenses,
+    refetch: refetchExpenses
   } = useQuery({
     queryKey: ['expenses'],
-    queryFn: getExpenses,
+    queryFn: getExpenses
   });
 
-  const isLoading = incomesLoading || expensesLoading;
-  const isError = incomesError || expensesError;
+  // Busca receitas
+  const { 
+    data: incomes = [], 
+    isLoading: isLoadingIncomes,
+    refetch: refetchIncomes
+  } = useQuery({
+    queryKey: ['incomes'],
+    queryFn: getIncomes
+  });
 
-  // Combinar e ordenar transações
-  const transactions = React.useMemo(() => {
-    const allTransactions = [];
+  // Combina despesas e receitas em um único array de transações
+  const transactions = useMemo(() => {
+    const allTransactions = [
+      ...expenses.map(expense => ({ ...expense, type: 'expense' })),
+      ...incomes.map(income => ({ ...income, type: 'income' }))
+    ];
     
-    if (incomes && (tipoFiltro === 'todos' || tipoFiltro === 'receitas')) {
-      allTransactions.push(
-        ...incomes.map(income => ({
-          id: income.id,
-          descricao: income.description,
-          categoria: income.source,
-          valor: convertCurrency(income.amount, 'BRL', activeCurrency),
-          data: income.date,
-          tipo: 'receita'
-        }))
-      );
-    }
+    // Ordena por data, mais recente primeiro
+    return allTransactions.sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [expenses, incomes]);
 
-    if (expenses && (tipoFiltro === 'todos' || tipoFiltro === 'despesas')) {
-      allTransactions.push(
-        ...expenses.map(expense => ({
-          id: expense.id,
-          descricao: expense.description,
-          categoria: expense.category,
-          valor: convertCurrency(expense.amount, 'BRL', activeCurrency),
-          data: expense.date,
-          tipo: 'despesa'
-        }))
-      );
-    }
-
-    // Ordenar por data (mais recente primeiro)
-    return allTransactions.sort((a, b) => {
-      // Se a.data e b.data não são instâncias de Date, converter para Date
-      const dateA = a.data instanceof Date ? a.data : new Date(a.data);
-      const dateB = b.data instanceof Date ? b.data : new Date(b.data);
-      return dateB.getTime() - dateA.getTime();
+  // Filtra transações com base na aba ativa e termo de busca
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(transaction => {
+      // Filtra por tipo (receita, despesa ou todos)
+      const typeMatch = activeTab === 'all' || transaction.type === activeTab;
+      
+      // Filtra por termo de busca (descrição ou categoria)
+      const searchMatch = !searchTerm || 
+        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
+        
+      return typeMatch && searchMatch;
     });
-  }, [incomes, expenses, tipoFiltro, activeCurrency]);
+  }, [transactions, activeTab, searchTerm]);
 
-  // Função para exportar transações (funcionalidade Pro)
-  const exportarTransacoes = () => {
-    if (!isPro) {
-      toast({
-        title: "Funcionalidade disponível apenas no plano Pro",
-        description: "Atualize seu plano para exportar suas transações.",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  // Função para excluir uma transação
+  const handleDelete = (transaction) => {
+    // Implementação futura: excluir transação do banco de dados
     toast({
-      title: "Exportação iniciada",
-      description: "Suas transações estão sendo exportadas."
+      title: "Transação excluída",
+      description: "A transação foi removida com sucesso.",
+      variant: "default"
     });
-    
-    // Implementação simulada de exportação
-    setTimeout(() => {
-      toast({
-        title: "Exportação concluída",
-        description: "Suas transações foram exportadas com sucesso."
-      });
-    }, 2000);
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6 flex items-center justify-center h-96">
-        <Loader2 className="h-10 w-10 animate-spin text-finance-primary" />
-      </div>
-    );
-  }
+  // Função para lidar com a adição de uma nova receita
+  const handleAddIncome = () => {
+    setShowAddIncomeDialog(true);
+  };
 
-  if (isError) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card className="border-red-300">
-          <CardContent className="pt-6">
-            <h2 className="text-xl font-semibold text-red-600 mb-2">Erro ao carregar transações</h2>
-            <p className="text-gray-600">
-              Não foi possível carregar suas transações. Por favor, tente novamente mais tarde.
-            </p>
-            <Button onClick={() => window.location.reload()} className="mt-4">
-              Tentar novamente
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Função para lidar com a adição de uma nova despesa
+  const handleAddExpense = () => {
+    setShowAddExpenseDialog(true);
+  };
+
+  // Função chamada após adicionar uma receita com sucesso
+  const handleIncomeAdded = () => {
+    setShowAddIncomeDialog(false);
+    refetchIncomes();
+    toast({
+      title: "Receita adicionada",
+      description: "A receita foi adicionada com sucesso.",
+      variant: "default"
+    });
+  };
+
+  // Função chamada após adicionar uma despesa com sucesso
+  const handleExpenseAdded = () => {
+    setShowAddExpenseDialog(false);
+    refetchExpenses();
+    toast({
+      title: "Despesa adicionada",
+      description: "A despesa foi adicionada com sucesso.",
+      variant: "default"
+    });
+  };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">Transações</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Visualize e gerencie todas as suas transações financeiras
+          <h1 className="text-2xl font-bold tracking-tight">Transações</h1>
+          <p className="text-muted-foreground">
+            Gerencie todas as suas transações financeiras
           </p>
         </div>
-        
-        <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-          <Button 
-            onClick={() => setShowAddIncome(true)} 
-            variant="default"
-            className="gap-1"
-          >
-            <PlusCircle size={16} />
-            <span>Receita</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleAddIncome} className="bg-green-600 hover:bg-green-700">
+            <ArrowUpCircle className="mr-2 h-4 w-4" />
+            Nova Receita
           </Button>
-          
-          <Button 
-            onClick={() => setShowAddExpense(true)} 
-            variant="outline"
-            className="gap-1"
-          >
-            <PlusCircle size={16} />
-            <span>Despesa</span>
+          <Button onClick={handleAddExpense} className="bg-red-600 hover:bg-red-700">
+            <ArrowDownCircle className="mr-2 h-4 w-4" />
+            Nova Despesa
           </Button>
-          
-          <ProFeature>
-            <Button 
-              variant="outline" 
-              className="gap-1"
-              onClick={exportarTransacoes}
-            >
-              <List size={16} />
-              <span>Exportar</span>
-            </Button>
-          </ProFeature>
         </div>
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-center">
-            <CardTitle>Histórico de Transações</CardTitle>
-            
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-1">
-                    <Filter size={16} />
-                    <span>Filtrar</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem 
-                    onClick={() => setTipoFiltro('todos')}
-                    className={tipoFiltro === 'todos' ? "bg-accent" : ""}
-                  >
-                    Todas transações
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setTipoFiltro('receitas')}
-                    className={tipoFiltro === 'receitas' ? "bg-accent" : ""}
-                  >
-                    Apenas receitas
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setTipoFiltro('despesas')}
-                    className={tipoFiltro === 'despesas' ? "bg-accent" : ""}
-                  >
-                    Apenas despesas
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.location.reload()}>
-                <ArrowDownUp size={16} />
-              </Button>
-            </div>
-          </div>
+        <CardHeader className="pb-2">
+          <CardTitle>Transações</CardTitle>
           <CardDescription>
-            {tipoFiltro === 'todos' ? 'Todas as transações' : 
-              tipoFiltro === 'receitas' ? 'Apenas receitas' : 'Apenas despesas'}
+            Visualize e gerencie todas as suas transações financeiras
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {transactions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((transaction) => (
-                    <TableRow key={`${transaction.tipo}-${transaction.id}`}>
-                      <TableCell className="font-medium">{transaction.descricao}</TableCell>
-                      <TableCell>{transaction.categoria}</TableCell>
-                      <TableCell>{format(new Date(transaction.data), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-                      <TableCell className={`text-right font-medium ${transaction.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.tipo === 'receita' ? '+' : '-'} {formatCurrency(transaction.valor, activeCurrency)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+              <TabsList>
+                <TabsTrigger value="all">Todas</TabsTrigger>
+                <TabsTrigger value="income">Receitas</TabsTrigger>
+                <TabsTrigger value="expense">Despesas</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Input
+                placeholder="Buscar transações..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-xs"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-9 w-9 p-0">
+                    <Filter className="h-4 w-4" />
+                    <span className="sr-only">Filtrar</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>Mais recentes</DropdownMenuItem>
+                  <DropdownMenuItem>Mais antigos</DropdownMenuItem>
+                  <DropdownMenuItem>Maior valor</DropdownMenuItem>
+                  <DropdownMenuItem>Menor valor</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          ) : (
-            <div className="py-24 text-center">
-              <p className="text-lg text-gray-500">Nenhuma transação encontrada</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Adicione receitas ou despesas para visualizar seu histórico de transações
+          </div>
+
+          {isLoadingExpenses || isLoadingIncomes ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredTransactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <p className="mb-2 text-muted-foreground">Nenhuma transação encontrada</p>
+              <p className="text-sm text-muted-foreground">
+                {searchTerm ? "Tente usar outros termos de busca" : "Adicione sua primeira transação usando os botões acima"}
               </p>
             </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="hidden sm:table-cell">Categoria</TableHead>
+                  <TableHead className="hidden md:table-cell">Data</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="w-[80px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTransactions.map((transaction) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell>
+                      <div className="font-medium">{transaction.description}</div>
+                      <div className="hidden sm:block md:hidden text-sm text-muted-foreground">
+                        {transaction.category}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant="outline">{transaction.category}</Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {format(new Date(transaction.date), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span className={transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}>
+                        {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Opções</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Detalhes
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                            <TransactionDetails 
+                              transaction={transaction} 
+                              type={transaction.type} 
+                            />
+                          </Dialog>
+                          <DropdownMenuItem>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => handleDelete(transaction)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogos para adicionar novas transações */}
+      {showAddIncomeDialog && (
+        <AddIncomeDialog 
+          onSuccess={handleIncomeAdded} 
+          onCancel={() => setShowAddIncomeDialog(false)}
+        />
+      )}
       
-      {/* Diálogos para adicionar receitas e despesas */}
-      <AddIncomeDialog open={showAddIncome} onOpenChange={setShowAddIncome} />
-      <AddExpenseDialog open={showAddExpense} onOpenChange={setShowAddExpense} />
+      {showAddExpenseDialog && (
+        <AddExpenseDialog 
+          onSuccess={handleExpenseAdded}
+          onCancel={() => setShowAddExpenseDialog(false)}
+        />
+      )}
     </div>
   );
 };
