@@ -4,6 +4,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { FileText, BookOpen, ChevronRight } from "lucide-react";
+import DashboardDemo from "@/components/DashboardDemo";
+import FinancialSummary from "@/components/dashboard/FinancialSummary";
+import RecentTransactions from "@/components/dashboard/RecentTransactions";
+import ExpenseDistribution from "@/components/dashboard/ExpenseDistribution";
 
 const LearnMorePage = () => {
   return (
@@ -75,28 +79,20 @@ const LearnMorePage = () => {
           </div>
         </section>
 
-        {/* Features Section */}
+        {/* Features Section with Dynamic Components */}
         <section className="py-16 bg-finance-gray">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-finance-dark mb-12 text-center">Recursos Disponíveis</h2>
             
             <div className="space-y-20">
-              <div className="flex flex-col lg:flex-row items-center gap-8">
-                <div className="lg:w-1/2">
-                  <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <img 
-                      src="/images/dashboard-overview.jpg" 
-                      alt="Dashboard Completo" 
-                      className="w-full h-auto rounded object-cover aspect-video" 
-                    />
-                  </div>
+              {/* Dashboard Overview - Using real component */}
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <h3 className="text-2xl font-bold text-finance-dark mb-6 text-center">Dashboard Completo</h3>
+                <div className="max-w-5xl mx-auto">
+                  <FinancialSummary />
                 </div>
-                <div className="lg:w-1/2">
-                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Dashboard Completo</h3>
-                  <p className="text-gray-700 mb-6">
-                    Visualize sua situação financeira atual em um painel intuitivo que mostra todas as informações importantes.
-                  </p>
-                  <ul className="space-y-2">
+                <div className="mt-6">
+                  <ul className="space-y-2 max-w-2xl mx-auto">
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
                       <span className="text-gray-700">Resumo das suas finanças em um único lugar</span>
@@ -113,22 +109,14 @@ const LearnMorePage = () => {
                 </div>
               </div>
               
-              <div className="flex flex-col lg:flex-row-reverse items-center gap-8">
-                <div className="lg:w-1/2">
-                  <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <img 
-                      src="/images/transactions.jpg" 
-                      alt="Gestão de Transações" 
-                      className="w-full h-auto rounded object-cover aspect-video" 
-                    />
-                  </div>
+              {/* Transactions - Using real component */}
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <h3 className="text-2xl font-bold text-finance-dark mb-6 text-center">Gestão de Transações</h3>
+                <div className="max-w-5xl mx-auto">
+                  <RecentTransactions />
                 </div>
-                <div className="lg:w-1/2">
-                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Gestão de Transações</h3>
-                  <p className="text-gray-700 mb-6">
-                    Registre e categorize suas receitas e despesas para ter um controle detalhado do seu dinheiro.
-                  </p>
-                  <ul className="space-y-2">
+                <div className="mt-6">
+                  <ul className="space-y-2 max-w-2xl mx-auto">
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
                       <span className="text-gray-700">Registro de receitas e despesas</span>
@@ -145,22 +133,14 @@ const LearnMorePage = () => {
                 </div>
               </div>
               
-              <div className="flex flex-col lg:flex-row items-center gap-8">
-                <div className="lg:w-1/2">
-                  <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <img 
-                      src="/images/goals-planning.jpg" 
-                      alt="Planejamento Financeiro" 
-                      className="w-full h-auto rounded object-cover aspect-video" 
-                    />
-                  </div>
+              {/* Planning and Expense Distribution - Using real component */}
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <h3 className="text-2xl font-bold text-finance-dark mb-6 text-center">Metas e Planejamento</h3>
+                <div className="max-w-5xl mx-auto">
+                  <ExpenseDistribution />
                 </div>
-                <div className="lg:w-1/2">
-                  <h3 className="text-2xl font-bold text-finance-dark mb-4">Metas e Planejamento</h3>
-                  <p className="text-gray-700 mb-6">
-                    Estabeleça metas financeiras e acompanhe seu progresso para alcançar seus objetivos.
-                  </p>
-                  <ul className="space-y-2">
+                <div className="mt-6">
+                  <ul className="space-y-2 max-w-2xl mx-auto">
                     <li className="flex items-start">
                       <ChevronRight className="h-5 w-5 text-finance-primary mt-0.5 flex-shrink-0" />
                       <span className="text-gray-700">Definição de metas financeiras</span>
