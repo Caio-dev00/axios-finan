@@ -1,754 +1,404 @@
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useCurrency } from "@/contexts/CurrencyContext";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { Textarea } from "@/components/ui/textarea";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, AlertCircle, Sun, Moon, Monitor } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useSearchParams } from "react-router-dom";
-
-// Profile schema validation
-const profileSchema = z.object({
-  nome: z.string().min(1, "Nome é obrigatório"),
-  phone: z.string().optional(),
-  occupation: z.string().optional(),
-});
-
-// Password schema validation
-const passwordSchema = z.object({
-  currentPassword: z.string().min(6, "A senha atual deve ter no mínimo 6 caracteres"),
-  newPassword: z.string().min(6, "A nova senha deve ter no mínimo 6 caracteres"),
-  confirmPassword: z.string().min(6, "Confirme a senha deve ter no mínimo 6 caracteres"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"],
-});
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
-type PasswordFormValues = z.infer<typeof passwordSchema>;
-
-// Extended profile type to include the new preference fields
-interface ProfileData {
-  id: string;
-  nome?: string;
-  email?: string;
-  phone?: string;
-  occupation?: string;
-  avatar_url?: string;
-  created_at?: string;
-  updated_at?: string;
-  theme_preference?: string;
-  currency_preference?: string;
-  date_format_preference?: string;
-  month_start_day?: string;
-}
-
-// Interface para as preferências de notificação
-interface NotificationPreferences {
-  id: string;
-  user_id: string;
-  budget_alerts: boolean;
-  bill_reminders: boolean;
-  weekly_reports: boolean;
-  financial_tips: boolean;
-  app_updates: boolean;
-}
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateProfile } from '@/services/profileService';
+import { updateUserNotificationPreferences, getUserNotificationPreferences } from '@/services/notificationService';
+import { useQuery } from '@tanstack/react-query';
 
 const SettingsPage = () => {
-  const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get("tab") || "profile";
-  const { user } = useAuth();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
+
+  // Perfil de usuário
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [occupation, setOccupation] = useState('');
   const [loading, setLoading] = useState(false);
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [profileData, setProfileData] = useState<any>(null);
-  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences | null>(null);
-  const [savingNotifications, setSavingNotifications] = useState(false);
-  const [savingPreferences, setSavingPreferences] = useState(false);
-  const [currencyPreference, setCurrencyPreference] = useState("BRL");
-  const [dateFormatPreference, setDateFormatPreference] = useState("DD/MM/YYYY");
-  const [monthStartDayPreference, setMonthStartDayPreference] = useState("1");
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  
-  // Initialize form with react-hook-form
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      nome: "",
-      phone: "",
-      occupation: "",
-    },
-  });
 
-  // Initialize password form with react-hook-form
-  const passwordForm = useForm<PasswordFormValues>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
+  // Preferências de notificações
+  const [billReminders, setBillReminders] = useState(true);
+  const [budgetAlerts, setBudgetAlerts] = useState(true);
+  const [weeklyReports, setWeeklyReports] = useState(false);
+  const [financialTips, setFinancialTips] = useState(true);
+  const [appUpdates, setAppUpdates] = useState(true);
 
-  // Fetch user profile data when component loads
+  // Preferências de visualização
+  const [currency, setCurrency] = useState('BRL');
+  const [theme, setTheme] = useState('light');
+  const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
+  const [monthStartDay, setMonthStartDay] = useState('1');
+
+  // Carregar perfil do usuário
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (user?.id) {
+    if (user) {
+      setName(user.user_metadata?.nome || '');
+      setEmail(user.email || '');
+      
+      // Carregar dados adicionais do perfil
+      const fetchProfileData = async () => {
         try {
-          const { data, error } = await supabase
+          const { data: profiles } = await supabase
             .from('profiles')
-            .select('*')
+            .select('phone, occupation, theme_preference, currency_preference, date_format_preference, month_start_day')
             .eq('id', user.id)
             .single();
-
-          if (error) {
-            throw error;
+          
+          if (profiles) {
+            setPhone(profiles.phone || '');
+            setOccupation(profiles.occupation || '');
+            setTheme(profiles.theme_preference || 'light');
+            setCurrency(profiles.currency_preference || 'BRL');
+            setDateFormat(profiles.date_format_preference || 'DD/MM/YYYY');
+            setMonthStartDay(profiles.month_start_day || '1');
           }
-
-          if (data) {
-            setProfileData(data as ProfileData);
-            form.reset({
-              nome: (data as ProfileData).nome || user?.user_metadata?.nome || "",
-              phone: (data as ProfileData).phone || "",
-              occupation: (data as ProfileData).occupation || "",
-            });
-            
-            // Carregar preferências gerais - checking if properties exist
-            if (data && typeof data === 'object') {
-              const currencyPref = (data as ProfileData).currency_preference;
-              if (currencyPref) {
-                setCurrencyPreference(currencyPref);
-              }
-              
-              const dateFormatPref = (data as ProfileData).date_format_preference;
-              if (dateFormatPref) {
-                setDateFormatPreference(dateFormatPref);
-              }
-              
-              const monthStartPref = (data as ProfileData).month_start_day;
-              if (monthStartPref) {
-                setMonthStartDayPreference(monthStartPref);
-              }
-            }
-          }
-        } catch (error: any) {
-          console.error("Erro ao buscar perfil:", error.message);
+        } catch (error) {
+          console.error('Erro ao carregar perfil:', error);
         }
-      }
-    };
-
-    fetchProfileData();
-  }, [user, form]);
-
-  // Buscar preferências de notificação
-  useEffect(() => {
-    const fetchNotificationPreferences = async () => {
-      if (user?.id) {
-        try {
-          const { data, error } = await supabase
-            .from('notification_preferences')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (error) {
-            throw error;
-          }
-
-          if (data) {
-            setNotificationPreferences(data);
-          } else {
-            // Se não encontrar, criar um registro com valores padrão
-            const { data: newPrefs, error: createError } = await supabase
-              .from('notification_preferences')
-              .insert([{ user_id: user.id }])
-              .select('*')
-              .single();
-
-            if (createError) {
-              throw createError;
-            }
-
-            setNotificationPreferences(newPrefs);
-          }
-        } catch (error: any) {
-          console.error("Erro ao buscar preferências de notificação:", error.message);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar suas preferências de notificação",
-            variant: "destructive",
-          });
-        }
-      }
-    };
-
-    fetchNotificationPreferences();
-  }, [user, toast]);
-
-  // Handle form submission
-  const onSubmit = async (formData: ProfileFormValues) => {
-    setLoading(true);
-    try {
-      // Update the profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          nome: formData.nome,
-          phone: formData.phone,
-          occupation: formData.occupation,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Perfil atualizado",
-        description: "Suas informações foram atualizadas com sucesso",
-      });
+      };
       
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: error.message,
-        variant: "destructive",
+      fetchProfileData();
+    }
+  }, [user]);
+
+  // Carregar preferências de notificações
+  const { data: notificationPrefs } = useQuery({
+    queryKey: ['notificationPreferences', user?.id],
+    queryFn: getUserNotificationPreferences,
+    enabled: !!user,
+    onSuccess: (data) => {
+      if (data) {
+        setBillReminders(data.bill_reminders);
+        setBudgetAlerts(data.budget_alerts);
+        setWeeklyReports(data.weekly_reports);
+        setFinancialTips(data.financial_tips);
+        setAppUpdates(data.app_updates);
+      }
+    }
+  });
+
+  // Salvar perfil
+  const handleSaveProfile = async () => {
+    try {
+      setLoading(true);
+      await updateProfile({
+        name,
+        phone,
+        occupation,
       });
-      console.error("Erro ao atualizar perfil:", error);
+      toast({
+        title: 'Perfil atualizado',
+        description: 'Suas informações foram atualizadas com sucesso.',
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar seu perfil.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle password change submission
-  const onPasswordSubmit = async (formData: PasswordFormValues) => {
-    setPasswordLoading(true);
-    setPasswordError(null);
-    
+  // Salvar preferências de notificação
+  const handleSaveNotifications = async () => {
     try {
-      // Primeiro, verifica a senha atual tentando fazer login
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || "",
-        password: formData.currentPassword,
+      setLoading(true);
+      await updateUserNotificationPreferences({
+        bill_reminders: billReminders,
+        budget_alerts: budgetAlerts,
+        weekly_reports: weeklyReports,
+        financial_tips: financialTips,
+        app_updates: appUpdates
       });
-
-      // Se houve erro no login, significa que a senha atual está incorreta
-      if (signInError) {
-        setPasswordError("Senha atual incorreta");
-        throw new Error("Senha atual incorreta");
-      }
-
-      // Atualizar a senha
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: formData.newPassword
-      });
-
-      if (updateError) throw updateError;
-
       toast({
-        title: "Senha atualizada",
-        description: "Sua senha foi atualizada com sucesso",
+        title: 'Preferências atualizadas',
+        description: 'Suas preferências de notificação foram atualizadas com sucesso.',
       });
-      
-      // Limpar o formulário
-      passwordForm.reset({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-      
-    } catch (error: any) {
-      if (!passwordError) {
-        toast({
-          title: "Erro ao atualizar senha",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-      console.error("Erro ao atualizar senha:", error);
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
-
-  // Atualizar preferências de notificação
-  const handleToggleNotification = async (field: keyof NotificationPreferences, value: boolean) => {
-    if (!user?.id || !notificationPreferences) return;
-    
-    // Atualizar state localmente para feedback imediato
-    setNotificationPreferences(prev => {
-      if (!prev) return prev;
-      return { ...prev, [field]: value };
-    });
-    
-    try {
-      const { error } = await supabase
-        .from('notification_preferences')
-        .update({ [field]: value, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-    } catch (error: any) {
-      console.error("Erro ao atualizar preferência:", error.message);
+    } catch (error) {
+      console.error('Erro ao atualizar preferências de notificação:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível atualizar sua preferência",
-        variant: "destructive",
-      });
-      
-      // Reverter mudança em caso de erro
-      setNotificationPreferences(prev => {
-        if (!prev) return prev;
-        return { ...prev, [field]: !value };
-      });
-    }
-  };
-
-  // Salvar todas as preferências de notificação
-  const saveNotificationPreferences = async () => {
-    if (!user?.id || !notificationPreferences) return;
-    
-    setSavingNotifications(true);
-    try {
-      const { error } = await supabase
-        .from('notification_preferences')
-        .update({
-          ...notificationPreferences,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Preferências atualizadas",
-        description: "Suas preferências de notificações foram atualizadas com sucesso",
-      });
-    } catch (error: any) {
-      console.error("Erro ao salvar preferências:", error.message);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar suas preferências",
-        variant: "destructive",
+        title: 'Erro',
+        description: 'Não foi possível atualizar suas preferências de notificação.',
+        variant: 'destructive',
       });
     } finally {
-      setSavingNotifications(false);
+      setLoading(false);
     }
   };
 
-  // Salvar preferências gerais do aplicativo
-  const saveAppPreferences = async () => {
-    if (!user?.id) return;
-    
-    setSavingPreferences(true);
+  // Salvar preferências de visualização
+  const handleSaveDisplayPreferences = async () => {
     try {
-      const updateData: Record<string, any> = {
-        updated_at: new Date().toISOString()
-      };
-      
-      // Adicionar campos apenas se eles existirem
-      if (currencyPreference) {
-        updateData.currency_preference = currencyPreference;
-      }
-      
-      if (dateFormatPreference) {
-        updateData.date_format_preference = dateFormatPreference;
-      }
-      
-      if (monthStartDayPreference) {
-        updateData.month_start_day = monthStartDayPreference;
-      }
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Preferências atualizadas",
-        description: "Suas preferências do aplicativo foram atualizadas com sucesso",
+      setLoading(true);
+      await updateProfile({
+        theme_preference: theme,
+        currency_preference: currency,
+        date_format_preference: dateFormat,
+        month_start_day: monthStartDay,
       });
-    } catch (error: any) {
-      console.error("Erro ao salvar preferências gerais:", error.message);
       toast({
-        title: "Erro",
-        description: "Não foi possível salvar suas preferências",
-        variant: "destructive",
+        title: 'Preferências atualizadas',
+        description: 'Suas preferências de visualização foram atualizadas com sucesso.',
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar preferências de visualização:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar suas preferências de visualização.',
+        variant: 'destructive',
       });
     } finally {
-      setSavingPreferences(false);
+      setLoading(false);
     }
-  };
-
-  // Alterar o tema
-  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
-    setTheme(newTheme);
-    toast({
-      title: "Tema alterado",
-      description: `O tema foi alterado para ${newTheme === 'light' ? 'claro' : newTheme === 'dark' ? 'escuro' : 'do sistema'}`,
-    });
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Configurações</h1>
-
-      <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="mb-6">
+      
+      <Tabs defaultValue="profile" className="w-full">
+        <TabsList className="grid grid-cols-3 mb-8">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="preferences">Preferências</TabsTrigger>
           <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
+          <TabsTrigger value="display">Visualização</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Informações de Perfil</CardTitle>
-              <CardDescription>Atualize suas informações pessoais</CardDescription>
-            </CardHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="nome"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Seu nome" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" defaultValue={user?.email || ""} disabled />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">O email não pode ser alterado</p>
-                    </div>
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Telefone</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="(00) 00000-0000" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="occupation"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Ocupação</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Sua ocupação" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-                <CardFooter>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Salvando..." : "Salvar Alterações"}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Form>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="preferences">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferências do Aplicativo</CardTitle>
-              <CardDescription>Personalize sua experiência no Axios Finanças</CardDescription>
+              <CardTitle>Informações Pessoais</CardTitle>
+              <CardDescription>
+                Atualize suas informações pessoais e de contato.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Moeda Padrão</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Moeda usada nos relatórios e visualizações</p>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome</Label>
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
-                <div className="w-[180px]">
-                  <select 
-                    className="w-full p-2 border rounded bg-background dark:bg-gray-800 text-foreground"
-                    value={currencyPreference}
-                    onChange={(e) => setCurrencyPreference(e.target.value)}
-                  >
-                    <option value="BRL">Real Brasileiro (R$)</option>
-                    <option value="USD">Dólar Americano ($)</option>
-                    <option value="EUR">Euro (€)</option>
-                  </select>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" value={email} disabled />
+                  <p className="text-sm text-muted-foreground">O email não pode ser alterado.</p>
                 </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Formato de Data</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Como as datas são exibidas</p>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone</Label>
+                  <Input 
+                    id="phone" 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)} 
+                    placeholder="(00) 00000-0000"
+                  />
                 </div>
-                <div className="w-[180px]">
-                  <select 
-                    className="w-full p-2 border rounded bg-background dark:bg-gray-800 text-foreground"
-                    value={dateFormatPreference}
-                    onChange={(e) => setDateFormatPreference(e.target.value)}
-                  >
-                    <option value="DD/MM/YYYY">DD/MM/AAAA</option>
-                    <option value="MM/DD/YYYY">MM/DD/AAAA</option>
-                    <option value="YYYY-MM-DD">AAAA-MM-DD</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Dia de início do mês</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Para cálculo de orçamentos mensais</p>
-                </div>
-                <div className="w-[180px]">
-                  <select 
-                    className="w-full p-2 border rounded bg-background dark:bg-gray-800 text-foreground"
-                    value={monthStartDayPreference}
-                    onChange={(e) => setMonthStartDayPreference(e.target.value)}
-                  >
-                    <option value="1">Dia 1</option>
-                    <option value="5">Dia 5</option>
-                    <option value="10">Dia 10</option>
-                    <option value="15">Dia 15</option>
-                    <option value="20">Dia 20</option>
-                    <option value="25">Dia 25</option>
-                  </select>
+                <div className="space-y-2">
+                  <Label htmlFor="occupation">Profissão</Label>
+                  <Input 
+                    id="occupation" 
+                    value={occupation} 
+                    onChange={(e) => setOccupation(e.target.value)}
+                    placeholder="Sua profissão"
+                  />
                 </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Tema</Label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Aparência do aplicativo</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant={theme === 'light' ? "default" : "outline"} 
-                    className="flex items-center gap-2"
-                    onClick={() => handleThemeChange('light')}
-                  >
-                    <Sun className="h-4 w-4" />
-                    Claro
-                  </Button>
-                  <Button 
-                    variant={theme === 'dark' ? "default" : "outline"} 
-                    className="flex items-center gap-2"
-                    onClick={() => handleThemeChange('dark')}
-                  >
-                    <Moon className="h-4 w-4" />
-                    Escuro
-                  </Button>
-                  <Button 
-                    variant={theme === 'system' ? "default" : "outline"} 
-                    className="flex items-center gap-2"
-                    onClick={() => handleThemeChange('system')}
-                  >
-                    <Monitor className="h-4 w-4" />
-                    Sistema
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
               <Button 
-                onClick={saveAppPreferences}
-                disabled={savingPreferences}
+                onClick={handleSaveProfile} 
+                disabled={loading}
+                className="mt-4"
               >
-                {savingPreferences ? "Salvando..." : "Salvar Preferências"}
+                {loading ? "Salvando..." : "Salvar alterações"}
               </Button>
-            </CardFooter>
+            </CardContent>
           </Card>
         </TabsContent>
         
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
-              <CardTitle>Notificações</CardTitle>
-              <CardDescription>Configure quais notificações deseja receber</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {!notificationPreferences ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Alertas de orçamento</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Notificações quando você ultrapassar 75% do orçamento</p>
-                    </div>
-                    <Switch 
-                      checked={notificationPreferences.budget_alerts}
-                      onCheckedChange={(checked) => handleToggleNotification('budget_alerts', checked)}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Lembretes de contas</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Lembretes para contas próximas do vencimento</p>
-                    </div>
-                    <Switch 
-                      checked={notificationPreferences.bill_reminders}
-                      onCheckedChange={(checked) => handleToggleNotification('bill_reminders', checked)}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Relatórios semanais</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Resumo semanal das suas finanças por email</p>
-                    </div>
-                    <Switch 
-                      checked={notificationPreferences.weekly_reports}
-                      onCheckedChange={(checked) => handleToggleNotification('weekly_reports', checked)}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Dicas financeiras</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Receba dicas para melhorar suas finanças</p>
-                    </div>
-                    <Switch 
-                      checked={notificationPreferences.financial_tips}
-                      onCheckedChange={(checked) => handleToggleNotification('financial_tips', checked)}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Novidades e atualizações</Label>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Notificações sobre novos recursos do aplicativo</p>
-                    </div>
-                    <Switch 
-                      checked={notificationPreferences.app_updates}
-                      onCheckedChange={(checked) => handleToggleNotification('app_updates', checked)}
-                    />
-                  </div>
-                </>
-              )}
-            </CardContent>
-            <CardFooter>
-              <Button 
-                onClick={saveNotificationPreferences} 
-                disabled={savingNotifications || !notificationPreferences}
-              >
-                {savingNotifications ? "Salvando..." : "Salvar Configurações"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Segurança da Conta</CardTitle>
-              <CardDescription>Gerencie a segurança da sua conta</CardDescription>
+              <CardTitle>Preferências de Notificações</CardTitle>
+              <CardDescription>
+                Configure quais notificações deseja receber.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <h3 className="font-medium">Alterar Senha</h3>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="bill-reminders" className="font-medium">Lembretes de contas</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receba lembretes sobre contas próximas do vencimento.
+                    </p>
+                  </div>
+                  <Switch 
+                    id="bill-reminders" 
+                    checked={billReminders} 
+                    onCheckedChange={setBillReminders}
+                  />
+                </div>
                 
-                {passwordError && (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{passwordError}</AlertDescription>
-                  </Alert>
-                )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="budget-alerts" className="font-medium">Alertas de orçamento</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receba alertas quando ultrapassar limites de orçamento.
+                    </p>
+                  </div>
+                  <Switch 
+                    id="budget-alerts" 
+                    checked={budgetAlerts} 
+                    onCheckedChange={setBudgetAlerts}
+                  />
+                </div>
                 
-                <Form {...passwordForm}>
-                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                    <FormField
-                      control={passwordForm.control}
-                      name="currentPassword"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel>Senha Atual</FormLabel>
-                          <FormControl>
-                            <Input id="current-password" type="password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={passwordForm.control}
-                      name="newPassword"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel>Nova Senha</FormLabel>
-                          <FormControl>
-                            <Input id="new-password" type="password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={passwordForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel>Confirmar Nova Senha</FormLabel>
-                          <FormControl>
-                            <Input id="confirm-password" type="password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button type="submit" disabled={passwordLoading}>
-                      {passwordLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Atualizando...
-                        </>
-                      ) : (
-                        "Atualizar Senha"
-                      )}
-                    </Button>
-                  </form>
-                </Form>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="weekly-reports" className="font-medium">Relatórios semanais</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receba relatórios semanais sobre sua atividade financeira.
+                    </p>
+                  </div>
+                  <Switch 
+                    id="weekly-reports" 
+                    checked={weeklyReports} 
+                    onCheckedChange={setWeeklyReports}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="financial-tips" className="font-medium">Dicas financeiras</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receba dicas personalizadas para melhorar sua saúde financeira.
+                    </p>
+                  </div>
+                  <Switch 
+                    id="financial-tips" 
+                    checked={financialTips} 
+                    onCheckedChange={setFinancialTips}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="app-updates" className="font-medium">Atualizações do aplicativo</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Seja notificado sobre novas funcionalidades e melhorias.
+                    </p>
+                  </div>
+                  <Switch 
+                    id="app-updates" 
+                    checked={appUpdates} 
+                    onCheckedChange={setAppUpdates}
+                  />
+                </div>
               </div>
               
-              {/* Removidas as seções de autenticação de dois fatores e dispositivos conectados */}
+              <Button 
+                onClick={handleSaveNotifications} 
+                disabled={loading}
+                className="mt-4"
+              >
+                {loading ? "Salvando..." : "Salvar preferências"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="display">
+          <Card>
+            <CardHeader>
+              <CardTitle>Preferências de Visualização</CardTitle>
+              <CardDescription>
+                Personalize como as informações são exibidas no aplicativo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="currency">Moeda</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger id="currency">
+                      <SelectValue placeholder="Selecione uma moeda" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BRL">Real (R$)</SelectItem>
+                      <SelectItem value="USD">Dólar ($)</SelectItem>
+                      <SelectItem value="EUR">Euro (€)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="theme">Tema</Label>
+                  <Select value={theme} onValueChange={setTheme}>
+                    <SelectTrigger id="theme">
+                      <SelectValue placeholder="Selecione um tema" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Claro</SelectItem>
+                      <SelectItem value="dark">Escuro</SelectItem>
+                      <SelectItem value="system">Sistema</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="date-format">Formato de data</Label>
+                  <Select value={dateFormat} onValueChange={setDateFormat}>
+                    <SelectTrigger id="date-format">
+                      <SelectValue placeholder="Selecione um formato" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DD/MM/YYYY">DD/MM/AAAA</SelectItem>
+                      <SelectItem value="MM/DD/YYYY">MM/DD/AAAA</SelectItem>
+                      <SelectItem value="YYYY-MM-DD">AAAA-MM-DD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="month-start">Início do mês</Label>
+                  <Select value={monthStartDay} onValueChange={setMonthStartDay}>
+                    <SelectTrigger id="month-start">
+                      <SelectValue placeholder="Selecione um dia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Dia 1</SelectItem>
+                      <SelectItem value="5">Dia 5</SelectItem>
+                      <SelectItem value="10">Dia 10</SelectItem>
+                      <SelectItem value="15">Dia 15</SelectItem>
+                      <SelectItem value="20">Dia 20</SelectItem>
+                      <SelectItem value="25">Dia 25</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">Para cálculo de ciclos financeiros mensais.</p>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleSaveDisplayPreferences} 
+                disabled={loading}
+                className="mt-4"
+              >
+                {loading ? "Salvando..." : "Salvar preferências"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

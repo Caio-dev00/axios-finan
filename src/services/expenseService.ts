@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Expense {
@@ -20,6 +21,24 @@ export const addExpense = async (expense: Expense) => {
     notes: expense.notes || null,
     is_recurring: expense.is_recurring || false,
   }).select();
+
+  if (error) throw error;
+  return data?.[0];
+};
+
+export const updateExpense = async (expense: Expense) => {
+  const { data, error } = await supabase
+    .from("expenses")
+    .update({
+      description: expense.description,
+      amount: expense.amount,
+      category: expense.category,
+      date: new Date(expense.date).toISOString().split("T")[0],
+      notes: expense.notes || null,
+      is_recurring: expense.is_recurring || false,
+    })
+    .eq("id", expense.id)
+    .select();
 
   if (error) throw error;
   return data?.[0];

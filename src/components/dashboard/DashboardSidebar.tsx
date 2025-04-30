@@ -1,6 +1,6 @@
 
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Settings, BarChart3, PieChart, CreditCard, LineChart, Receipt, Lightbulb } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,10 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 
 const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
   const { isMobile, setOpenMobile } = useSidebar();
+  const location = useLocation();
+  
+  // Check if the current route matches exactly with the NavItem's route
+  const isExactActive = location.pathname === to;
   
   // Para items que são Pro, mas o usuário não é Pro, mostrar o ProFeature ou não mostrar o item
   if (isProFeature && !isPro) {
@@ -20,7 +24,7 @@ const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
       onClick={isMobile ? () => setOpenMobile(false) : undefined}
       className={({ isActive }) => `
         flex items-center gap-4 px-4 py-3 rounded-md text-base transition-colors
-        ${isActive 
+        ${isExactActive 
           ? "bg-finance-primary text-white" 
           : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"}
       `}
