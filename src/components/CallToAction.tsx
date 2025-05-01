@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 const CallToAction = () => {
@@ -16,7 +17,7 @@ const CallToAction = () => {
             </Button>
             <Button variant="outline" className="border-white text-white text-base bg-gray-800 hover:bg-gray-700">
               <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
-                Assinar plano Pro - R$ 29,90/mês
+                Assinar plano Pro - R$ 24,90/mês
               </a>
             </Button>
           </div>
