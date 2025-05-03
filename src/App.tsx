@@ -53,6 +53,8 @@ const App: React.FC = () => {
               <Route path="relatorios" element={<ReportsPage />} />
               <Route path="dicas" element={<DicasPage />} />
               <Route path="configuracoes" element={<SettingsPage />} />
+              <Route path="settings" element={<Navigate to="/dashboard/configuracoes" replace />} />
+              <Route path="profile" element={<Navigate to="/dashboard/configuracoes" replace />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

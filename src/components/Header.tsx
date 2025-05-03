@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ const Header = () => {
               <Link to="/dashboard/transacoes" className="text-gray-700 hover:text-finance-primary transition-colors">
                 Transações
               </Link>
-              <Link to="/dashboard/reports" className="text-gray-700 hover:text-finance-primary transition-colors">
+              <Link to="/dashboard/relatorios" className="text-gray-700 hover:text-finance-primary transition-colors">
                 Relatórios
               </Link>
               <Link to="/dashboard/dicas" className="text-gray-700 hover:text-finance-primary transition-colors">
@@ -79,10 +80,10 @@ const Header = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard/settings">Perfil</Link>
+                  <Link to="/dashboard/configuracoes">Perfil</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard/settings">Configurações</Link>
+                  <Link to="/dashboard/configuracoes">Configurações</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
@@ -118,7 +119,7 @@ const Header = () => {
                       <>
                         <SheetClose asChild>
                           <Link 
-                            to="/dashboard/settings" 
+                            to="/dashboard/configuracoes" 
                             className="text-gray-700 hover:text-finance-primary transition-colors"
                           >
                             Perfil
@@ -126,7 +127,7 @@ const Header = () => {
                         </SheetClose>
                         <SheetClose asChild>
                           <Link 
-                            to="/dashboard/settings" 
+                            to="/dashboard/configuracoes" 
                             className="text-gray-700 hover:text-finance-primary transition-colors"
                           >
                             Configurações

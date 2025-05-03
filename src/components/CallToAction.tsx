@@ -1,6 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+
 const CallToAction = () => {
   return <section className="py-16 bg-finance-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,8 +14,8 @@ const CallToAction = () => {
             Teste o Axios Finanças gratuitamente por 2 dias e descubra como é fácil ter o controle total das suas finanças.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button className="bg-white text-finance-primary hover:bg-white/90 text-base">
-              Começar teste grátis
+            <Button className="bg-white text-finance-primary hover:bg-white/90 text-base" asChild>
+              <Link to="/auth">Começar teste grátis</Link>
             </Button>
             <Button variant="outline" className="border-white text-white text-base bg-gray-800 hover:bg-gray-700">
               <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
@@ -28,4 +30,5 @@ const CallToAction = () => {
       </div>
     </section>;
 };
+
 export default CallToAction;
