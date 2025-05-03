@@ -73,8 +73,10 @@ const Hero = () => {
               Axios Finanças é o app ideal para quem quer ter o controle das finanças pessoais de forma simples, organizada e eficaz.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button className="finance-btn-primary text-base">
-                Comece agora gratuitamente
+              <Button className="finance-btn-primary text-base" asChild>
+                <Link to="/auth">
+                  Comece agora gratuitamente
+                </Link>
               </Button>
               <Button 
                 variant="outline" 
