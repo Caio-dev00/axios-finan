@@ -11,7 +11,7 @@ const CallToAction = () => {
             Comece a transformar suas finanças hoje
           </h2>
           <p className="text-lg text-white/90 mb-8 max-w-2xl">
-            Teste o Axios Finanças gratuitamente por 2 dias e descubra como é fácil ter o controle total das suas finanças.
+            Teste o Axios Finanças gratuitamente por 3 dias e descubra como é fácil ter o controle total das suas finanças.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button className="bg-white text-finance-primary hover:bg-white/90 text-base" asChild>

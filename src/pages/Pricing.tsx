@@ -1,4 +1,3 @@
-
 import React from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -35,7 +34,7 @@ const PricingPage = () => {
     {
       name: "Plano Gratuito",
       price: "R$ 0",
-      period: "Teste por 2 dias",
+      period: "Teste por 3 dias",
       description: "Perfeito para conhecer as funcionalidades básicas e experimentar nossa plataforma.",
       features: [
         "Registro de até 20 transações",
@@ -78,7 +77,7 @@ const PricingPage = () => {
     },
     {
       question: "Como funciona o teste gratuito?",
-      answer: "Nosso teste gratuito dá acesso a todas as funcionalidades do Plano Pro por 2 dias. Após esse período, você pode optar por assinar o plano Pro ou continuar com a versão gratuita limitada."
+      answer: "Nosso teste gratuito dá acesso a todas as funcionalidades do Plano Pro por 3 dias. Após esse período, você pode optar por assinar o plano Pro ou continuar com a versão gratuita limitada."
     },
     {
       question: "Quais formas de pagamento são aceitas?",
@@ -127,7 +126,7 @@ const PricingPage = () => {
                     <h3 className="text-xl font-bold text-finance-dark">{plan.name}</h3>
                     <div className="mt-4">
                       <span className="text-4xl font-bold">{plan.price}</span>
-                      {plan.period !== "Teste por 2 dias" && (
+                      {plan.period !== "Teste por 3 dias" && (
                         <span className="text-gray-500 ml-2">{plan.period}</span>
                       )}
                     </div>

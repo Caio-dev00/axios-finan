@@ -89,7 +89,7 @@ const Hero = () => {
               </Button>
             </div>
             <div className="mt-6 text-sm text-gray-500">
-              Teste por 2 dias sem compromisso. Cancele quando quiser.
+              Teste por 3 dias sem compromisso. Cancele quando quiser.
             </div>
           </div>
           <div className={`lg:w-1/2 ${isAnimating ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
