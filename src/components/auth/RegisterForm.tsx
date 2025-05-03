@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const registerSchema = z.object({
   nome: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
@@ -32,19 +34,20 @@ export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
   returnTo?: string;
-  initialEmail?: string;  // Added initialEmail prop
+  initialEmail?: string;
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard", initialEmail = "" }) => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       nome: "",
-      email: initialEmail, // Use initialEmail as default value
+      email: initialEmail,
       password: "",
       confirmPassword: "",
     },
@@ -53,19 +56,25 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard", in
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       setLoading(true);
+      setAuthError(null);
       const { email, password, nome } = values;
       
       const result = await signUp(email, password, nome);
       
       if (result && result.error) {
-        toast.error(result.error.message || "Erro ao criar conta. Tente novamente.");
+        // Tratamento específico para erros comuns
+        if (result.error.message.includes("User already registered")) {
+          setAuthError("Este email já está cadastrado. Por favor, faça login ou use outro email.");
+        } else {
+          setAuthError(result.error.message || "Erro ao criar conta. Tente novamente.");
+        }
         return;
       }
       
       toast.success("Conta criada com sucesso! Verifique seu email para confirmar seu cadastro.");
       // Success will redirect via AuthContext or need to verify email
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+      setAuthError(error.message || "Erro ao criar conta. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -73,6 +82,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ returnTo = "/dashboard", in
 
   return (
     <Form {...form}>
+      {authError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{authError}</AlertDescription>
+        </Alert>
+      )}
+      
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}

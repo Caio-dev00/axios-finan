@@ -1,155 +1,145 @@
 
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { Settings, BarChart3, PieChart, CreditCard, LineChart, Receipt, Lightbulb } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
+import { Link, useLocation } from "react-router-dom";
+import { 
+  Sidebar, 
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger 
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { 
+  Home, 
+  CreditCard, 
+  PiggyBank, 
+  Wallet, 
+  BarChart, 
+  BarChart3, 
+  Settings, 
+  Lightbulb,
+  LogOut,
+  TrendingUp,
+  Crown
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
-import { useTheme } from "@/contexts/ThemeContext";
-
-const NavItem = ({ to, icon: Icon, label, isPro, isProFeature }) => {
-  const { isMobile, setOpenMobile } = useSidebar();
-  const location = useLocation();
-  const { isDarkMode } = useTheme();
-  
-  // Check if the current route matches exactly with the NavItem's route
-  const isExactActive = location.pathname === to;
-  
-  // Para items que são Pro, mas o usuário não é Pro, mostrar o ProFeature ou não mostrar o item
-  if (isProFeature && !isPro) {
-    return null;
-  }
-  
-  return (
-    <NavLink
-      to={to}
-      onClick={isMobile ? () => setOpenMobile(false) : undefined}
-      className={({ isActive }) => `
-        flex items-center gap-4 px-4 py-3 rounded-md text-base transition-colors
-        ${isExactActive 
-          ? "bg-finance-primary text-white" 
-          : isDarkMode 
-            ? "text-gray-200 hover:bg-gray-800" 
-            : "text-gray-700 hover:bg-gray-100"
-        }
-      `}
-    >
-      <Icon size={20} />
-      <span>{label}</span>
-      {isProFeature && <span className="text-xs bg-amber-200 text-amber-800 dark:bg-amber-900 dark:text-amber-200 px-1.5 py-0.5 rounded ml-auto">Pro</span>}
-    </NavLink>
-  );
-};
+import { cn } from "@/lib/utils";
+import SubscriptionStatus from "./SubscriptionStatus";
 
 const DashboardSidebar = () => {
-  const { user } = useAuth();
-  const { isPro } = useSubscription();
-  const { isDarkMode } = useTheme();
+  const { signOut, user } = useAuth();
+  const location = useLocation();
+  const { plan } = useSubscription();
+  const isPro = plan === "pro";
   
-  // Simplificar o nome para exibição
-  const displayName = user?.user_metadata?.nome
-    ? user.user_metadata.nome.split(' ')[0]
-    : "Usuário";
+  const menuItems = [
+    { name: "Visão Geral", path: "/dashboard", icon: Home },
+    { name: "Transações", path: "/dashboard/transacoes", icon: Wallet },
+    { name: "Despesas", path: "/dashboard/despesas", icon: CreditCard },
+    { name: "Receitas", path: "/dashboard/receitas", icon: TrendingUp },
+    { name: "Orçamentos", path: "/dashboard/orcamentos", icon: PiggyBank },
+    { name: "Planejamento", path: "/dashboard/planejamento", icon: BarChart },
+    { name: "Relatórios", path: "/dashboard/relatorios", icon: BarChart3 },
+    { name: "Dicas", path: "/dashboard/dicas", icon: Lightbulb },
+  ];
+  
+  const handleLogout = async () => {
+    await signOut();
+  };
   
   return (
-    <div className="hidden md:flex min-h-screen w-64 border-r border-gray-200 dark:border-gray-800 flex-col transition-all duration-300 bg-white dark:bg-gray-900">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-full bg-finance-primary/20 text-finance-primary font-bold flex items-center justify-center">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h3 className="font-medium text-gray-900 dark:text-gray-100">{displayName}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{isPro ? 'Plano Pro' : 'Plano Gratuito'}</p>
-          </div>
+    <Sidebar className="border-r border-gray-200 dark:border-gray-800">
+      <SidebarHeader className="border-b border-gray-200 dark:border-gray-800 px-6 py-3">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="font-bold text-xl text-finance-primary">Axios</span>
+            <span className="font-semibold">Finanças</span>
+          </Link>
+          <SidebarTrigger />
         </div>
-      </div>
+      </SidebarHeader>
       
-      <div className="p-4 flex-1">
-        <div className="space-y-1">
-          <NavItem 
-            to="/dashboard" 
-            icon={BarChart3} 
-            label="Visão Geral" 
-            isPro={isPro}
-            isProFeature={false}
-          />
-          <NavItem 
-            to="/dashboard/transacoes" 
-            icon={Receipt} 
-            label="Transações" 
-            isPro={isPro}
-            isProFeature={false}
-          />
-          <NavItem 
-            to="/dashboard/despesas" 
-            icon={CreditCard} 
-            label="Despesas" 
-            isPro={isPro}
-            isProFeature={false}
-          />
-          <NavItem 
-            to="/dashboard/receitas" 
-            icon={BarChart3} 
-            label="Receitas" 
-            isPro={isPro}
-            isProFeature={false}
-          />
-          <NavItem 
-            to="/dashboard/orcamentos" 
-            icon={PieChart} 
-            label="Orçamentos" 
-            isPro={isPro}
-            isProFeature={false}
-          />
-          <NavItem 
-            to="/dashboard/relatorios" 
-            icon={LineChart} 
-            label="Relatórios" 
-            isPro={isPro}
-            isProFeature={false}
-          />
-          <NavItem 
-            to="/dashboard/dicas" 
-            icon={Lightbulb} 
-            label="Dicas" 
-            isPro={isPro}
-            isProFeature={false}
-          />
-          <NavItem 
-            to="/dashboard/planejamento" 
-            icon={BarChart3} 
-            label="Planejamento" 
-            isPro={isPro}
-            isProFeature={true}
-          />
-          <NavItem 
-            to="/dashboard/configuracoes" 
-            icon={Settings} 
-            label="Configurações" 
-            isPro={isPro}
-            isProFeature={false}
-          />
+      <SidebarContent className="px-4 py-6">
+        <div className="pb-4">
+          <SubscriptionStatus />
         </div>
-      </div>
-      
-      {!isPro && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="bg-finance-light dark:bg-gray-800 rounded-md p-3">
-            <h4 className="font-medium text-sm text-finance-dark dark:text-gray-200">Atualize para o Pro</h4>
-            <p className="text-xs text-gray-600 dark:text-gray-400 my-1">
-              Desbloqueie recursos avançados e mais visualizações.
-            </p>
-            <NavLink 
-              to="/precos"
-              className="block text-center text-xs bg-finance-primary text-white rounded py-1.5 mt-2 hover:bg-finance-primary/90"
-            >
-              Ver planos
-            </NavLink>
+        
+        <SidebarMenu>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.path}>
+              <SidebarMenuButton asChild>
+                <Link
+                  to={item.path}
+                  className={cn(
+                    "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium",
+                    location.pathname === item.path
+                      ? "bg-finance-light text-finance-primary"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          
+          <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link
+                  to="/dashboard/assinatura"
+                  className={cn(
+                    "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium",
+                    location.pathname === "/dashboard/assinatura"
+                      ? "bg-finance-light text-finance-primary"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  )}
+                >
+                  <Crown className="h-5 w-5" />
+                  <span>Minha Assinatura</span>
+                  {isPro && (
+                    <span className="ml-auto text-xs bg-finance-primary text-white px-1.5 py-0.5 rounded">Pro</span>
+                  )}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link
+                  to="/dashboard/configuracoes"
+                  className={cn(
+                    "flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium",
+                    location.pathname === "/dashboard/configuracoes"
+                      ? "bg-finance-light text-finance-primary"
+                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  )}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Configurações</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </div>
-        </div>
-      )}
-    </div>
+        </SidebarMenu>
+      </SidebarContent>
+      
+      <SidebarFooter className="border-t border-gray-200 dark:border-gray-800 px-6 py-4">
+        <Button
+          variant="outline"
+          className="w-full justify-start text-gray-700 hover:text-red-600"
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair
+        </Button>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 

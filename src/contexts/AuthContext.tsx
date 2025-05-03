@@ -35,6 +35,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Feedback apropriado para eventos de autenticação
+        if (event === 'SIGNED_IN') {
+          console.log("Usuário autenticado com sucesso!");
+        } else if (event === 'SIGNED_OUT') {
+          console.log("Usuário desconectado.");
+        } else if (event === 'USER_UPDATED') {
+          console.log("Dados do usuário atualizados.");
+        } else if (event === 'PASSWORD_RECOVERY') {
+          console.log("Solicitação de recuperação de senha.");
+        }
+        
         setLoading(false);
       }
     );
@@ -52,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -61,9 +73,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return {};
     } catch (error: any) {
+      const errorMessage = error.message || "Erro ao entrar. Tente novamente.";
       toast({
         title: "Erro ao entrar",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       return { error };
@@ -75,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, nome: string): Promise<AuthResult> => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -85,7 +98,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       
-      if (error) return { error };
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          return { error: { message: "Este email já está cadastrado. Por favor, faça login ou use outro email." } };
+        }
+        return { error };
+      }
       
       toast({
         title: "Cadastro realizado com sucesso!",
@@ -94,9 +112,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return {};
     } catch (error: any) {
+      const errorMessage = error.message || "Erro ao cadastrar. Tente novamente.";
       toast({
         title: "Erro ao cadastrar",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
       return { error };
@@ -109,10 +128,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       await supabase.auth.signOut();
+      toast({
+        title: "Desconectado com sucesso",
+        description: "Você foi desconectado do sistema.",
+      });
     } catch (error: any) {
+      const errorMessage = error.message || "Erro ao sair. Tente novamente.";
       toast({
         title: "Erro ao sair",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

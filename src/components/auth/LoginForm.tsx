@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -33,6 +35,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ returnTo = "/dashboard" }) => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -45,17 +48,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ returnTo = "/dashboard" }) => {
   const onSubmit = async (values: LoginFormValues) => {
     try {
       setLoading(true);
+      setAuthError(null);
       const { email, password } = values;
+      
       const result = await signIn(email, password);
       
       if (result && result.error) {
-        toast.error(result.error.message || "Erro ao entrar. Tente novamente.");
+        // Tratamento específico para erros comuns
+        if (result.error.message.includes("Invalid login")) {
+          setAuthError("Email ou senha inválidos. Por favor, verifique suas credenciais.");
+        } else {
+          setAuthError(result.error.message || "Erro ao entrar. Tente novamente.");
+        }
         return;
       }
       
       // Success will automatically redirect via AuthContext
     } catch (error: any) {
-      toast.error(error.message || "Erro ao entrar. Tente novamente.");
+      setAuthError(error.message || "Erro ao entrar. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -63,6 +73,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ returnTo = "/dashboard" }) => {
 
   return (
     <Form {...form}>
+      {authError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{authError}</AlertDescription>
+        </Alert>
+      )}
+      
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}

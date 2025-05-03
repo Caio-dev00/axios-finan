@@ -19,6 +19,7 @@ import PlanningPage from "@/pages/dashboard/PlanningPage";
 import ReportsPage from "@/pages/dashboard/ReportsPage";
 import DicasPage from "@/pages/dashboard/DicasPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
+import SubscriptionDetailsPage from "@/pages/dashboard/SubscriptionDetailsPage";
 import NotFound from "@/pages/NotFound";
 import Resources from "@/pages/Resources";
 import PricingPage from "@/pages/Pricing";
@@ -53,6 +54,7 @@ const App: React.FC = () => {
               <Route path="relatorios" element={<ReportsPage />} />
               <Route path="dicas" element={<DicasPage />} />
               <Route path="configuracoes" element={<SettingsPage />} />
+              <Route path="assinatura" element={<SubscriptionDetailsPage />} />
               <Route path="settings" element={<Navigate to="/dashboard/configuracoes" replace />} />
               <Route path="profile" element={<Navigate to="/dashboard/configuracoes" replace />} />
             </Route>
