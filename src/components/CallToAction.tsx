@@ -2,8 +2,17 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { facebookEvents } from "@/utils/facebookPixel";
 
 const CallToAction = () => {
+  const handleTrialClick = () => {
+    facebookEvents.startTrial();
+  };
+
+  const handleSubscribeClick = () => {
+    facebookEvents.subscribe(24.90, 'BRL');
+  };
+
   return <section className="py-16 bg-finance-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center">
@@ -15,10 +24,15 @@ const CallToAction = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button className="bg-white text-finance-primary hover:bg-white/90 text-base" asChild>
-              <Link to="/auth">Começar teste grátis</Link>
+              <Link to="/auth" onClick={handleTrialClick}>Começar teste grátis</Link>
             </Button>
             <Button variant="outline" className="border-white text-white text-base bg-gray-800 hover:bg-gray-700">
-              <a href="https://pay.cakto.com.br/4j2tn5j_365602" target="_blank" rel="noopener noreferrer">
+              <a 
+                href="https://pay.cakto.com.br/4j2tn5j_365602" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={handleSubscribeClick}
+              >
                 Assinar plano Pro - R$ 24,90/mês
               </a>
             </Button>

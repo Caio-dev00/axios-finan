@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/services/currencyService";
 import { Bar, Line, LineChart, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { facebookEvents } from "@/utils/facebookPixel";
 
 const Hero = () => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -28,6 +29,11 @@ const Hero = () => {
     }, 5000);
     
     return () => clearInterval(interval);
+  }, []);
+
+  // Track page view
+  useEffect(() => {
+    facebookEvents.viewPage();
   }, []);
 
   // Generate random data for demonstration
@@ -62,6 +68,10 @@ const Hero = () => {
     { name: 'Uber', categoria: 'Transporte', valor: -32.50, data: '24/04' },
   ];
 
+  const handleStartTrial = () => {
+    facebookEvents.startTrial();
+  };
+
   return <section className="bg-gradient-to-br from-finance-light to-white py-16 lg:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between">
@@ -74,7 +84,7 @@ const Hero = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button className="finance-btn-primary text-base" asChild>
-                <Link to="/auth">
+                <Link to="/auth" onClick={handleStartTrial}>
                   Comece agora gratuitamente
                 </Link>
               </Button>
