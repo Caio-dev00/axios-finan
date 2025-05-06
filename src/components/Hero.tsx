@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/services/currencyService";
 import { Bar, Line, LineChart, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { facebookEvents } from "@/utils/facebookPixel";
+import { facebookEvents, initFacebookPixel } from "@/utils/facebookPixel";
 
 const Hero = () => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -31,8 +31,11 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Track page view
+  // Track page view and initialize Facebook Pixel
   useEffect(() => {
+    // Inicializa o Facebook Pixel
+    initFacebookPixel();
+    // Rastreia a visualização da página
     facebookEvents.viewPage();
   }, []);
 
