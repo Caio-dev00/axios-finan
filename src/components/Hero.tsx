@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/services/currencyService";
 import { Bar, Line, LineChart, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { facebookEvents, initFacebookPixel } from "@/utils/facebookPixel";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Hero = () => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -17,6 +19,7 @@ const Hero = () => {
   ]);
   
   const [activeData, setActiveData] = useState(0);
+  const { user } = useAuth();
   
   // Animation effect - rotate through different chart data
   useEffect(() => {
@@ -36,8 +39,8 @@ const Hero = () => {
     // Inicializa o Facebook Pixel
     initFacebookPixel();
     // Rastreia a visualização da página
-    facebookEvents.viewPage();
-  }, []);
+    facebookEvents.viewPage(user?.email);
+  }, [user]);
 
   // Generate random data for demonstration
   const generateRandomData = (seed: number) => {
@@ -72,7 +75,7 @@ const Hero = () => {
   ];
 
   const handleStartTrial = () => {
-    facebookEvents.startTrial();
+    facebookEvents.startTrial(user?.email);
   };
 
   return <section className="bg-gradient-to-br from-finance-light to-white py-16 lg:py-24">

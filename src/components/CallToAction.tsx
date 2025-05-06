@@ -3,14 +3,17 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { facebookEvents } from "@/utils/facebookPixel";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CallToAction = () => {
+  const { user } = useAuth();
+
   const handleTrialClick = () => {
-    facebookEvents.startTrial();
+    facebookEvents.startTrial(user?.email);
   };
 
   const handleSubscribeClick = () => {
-    facebookEvents.subscribe(24.90, 'BRL');
+    facebookEvents.subscribe(24.90, 'BRL', user?.email);
   };
 
   return <section className="py-16 bg-finance-primary">
