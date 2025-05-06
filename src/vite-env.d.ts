@@ -3,10 +3,6 @@
 
 // Definição para o Facebook Pixel
 interface Window {
-  fbq?: (
-    eventType: string,
-    eventName: string,
-    params?: Record<string, any>
-  ) => void;
+  fbq?: any; // Usando any para permitir propriedades dinâmicas
   _fbq?: any;
 }

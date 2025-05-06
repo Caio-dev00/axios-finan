@@ -10,8 +10,9 @@ const PIXEL_ID = '1354746008979053';
 export const initFacebookPixel = () => {
   if (!window.fbq) {
     window.fbq = function() {
-      // @ts-ignore
-      window.fbq.callMethod ? window.fbq.callMethod.apply(window.fbq, arguments) : window.fbq.queue.push(arguments);
+      window.fbq.callMethod ? 
+        window.fbq.callMethod.apply(window.fbq, arguments) : 
+        window.fbq.queue.push(arguments);
     };
     
     if (!window._fbq) window._fbq = window.fbq;
