@@ -3,10 +3,10 @@
  * Utilitário para rastrear eventos do Facebook Pixel e API de Conversão
  */
 import axios from 'axios';
+import { supabase } from '@/integrations/supabase/client';
 
-// Variável para armazenar o ID do pixel e token de acesso
+// Variável para armazenar o ID do pixel
 const PIXEL_ID = '1354746008979053';
-const ACCESS_TOKEN = 'EAARFcJMwR8gBO4amjwuLjT9Km6Fg5dhRV2tzgMZBJOUR3O3gFIBfsaThFsQHow9wtlzLbhoboefI6ZAUYMJSLRDUjWzK1NounYgDFBRkzQSbseZB5ikjoTGhwQYLeeHKWfmZBomZAELZA2yJXbbFnVEU8zRERCVnZBIfVATz4lZCuVY84XeBuycmr4LNJYILhMRNrQZDZD';
 
 // Inicializa o Facebook Pixel se ele ainda não estiver carregado
 export const initFacebookPixel = () => {
@@ -45,7 +45,7 @@ const hashData = (data: string): string => {
 // Função para obter dados adicionais do usuário para a API de Conversão
 const getUserData = (email?: string) => {
   const userData: Record<string, any> = {
-    client_ip_address: '', // Coletado automaticamente pelo Facebook
+    client_ip_address: '', // Coletado automaticamente pelo Facebook no servidor
     client_user_agent: navigator.userAgent,
     fbc: getCookie('_fbc'),
     fbp: getCookie('_fbp'),
@@ -70,31 +70,28 @@ const getCookie = (name: string): string => {
   return '';
 };
 
-// Envia evento para a API de Conversão do Facebook
+// Envia evento para a API de Conversão do Facebook via edge function
 const sendToConversionAPI = async (eventName: string, userData: Record<string, any>, customData?: Record<string, any>) => {
   try {
+    // Dados do evento
     const eventData = {
-      data: [
-        {
-          event_name: eventName,
-          event_time: Math.floor(Date.now() / 1000),
-          action_source: 'website',
-          event_source_url: window.location.href,
-          user_data: userData,
-          custom_data: customData || {}
-        }
-      ],
-      access_token: ACCESS_TOKEN
+      eventName,
+      userData,
+      customData: customData || {},
+      eventSourceUrl: window.location.href
     };
 
-    // Fazer a requisição HTTP real para a API de Conversão
-    const response = await axios.post(
-      `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`,
-      eventData
-    );
+    // Chamar a edge function do Supabase
+    const { data, error } = await supabase.functions.invoke('facebook-events', {
+      body: eventData
+    });
     
-    console.log(`[Facebook Conversion API] Evento enviado com sucesso: ${eventName}`, response.data);
-    return response.data;
+    if (error) {
+      throw error;
+    }
+    
+    console.log(`[Facebook Conversion API] Evento enviado com sucesso: ${eventName}`, data);
+    return data;
   } catch (error) {
     console.error('[Facebook Conversion API] Erro ao enviar evento:', error);
     return null;
@@ -119,7 +116,7 @@ export const trackFacebookEvent = (eventName: string, eventParams?: Record<strin
     // Rastreia o evento usando o Pixel
     window.fbq('track', eventName, enhancedParams);
     
-    // Envia evento para a API de Conversão
+    // Envia evento para a API de Conversão via edge function
     sendToConversionAPI(eventName, userData, eventParams);
     
     console.log(`[Facebook Pixel] Evento rastreado: ${eventName}`, enhancedParams || '');

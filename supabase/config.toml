@@ -1,2 +1,5 @@
 
-project_id = "yascliotrmqhvqbvrhsc"
+project_id = "project_id"
+
+[functions.facebook-events]
+verify_jwt = false
