@@ -2,7 +2,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import axios from 'https://esm.sh/axios@1.9.0'
-import { createHash } from 'https://deno.land/std@0.168.0/crypto/mod.ts';
+import { crypto } from 'https://deno.land/std@0.168.0/crypto/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,9 +16,19 @@ const ACCESS_TOKEN = Deno.env.get('FB_ACCESS_TOKEN')
 // Função para hash SHA-256
 const hashValue = (value: string): string => {
   if (!value) return '';
-  const hash = createHash('sha256');
-  hash.update(value.trim().toLowerCase());
-  return hash.toString();
+  
+  // Convert the string to a TextEncoder
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value.trim().toLowerCase());
+  
+  // Generate the SHA-256 hash
+  const hashBuffer = crypto.subtle.digestSync('SHA-256', data);
+  
+  // Convert the hash to a hex string
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return hashHex;
 }
 
 // Hash user data following Facebook's requirements
@@ -68,14 +78,14 @@ serve(async (req) => {
     
     if (!eventName) {
       return new Response(JSON.stringify({ error: 'Event name is required' }), {
-        status: 400,
+        status: 200, // Return 200 even for validation errors
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
     
     if (!ACCESS_TOKEN) {
       return new Response(JSON.stringify({ error: 'Facebook access token is not configured' }), {
-        status: 500,
+        status: 200, // Return 200 even for configuration errors
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }

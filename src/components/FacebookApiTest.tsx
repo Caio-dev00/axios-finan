@@ -10,6 +10,7 @@ import { getUserData } from '@/utils/facebookPixel';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 const FacebookApiTest = () => {
   const [eventType, setEventType] = useState('PageView');
@@ -17,6 +18,7 @@ const FacebookApiTest = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleTestEvent = async () => {
     setIsLoading(true);
@@ -42,12 +44,13 @@ const FacebookApiTest = () => {
       console.log('Sending test event:', eventData);
       
       // Call the edge function
-      const { data, error } = await supabase.functions.invoke('facebook-events', {
+      const { data, error: fnError } = await supabase.functions.invoke('facebook-events', {
         body: eventData
       });
       
-      if (error) {
-        throw new Error(`Edge function error: ${error.message}`);
+      if (fnError) {
+        console.error('Edge function error:', fnError);
+        throw new Error(`Edge function error: ${fnError.message}`);
       }
       
       console.log('Function response:', data);
@@ -55,12 +58,26 @@ const FacebookApiTest = () => {
       if (!data.success && data.error) {
         setError(`Facebook API Error: ${data.error}`);
         setResult(data.details || {});
+        toast({
+          title: "Erro na API do Facebook",
+          description: data.error,
+          variant: "destructive"
+        });
       } else {
         setResult(data);
+        toast({
+          title: "Sucesso",
+          description: "Evento enviado com sucesso!",
+        });
       }
     } catch (err: any) {
       console.error('Test failed:', err);
       setError(err.message || 'Failed to send test event');
+      toast({
+        title: "Erro",
+        description: err.message || "Falha ao enviar evento de teste",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
