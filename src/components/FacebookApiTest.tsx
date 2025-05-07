@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,16 +10,85 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import type { FacebookPixelEvent } from '@/types/facebook-pixel';
 
-const FacebookApiTest = () => {
+interface EventType {
+  value: string;
+  label: string;
+}
+
+interface TestResult {
+  success: boolean;
+  data?: unknown;
+  error?: {
+    message?: string;
+    error_user_msg?: string;
+    error_user_title?: string;
+    code?: string;
+    error_subcode?: string;
+    fbtrace_id?: string;
+  };
+  details?: unknown;
+}
+
+const EVENT_TYPES: EventType[] = [
+  { value: 'PageView', label: 'Page View' },
+  { value: 'ViewContent', label: 'View Content' },
+  { value: 'AddToCart', label: 'Add to Cart' },
+  { value: 'Purchase', label: 'Purchase' },
+  { value: 'CompleteRegistration', label: 'Complete Registration' },
+  { value: 'Subscribe', label: 'Subscribe' },
+  { value: 'Lead', label: 'Lead' },
+  { value: 'AddPaymentInfo', label: 'Add Payment Info' },
+  { value: 'InitiateCheckout', label: 'Initiate Checkout' },
+  { value: 'Search', label: 'Search' },
+  { value: 'AddTransaction', label: 'Add Transaction' },
+  { value: 'CreateBudget', label: 'Create Budget' },
+  { value: 'CreateGoal', label: 'Create Goal' },
+  { value: 'Login', label: 'Login' },
+  { value: 'StartTrial', label: 'Start Trial' }
+];
+
+const FacebookApiTest: React.FC = () => {
   const [eventType, setEventType] = useState('PageView');
   const [email, setEmail] = useState('');
+  const [value, setValue] = useState('');
+  const [currency, setCurrency] = useState('BRL');
+  const [searchString, setSearchString] = useState('');
+  const [contentName, setContentName] = useState('');
+  const [contentCategory, setContentCategory] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<TestResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleTestEvent = async () => {
+  const getCustomData = (): Record<string, unknown> => {
+    const customData: Record<string, unknown> = {
+      test_event: true
+    };
+
+    switch (eventType) {
+      case 'Purchase':
+      case 'Subscribe':
+      case 'AddToCart':
+        customData.value = parseFloat(value);
+        customData.currency = currency;
+        break;
+      case 'Search':
+        customData.search_string = searchString;
+        break;
+      case 'ViewContent':
+        customData.content_name = contentName;
+        if (contentCategory) {
+          customData.content_category = contentCategory;
+        }
+        break;
+    }
+
+    return customData;
+  };
+
+  const handleTestEvent = async (): Promise<void> => {
     setIsLoading(true);
     setResult(null);
     setError(null);
@@ -30,14 +98,10 @@ const FacebookApiTest = () => {
       const userData = getUserData(email || undefined);
       
       // Define event data
-      const eventData = {
+      const eventData: FacebookPixelEvent = {
         eventName: eventType,
         userData,
-        customData: {
-          test_event: true,
-          value: eventType === 'Purchase' || eventType === 'Subscribe' ? 49.90 : undefined,
-          currency: eventType === 'Purchase' || eventType === 'Subscribe' ? 'BRL' : undefined,
-        },
+        customData: getCustomData(),
         eventSourceUrl: window.location.href
       };
 
@@ -70,12 +134,13 @@ const FacebookApiTest = () => {
           description: "Evento enviado com sucesso!",
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Test failed:', err);
-      setError(err.message || 'Failed to send test event');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send test event';
+      setError(errorMessage);
       toast({
         title: "Erro",
-        description: err.message || "Falha ao enviar evento de teste",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -113,24 +178,99 @@ const FacebookApiTest = () => {
     return null;
   };
 
+  const renderEventFields = () => {
+    switch (eventType) {
+      case 'Purchase':
+      case 'Subscribe':
+      case 'AddToCart':
+        return (
+          <>
+            <div>
+              <Label htmlFor="value">Valor</Label>
+              <Input 
+                id="value" 
+                type="number" 
+                step="0.01"
+                placeholder="0.00" 
+                value={value} 
+                onChange={e => setValue(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="currency">Moeda</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="currency">
+                  <SelectValue placeholder="Selecione a moeda" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BRL">BRL</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        );
+      case 'Search':
+        return (
+          <div>
+            <Label htmlFor="search-string">Termo de Busca</Label>
+            <Input 
+              id="search-string" 
+              type="text" 
+              placeholder="Digite o termo de busca" 
+              value={searchString} 
+              onChange={e => setSearchString(e.target.value)}
+            />
+          </div>
+        );
+      case 'ViewContent':
+        return (
+          <>
+            <div>
+              <Label htmlFor="content-name">Nome do Conteúdo</Label>
+              <Input 
+                id="content-name" 
+                type="text" 
+                placeholder="Nome do conteúdo" 
+                value={contentName} 
+                onChange={e => setContentName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="content-category">Categoria (opcional)</Label>
+              <Input 
+                id="content-category" 
+                type="text" 
+                placeholder="Categoria do conteúdo" 
+                value={contentCategory} 
+                onChange={e => setContentCategory(e.target.value)}
+              />
+            </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card className="p-6 shadow-md">
       <h2 className="text-xl font-bold mb-4">Facebook Conversion API Test</h2>
       
       <div className="space-y-4">
         <div>
-          <Label htmlFor="event-type">Event Type</Label>
+          <Label htmlFor="event-type">Tipo de Evento</Label>
           <Select value={eventType} onValueChange={setEventType}>
             <SelectTrigger id="event-type">
-              <SelectValue placeholder="Select event type" />
+              <SelectValue placeholder="Selecione o tipo de evento" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PageView">PageView</SelectItem>
-              <SelectItem value="ViewContent">ViewContent</SelectItem>
-              <SelectItem value="AddToCart">AddToCart</SelectItem>
-              <SelectItem value="Purchase">Purchase</SelectItem>
-              <SelectItem value="CompleteRegistration">CompleteRegistration</SelectItem>
-              <SelectItem value="Subscribe">Subscribe</SelectItem>
+              {EVENT_TYPES.map(event => (
+                <SelectItem key={event.value} value={event.value}>
+                  {event.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -145,6 +285,8 @@ const FacebookApiTest = () => {
             onChange={e => setEmail(e.target.value)}
           />
         </div>
+
+        {renderEventFields()}
 
         <Button 
           onClick={handleTestEvent} 

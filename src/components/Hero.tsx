@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ const Hero = () => {
   const [activeData, setActiveData] = useState(0);
   const { user } = useAuth();
   
-  // Animation effect - rotate through different chart data
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
@@ -30,19 +28,15 @@ const Hero = () => {
         setIsAnimating(false);
       }, 300);
     }, 5000);
-    
     return () => clearInterval(interval);
   }, []);
 
-  // Track page view and initialize Facebook Pixel
   useEffect(() => {
-    // Inicializa o Facebook Pixel
     initFacebookPixel();
-    // Rastreia a visualização da página
     facebookEvents.viewPage(user?.email);
+    facebookEvents.viewContent('Página Inicial', 'Homepage', user?.email);
   }, [user]);
 
-  // Generate random data for demonstration
   const generateRandomData = (seed: number) => {
     const baseData = [...monthlyData];
     return baseData.map(item => ({
@@ -66,7 +60,6 @@ const Hero = () => {
     { name: 'Outros', valor: 500 }
   ];
   
-  // Recent transactions for the demo
   const transactions = [
     { name: 'Supermercado Extra', categoria: 'Alimentação', valor: -235.45, data: 'Hoje' },
     { name: 'Salário', categoria: 'Receita', valor: 4500.00, data: 'Ontem' },
@@ -76,9 +69,11 @@ const Hero = () => {
 
   const handleStartTrial = () => {
     facebookEvents.startTrial(user?.email);
+    facebookEvents.lead(0, 'BRL', user?.email);
   };
 
-  return <section className="bg-gradient-to-br from-finance-light to-white py-16 lg:py-24">
+  return (
+    <section className="bg-gradient-to-br from-finance-light to-white py-16 lg:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between">
           <div className="lg:w-1/2 lg:pr-12 mb-10 lg:mb-0 animate-fade-up">
@@ -183,7 +178,8 @@ const Hero = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
 
 export default Hero;

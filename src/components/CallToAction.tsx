@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -9,14 +8,23 @@ const CallToAction = () => {
   const { user } = useAuth();
 
   const handleTrialClick = () => {
+    // Rastreia o evento de início de teste
     facebookEvents.startTrial(user?.email);
+    // Rastreia o evento de lead
+    facebookEvents.lead(0, 'BRL', user?.email);
   };
 
   const handleSubscribeClick = () => {
+    // Rastreia o evento de início de checkout
+    facebookEvents.initiateCheckout(24.90, 'BRL', user?.email);
+    // Rastreia o evento de adição de informação de pagamento
+    facebookEvents.addPaymentInfo(24.90, 'BRL', user?.email);
+    // Rastreia o evento de assinatura
     facebookEvents.subscribe(24.90, 'BRL', user?.email);
   };
 
-  return <section className="py-16 bg-finance-primary">
+  return (
+    <section className="py-16 bg-finance-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
@@ -45,7 +53,8 @@ const CallToAction = () => {
           </p>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
 
 export default CallToAction;
