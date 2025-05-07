@@ -12,7 +12,6 @@ import { updateProfile, getProfile } from '@/services/profileService';
 import { NotificationPreferences, getUserNotificationPreferences, updateUserNotificationPreferences } from '@/services/notificationService';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import FacebookEventTester from '@/components/FacebookEventTester';
 
 const SettingsPage = () => {
   const { toast } = useToast();
@@ -179,10 +178,6 @@ const SettingsPage = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Configurações</h1>
       
-      <div className="mb-8">
-        <FacebookEventTester />
-      </div>
-
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="grid grid-cols-3 mb-8">
           <TabsTrigger value="profile">Perfil</TabsTrigger>

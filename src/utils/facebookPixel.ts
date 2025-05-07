@@ -52,6 +52,20 @@ interface FailedEvent {
   timestamp: number;
 }
 
+// Garante que todo visitante tenha um external_id único
+(function ensureExternalId() {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (!localStorage.getItem('external_id')) {
+      const uuid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+            (Number.parseInt(c) ^ (crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> (Number.parseInt(c) / 4))).toString(16)
+          );
+      localStorage.setItem('external_id', uuid);
+    }
+  }
+})();
+
 // Inicializa o Facebook Pixel se ele ainda não estiver carregado
 export const initFacebookPixel = (): void => {
   if (typeof window === 'undefined') return;
@@ -77,15 +91,8 @@ export const initFacebookPixel = (): void => {
 };
 
 // Função para obter dados adicionais do usuário para a API de Conversão
-export const getUserData = (email?: string): UserData => {
-  const userData: UserData = {
-    client_user_agent: navigator.userAgent,
-    fbc: getCookie('_fbc'),
-    fbp: getCookie('_fbp'),
-    external_id: '' // Pode ser preenchido se o usuário estiver logado
-  };
-  
-  // Tenta obter o email do usuário logado se não foi fornecido
+export const getUserData = (email?: string, phone?: string, externalId?: string): UserData => {
+  // Buscar email do localStorage se não fornecido
   let userEmail = email;
   if (!userEmail) {
     const storedUser = localStorage.getItem('user');
@@ -98,18 +105,49 @@ export const getUserData = (email?: string): UserData => {
       }
     }
   }
-  
+
+  // Buscar telefone do localStorage se não fornecido
+  const userPhone = localStorage.getItem('user_phone') || phone || '';
+
+  // Buscar external_id do localStorage se não fornecido
+  let extId = externalId;
+  if (!extId) {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        extId = user.id || '';
+      }
+    } catch (e) {
+      // Silencia o erro, mas não deixa o bloco vazio
+    }
+    // Se ainda não encontrou, usa o external_id de visitante
+    if (!extId) {
+      extId = localStorage.getItem('external_id') || '';
+    }
+  }
+
+  // Buscar fbc e fbp dos cookies
+  const fbc = getCookie('_fbc') || '';
+  const fbp = getCookie('_fbp') || '';
+
+  const userData: UserData = {
+    client_user_agent: navigator.userAgent,
+    fbc: fbc,
+    fbp: fbp,
+    external_id: extId || '',
+  };
+
   // Adiciona email se disponível (será hasheado no backend)
   if (userEmail) {
     userData.em = [userEmail.toLowerCase().trim()];
   }
 
   // Adiciona número de telefone se disponível (será hasheado no backend)
-  const phone = localStorage.getItem('user_phone');
-  if (phone) {
-    userData.ph = [phone.trim()];
+  if (userPhone) {
+    userData.ph = [userPhone.trim()];
   }
-  
+
   return userData;
 };
 
@@ -266,24 +304,33 @@ export const trackFacebookEvent = (
   // Inicializa o pixel caso ainda não tenha sido inicializado
   initFacebookPixel();
   
+  // Buscar telefone e external_id do localStorage
+  const userPhone = localStorage.getItem('user_phone') || undefined;
+  let externalId: string | undefined = undefined;
+  try {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      externalId = user.id || undefined;
+    }
+  } catch (e) {
+    // Silencia o erro
+  }
+
+  // Dados do usuário para a API de Conversão
+  const userData = getUserData(userEmail, userPhone, externalId);
+  
+  // Adiciona os dados do usuário aos parâmetros do evento
+  const enhancedParams = {
+    ...eventParams,
+    event_id: `event_${Date.now()}`,
+    // Adiciona email aos parâmetros do evento se disponível
+    ...(userData.em && { email: userData.em[0] })
+  };
+  
   if (window.fbq) {
-    // Dados do usuário para a API de Conversão
-    const userData = getUserData(userEmail);
-    
-    // Adiciona os dados do usuário aos parâmetros do evento
-    const enhancedParams = {
-      ...eventParams,
-      event_id: `event_${Date.now()}`,
-      // Adiciona email aos parâmetros do evento se disponível
-      ...(userData.em && { email: userData.em[0] })
-    };
-    
-    // Rastreia o evento usando o Pixel
     window.fbq('track', eventName, enhancedParams);
-    
-    // Envia evento para a API de Conversão via edge function
     sendToConversionAPI(eventName, userData, eventParams);
-    
     console.log('[Facebook Pixel] Evento rastreado:', eventName, enhancedParams || '');
   } else {
     console.warn('Facebook Pixel não está carregado corretamente');
