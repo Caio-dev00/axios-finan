@@ -45,6 +45,9 @@ serve(async (req) => {
       })
     }
 
+    // Get the client IP - properly format it for Facebook API
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || ''
+
     // Prepare the event payload
     const eventPayload = {
       data: [
@@ -56,7 +59,7 @@ serve(async (req) => {
           event_id: 'event_' + Date.now(),
           user_data: {
             ...userData,
-            client_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || '',
+            client_ip_address: clientIp, // Use only the first IP in the list
             client_user_agent: req.headers.get('user-agent') || ''
           },
           custom_data: customData || {}
@@ -65,32 +68,45 @@ serve(async (req) => {
       access_token: ACCESS_TOKEN,
     }
     
-    console.log(`Sending event ${eventName} to Facebook Conversion API with payload:`, JSON.stringify(eventPayload))
+    console.log(`Sending event ${eventName} to Facebook Conversion API`)
 
-    // Send event to Facebook Conversion API
-    const response = await axios.post(
-      `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`,
-      eventPayload
-    )
+    try {
+      // Send event to Facebook Conversion API
+      const response = await axios.post(
+        `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`,
+        eventPayload
+      )
 
-    console.log(`Facebook API response:`, JSON.stringify(response.data))
+      console.log(`Facebook API response:`, JSON.stringify(response.data))
 
-    return new Response(JSON.stringify({
-      success: true,
-      data: response.data
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    })
+      return new Response(JSON.stringify({
+        success: true,
+        data: response.data
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    } catch (apiError) {
+      // Handle API-specific errors but still return 200 to the client
+      console.error('Facebook API error:', apiError.response?.data || apiError.message)
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Facebook API returned an error',
+        details: apiError.response?.data || apiError.message
+      }), {
+        status: 200, // Always return 200 to the client
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
   } catch (error) {
-    console.error('Error sending event to Facebook:', error)
-    console.error('Error details:', error.response?.data || error.message)
+    console.error('Error in edge function:', error)
     
     return new Response(JSON.stringify({
-      error: 'Failed to send event to Facebook',
-      details: error.message,
-      response: error.response?.data || null
+      success: false,
+      error: 'Error processing request',
+      details: error.message
     }), {
-      status: 500,
+      status: 200, // Return 200 even for internal errors
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }

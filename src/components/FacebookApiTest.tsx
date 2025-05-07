@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { getUserData } from '@/utils/facebookPixel';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
 
 const FacebookApiTest = () => {
   const [eventType, setEventType] = useState('PageView');
@@ -48,8 +50,14 @@ const FacebookApiTest = () => {
         throw new Error(`Edge function error: ${error.message}`);
       }
       
-      console.log('Facebook API response:', data);
-      setResult(data);
+      console.log('Function response:', data);
+
+      if (!data.success && data.error) {
+        setError(`Facebook API Error: ${data.error}`);
+        setResult(data.details || {});
+      } else {
+        setResult(data);
+      }
     } catch (err: any) {
       console.error('Test failed:', err);
       setError(err.message || 'Failed to send test event');
@@ -96,14 +104,18 @@ const FacebookApiTest = () => {
           disabled={isLoading}
           className="w-full"
         >
-          {isLoading ? 'Enviando...' : 'Enviar Evento de Teste'}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Enviando...
+            </>
+          ) : 'Enviar Evento de Teste'}
         </Button>
         
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-300 rounded text-red-700">
-            <p className="font-semibold">Erro:</p>
-            <p>{error}</p>
-          </div>
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
         
         {result && (
@@ -111,7 +123,7 @@ const FacebookApiTest = () => {
             <Label>Resultado:</Label>
             <Textarea 
               value={JSON.stringify(result, null, 2)} 
-              className="font-mono text-sm h-32 mt-1"
+              className="font-mono text-sm h-40 mt-1"
               readOnly
             />
           </div>
