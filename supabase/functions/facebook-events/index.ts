@@ -54,20 +54,26 @@ serve(async (req) => {
           action_source: 'website',
           event_source_url: eventSourceUrl || req.headers.get('referer') || '',
           event_id: 'event_' + Date.now(),
-          user_data: userData || {},
+          user_data: {
+            ...userData,
+            client_ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || '',
+            client_user_agent: req.headers.get('user-agent') || ''
+          },
           custom_data: customData || {}
         }
       ],
       access_token: ACCESS_TOKEN,
     }
     
-    console.log(`Sending event ${eventName} to Facebook Conversion API`)
+    console.log(`Sending event ${eventName} to Facebook Conversion API with payload:`, JSON.stringify(eventPayload))
 
     // Send event to Facebook Conversion API
     const response = await axios.post(
       `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`,
       eventPayload
     )
+
+    console.log(`Facebook API response:`, JSON.stringify(response.data))
 
     return new Response(JSON.stringify({
       success: true,
@@ -77,10 +83,12 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Error sending event to Facebook:', error)
+    console.error('Error details:', error.response?.data || error.message)
     
     return new Response(JSON.stringify({
       error: 'Failed to send event to Facebook',
-      details: error.message
+      details: error.message,
+      response: error.response?.data || null
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
