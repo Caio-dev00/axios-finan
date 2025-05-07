@@ -1,6 +1,6 @@
-
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -71,9 +71,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) return { error };
       
+      // Salva o email no localStorage para máxima cobertura do Facebook
+      if (data?.user?.email) {
+        localStorage.setItem('user_email', data.user.email.trim().toLowerCase());
+      }
       return {};
-    } catch (error: any) {
-      const errorMessage = error.message || "Erro ao entrar. Tente novamente.";
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Erro ao entrar. Tente novamente.";
       toast({
         title: "Erro ao entrar",
         description: errorMessage,
@@ -111,8 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       return {};
-    } catch (error: any) {
-      const errorMessage = error.message || "Erro ao cadastrar. Tente novamente.";
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Erro ao cadastrar. Tente novamente.";
       toast({
         title: "Erro ao cadastrar",
         description: errorMessage,
@@ -132,8 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Desconectado com sucesso",
         description: "Você foi desconectado do sistema.",
       });
-    } catch (error: any) {
-      const errorMessage = error.message || "Erro ao sair. Tente novamente.";
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Erro ao sair. Tente novamente.";
       toast({
         title: "Erro ao sair",
         description: errorMessage,

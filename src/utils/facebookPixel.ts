@@ -104,6 +104,10 @@ export const getUserData = (email?: string, phone?: string, externalId?: string)
         console.error('[Facebook Pixel] Erro ao obter email do usuário:', error);
       }
     }
+    // Fallback: buscar do localStorage se ainda não encontrou
+    if (!userEmail) {
+      userEmail = localStorage.getItem('user_email') || '';
+    }
   }
 
   // Buscar telefone do localStorage se não fornecido

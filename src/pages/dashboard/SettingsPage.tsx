@@ -60,6 +60,10 @@ const SettingsPage = () => {
             if (profiles.phone) {
               localStorage.setItem('user_phone', profiles.phone.trim());
             }
+            // Carrega o email no localStorage se existir
+            if (profiles.email) {
+              localStorage.setItem('user_email', profiles.email.trim().toLowerCase());
+            }
           }
         } catch (error) {
           console.error('Erro ao carregar perfil:', error);
