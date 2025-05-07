@@ -37,6 +37,7 @@ interface UserData {
   fbp?: string;
   subscription_id?: string;
   em?: string[];
+  ph?: string[]; // Phone number (will be hashed)
   [key: string]: unknown;
 }
 
@@ -69,19 +70,26 @@ const processUserData = (userData: UserData): UserData => {
   const processed: UserData = { ...userData };
   const nonHashFields = ['client_user_agent', 'fbc', 'fbp', 'subscription_id'];
   
+  // Process email array
   if (processed.em && Array.isArray(processed.em)) {
     processed.em = processed.em.map(email => hashValue(email));
   }
 
-  Object.keys(processed).forEach(key => {
-    if (!nonHashFields.includes(key) && key !== 'em') {
+  // Process phone array
+  if (processed.ph && Array.isArray(processed.ph)) {
+    processed.ph = processed.ph.map(phone => hashValue(phone));
+  }
+
+  // Process other fields
+  for (const key of Object.keys(processed)) {
+    if (!nonHashFields.includes(key) && key !== 'em' && key !== 'ph') {
       if (Array.isArray(processed[key])) {
         processed[key] = (processed[key] as string[]).map(val => hashValue(val));
       } else if (processed[key] && typeof processed[key] === 'string') {
         processed[key] = hashValue(processed[key] as string);
       }
     }
-  });
+  }
 
   return processed;
 }
@@ -102,12 +110,12 @@ const validateEventData = (eventName: string, customData?: CustomData): string |
       break;
     case 'Search':
       if (!customData?.search_string) {
-        return `Evento Search requer search_string`;
+        return 'Evento Search requer search_string';
       }
       break;
     case 'ViewContent':
       if (!customData?.content_name) {
-        return `Evento ViewContent requer content_name`;
+        return 'Evento ViewContent requer content_name';
       }
       break;
   }
@@ -155,7 +163,7 @@ serve(async (req) => {
 
     const userDataCopy = { ...userData };
     if (!userDataCopy.client_ip_address || userDataCopy.client_ip_address === '') {
-      delete userDataCopy.client_ip_address;
+      userDataCopy.client_ip_address = undefined;
     }
 
     const processedUserData = processUserData(userDataCopy);
@@ -167,7 +175,7 @@ serve(async (req) => {
           event_time: Math.floor(Date.now() / 1000),
           action_source: 'website',
           event_source_url: eventSourceUrl || req.headers.get('referer') || '',
-          event_id: customData?.event_id || 'event_' + Date.now(),
+          event_id: customData?.event_id || `event_${Date.now()}`,
           user_data: processedUserData,
           custom_data: {
             ...customData,
@@ -179,7 +187,7 @@ serve(async (req) => {
       access_token: ACCESS_TOKEN,
     }
     
-    console.log(`Sending event ${eventName} to Facebook Conversion API`);
+    console.log('Sending event', eventName, 'to Facebook Conversion API');
 
     try {
       const response = await axios.post(
@@ -194,7 +202,7 @@ serve(async (req) => {
         }
       )
 
-      console.log(`Facebook API response:`, JSON.stringify(response.data))
+      console.log('Facebook API response:', JSON.stringify(response.data))
 
       return new Response(JSON.stringify({
         success: true,

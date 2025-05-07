@@ -23,6 +23,7 @@ interface UserData {
   fbp: string;
   external_id: string;
   em?: string[];
+  ph?: string[]; // Phone number (will be hashed)
   [key: string]: unknown;
 }
 
@@ -56,7 +57,7 @@ export const initFacebookPixel = (): void => {
   if (typeof window === 'undefined') return;
   
   if (!window.fbq) {
-    window.fbq = function(eventName: string, ...args: unknown[]): void {
+    window.fbq = (eventName: string, ...args: unknown[]): void => {
       if (window.fbq.callMethod) {
         window.fbq.callMethod(eventName, ...args);
       } else {
@@ -87,6 +88,12 @@ export const getUserData = (email?: string): UserData => {
   // Adiciona email se disponível (será hasheado no backend)
   if (email) {
     userData.em = [email.toLowerCase().trim()];
+  }
+
+  // Adiciona número de telefone se disponível (será hasheado no backend)
+  const phone = localStorage.getItem('user_phone');
+  if (phone) {
+    userData.ph = [phone.trim()];
   }
   
   return userData;
@@ -141,11 +148,11 @@ const sendToConversionAPI = async (
 ): Promise<EventResponse> => {
   try {
     // Gera ID único para o evento
-    const eventId = `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const eventId = `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
     // Verifica duplicação
     if (isEventDuplicate(eventName, eventId)) {
-      console.log(`[Facebook Conversion API] Evento duplicado ignorado: ${eventName}`);
+      console.log('[Facebook Conversion API] Evento duplicado ignorado:', eventName);
       return { success: false };
     }
 
@@ -170,14 +177,14 @@ const sendToConversionAPI = async (
       throw error;
     }
     
-    console.log(`[Facebook Conversion API] Evento enviado com sucesso: ${eventName}`, data);
+    console.log('[Facebook Conversion API] Evento enviado com sucesso:', eventName, data);
     return { success: true, data };
   } catch (error) {
-    console.error(`[Facebook Conversion API] Erro ao enviar evento (tentativa ${retryCount + 1}):`, error);
+    console.error('[Facebook Conversion API] Erro ao enviar evento (tentativa', retryCount + 1, '):', error);
     
     // Implementa retry
     if (retryCount < MAX_RETRIES) {
-      await delay(RETRY_DELAY * Math.pow(2, retryCount)); // Exponential backoff
+      await delay(RETRY_DELAY * (2 ** retryCount)); // Exponential backoff
       return sendToConversionAPI(eventName, userData, customData, retryCount + 1);
     }
     
@@ -252,7 +259,7 @@ export const trackFacebookEvent = (
     // Adiciona os dados do usuário aos parâmetros do evento
     const enhancedParams = {
       ...eventParams,
-      event_id: 'event_' + Date.now(),
+      event_id: `event_${Date.now()}`
     };
     
     // Rastreia o evento usando o Pixel
@@ -261,7 +268,7 @@ export const trackFacebookEvent = (
     // Envia evento para a API de Conversão via edge function
     sendToConversionAPI(eventName, userData, eventParams);
     
-    console.log(`[Facebook Pixel] Evento rastreado: ${eventName}`, enhancedParams || '');
+    console.log('[Facebook Pixel] Evento rastreado:', eventName, enhancedParams || '');
   } else {
     console.warn('Facebook Pixel não está carregado corretamente');
   }

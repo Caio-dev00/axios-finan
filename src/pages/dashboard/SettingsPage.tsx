@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +55,11 @@ const SettingsPage = () => {
             setCurrency(profiles.currency_preference || 'BRL');
             setDateFormat(profiles.date_format_preference || 'DD/MM/YYYY');
             setMonthStartDay(profiles.month_start_day || '1');
+
+            // Carrega o telefone no localStorage se existir
+            if (profiles.phone) {
+              localStorage.setItem('user_phone', profiles.phone.trim());
+            }
           }
         } catch (error) {
           console.error('Erro ao carregar perfil:', error);
@@ -93,6 +97,14 @@ const SettingsPage = () => {
         phone,
         occupation,
       });
+
+      // Armazena o telefone no localStorage para uso na API de conversão do Facebook
+      if (phone) {
+        localStorage.setItem('user_phone', phone.trim());
+      } else {
+        localStorage.removeItem('user_phone');
+      }
+
       toast({
         title: 'Perfil atualizado',
         description: 'Suas informações foram atualizadas com sucesso.',
