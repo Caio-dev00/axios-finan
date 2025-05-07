@@ -85,9 +85,23 @@ export const getUserData = (email?: string): UserData => {
     external_id: '' // Pode ser preenchido se o usuário estiver logado
   };
   
+  // Tenta obter o email do usuário logado se não foi fornecido
+  let userEmail = email;
+  if (!userEmail) {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        userEmail = user.email;
+      } catch (error) {
+        console.error('[Facebook Pixel] Erro ao obter email do usuário:', error);
+      }
+    }
+  }
+  
   // Adiciona email se disponível (será hasheado no backend)
-  if (email) {
-    userData.em = [email.toLowerCase().trim()];
+  if (userEmail) {
+    userData.em = [userEmail.toLowerCase().trim()];
   }
 
   // Adiciona número de telefone se disponível (será hasheado no backend)
@@ -259,7 +273,9 @@ export const trackFacebookEvent = (
     // Adiciona os dados do usuário aos parâmetros do evento
     const enhancedParams = {
       ...eventParams,
-      event_id: `event_${Date.now()}`
+      event_id: `event_${Date.now()}`,
+      // Adiciona email aos parâmetros do evento se disponível
+      ...(userData.em && { email: userData.em[0] })
     };
     
     // Rastreia o evento usando o Pixel

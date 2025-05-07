@@ -70,21 +70,31 @@ const processUserData = (userData: UserData): UserData => {
   const processed: UserData = { ...userData };
   const nonHashFields = ['client_user_agent', 'fbc', 'fbp', 'subscription_id'];
   
-  // Process email array
+  // Process email array - ensure it's properly formatted and hashed
   if (processed.em && Array.isArray(processed.em)) {
-    processed.em = processed.em.map(email => hashValue(email));
+    processed.em = processed.em
+      .filter(email => email && typeof email === 'string')
+      .map(email => email.toLowerCase().trim())
+      .filter(email => email.length > 0)
+      .map(email => hashValue(email));
   }
 
   // Process phone array
   if (processed.ph && Array.isArray(processed.ph)) {
-    processed.ph = processed.ph.map(phone => hashValue(phone));
+    processed.ph = processed.ph
+      .filter(phone => phone && typeof phone === 'string')
+      .map(phone => phone.trim())
+      .filter(phone => phone.length > 0)
+      .map(phone => hashValue(phone));
   }
 
   // Process other fields
   for (const key of Object.keys(processed)) {
     if (!nonHashFields.includes(key) && key !== 'em' && key !== 'ph') {
       if (Array.isArray(processed[key])) {
-        processed[key] = (processed[key] as string[]).map(val => hashValue(val));
+        processed[key] = (processed[key] as string[])
+          .filter(val => val && typeof val === 'string')
+          .map(val => hashValue(val));
       } else if (processed[key] && typeof processed[key] === 'string') {
         processed[key] = hashValue(processed[key] as string);
       }
