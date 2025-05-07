@@ -2,6 +2,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import axios from 'https://esm.sh/axios@1.9.0'
+import { createHash } from 'https://deno.land/std@0.168.0/crypto/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,40 @@ const corsHeaders = {
 // Obtenha as variáveis de ambiente
 const PIXEL_ID = Deno.env.get('FB_PIXEL_ID') || '1354746008979053'
 const ACCESS_TOKEN = Deno.env.get('FB_ACCESS_TOKEN')
+
+// Função para hash SHA-256
+const hashValue = (value: string): string => {
+  if (!value) return '';
+  const hash = createHash('sha256');
+  hash.update(value.trim().toLowerCase());
+  return hash.toString();
+}
+
+// Hash user data following Facebook's requirements
+const processUserData = (userData: Record<string, any>): Record<string, any> => {
+  const processed: Record<string, any> = { ...userData };
+
+  // These fields should NOT be hashed
+  const nonHashFields = ['client_user_agent', 'fbc', 'fbp', 'subscription_id'];
+  
+  // Process email specifically
+  if (processed.em && Array.isArray(processed.em)) {
+    processed.em = processed.em.map(email => hashValue(email));
+  }
+
+  // Process all other fields that require hashing
+  Object.keys(processed).forEach(key => {
+    if (!nonHashFields.includes(key) && key !== 'em') {
+      if (Array.isArray(processed[key])) {
+        processed[key] = processed[key].map((val: string) => hashValue(val));
+      } else if (processed[key] && typeof processed[key] === 'string') {
+        processed[key] = hashValue(processed[key]);
+      }
+    }
+  });
+
+  return processed;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -48,6 +83,13 @@ serve(async (req) => {
     // Get the client IP - properly format it for Facebook API
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || ''
 
+    // Process and hash user data according to Facebook requirements
+    const processedUserData = processUserData({
+      ...userData,
+      client_ip_address: clientIp,
+      client_user_agent: req.headers.get('user-agent') || ''
+    });
+
     // Prepare the event payload
     const eventPayload = {
       data: [
@@ -57,18 +99,14 @@ serve(async (req) => {
           action_source: 'website',
           event_source_url: eventSourceUrl || req.headers.get('referer') || '',
           event_id: 'event_' + Date.now(),
-          user_data: {
-            ...userData,
-            client_ip_address: clientIp, // Use only the first IP in the list
-            client_user_agent: req.headers.get('user-agent') || ''
-          },
+          user_data: processedUserData,
           custom_data: customData || {}
         }
       ],
       access_token: ACCESS_TOKEN,
     }
     
-    console.log(`Sending event ${eventName} to Facebook Conversion API`)
+    console.log(`Sending event ${eventName} to Facebook Conversion API`);
 
     try {
       // Send event to Facebook Conversion API
@@ -86,8 +124,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     } catch (apiError) {
-      // Handle API-specific errors but still return 200 to the client
-      console.error('Facebook API error:', apiError.response?.data || apiError.message)
+      // Log the detailed error for debugging
+      console.error('Facebook API error:', apiError.response?.data || apiError.message);
       
       return new Response(JSON.stringify({
         success: false,
@@ -99,7 +137,7 @@ serve(async (req) => {
       })
     }
   } catch (error) {
-    console.error('Error in edge function:', error)
+    console.error('Error in edge function:', error);
     
     return new Response(JSON.stringify({
       success: false,

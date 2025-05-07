@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { getUserData } from '@/utils/facebookPixel';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 const FacebookApiTest = () => {
   const [eventType, setEventType] = useState('PageView');
@@ -66,6 +66,36 @@ const FacebookApiTest = () => {
     }
   };
 
+  const renderErrorDetails = () => {
+    if (!result || !error) return null;
+    
+    // Handle specific Facebook API errors
+    if (result.error?.message) {
+      return (
+        <div className="mt-4 space-y-2">
+          <div className="font-medium">Erro do Facebook API:</div>
+          <div className="text-sm text-red-600">{result.error.message}</div>
+          {result.error.error_user_msg && (
+            <div className="text-sm bg-red-50 p-3 rounded">
+              <span className="font-medium">Mensagem:</span> {result.error.error_user_msg}
+            </div>
+          )}
+          {result.error.error_user_title && (
+            <div className="text-sm">
+              <span className="font-medium">Título:</span> {result.error.error_user_title}
+            </div>
+          )}
+          <div className="text-xs text-gray-500">
+            Código: {result.error.code}{result.error.error_subcode ? ` (${result.error.error_subcode})` : ''}
+            {result.error.fbtrace_id && ` | Trace ID: ${result.error.fbtrace_id}`}
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <Card className="p-6 shadow-md">
       <h2 className="text-xl font-bold mb-4">Facebook Conversion API Test</h2>
@@ -114,7 +144,19 @@ const FacebookApiTest = () => {
         
         {error && (
           <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
+            {renderErrorDetails()}
+          </Alert>
+        )}
+        
+        {result && !error && (
+          <Alert variant="success" className="mt-4 border-green-500 bg-green-50">
+            <AlertTitle className="text-green-600">Sucesso</AlertTitle>
+            <AlertDescription className="text-green-700">
+              Evento enviado com sucesso!
+            </AlertDescription>
           </Alert>
         )}
         
