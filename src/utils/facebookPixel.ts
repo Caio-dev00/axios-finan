@@ -43,7 +43,7 @@ const hashData = (data: string): string => {
 };
 
 // Função para obter dados adicionais do usuário para a API de Conversão
-const getUserData = (email?: string) => {
+export const getUserData = (email?: string) => {
   const userData: Record<string, any> = {
     client_ip_address: '', // Coletado automaticamente pelo Facebook no servidor
     client_user_agent: navigator.userAgent,
