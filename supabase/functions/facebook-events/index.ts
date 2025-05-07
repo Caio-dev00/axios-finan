@@ -3,7 +3,7 @@ import axios from 'https://esm.sh/axios@1.9.0';
 import { crypto } from 'https://deno.land/std@0.168.0/crypto/mod.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://axiosfinancas.axiostech.com.br',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
