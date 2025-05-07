@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 // Tipo para as notificações
 interface Notification {
@@ -47,7 +47,7 @@ const DashboardHeader = () => {
   };
 
   // Função para buscar notificações do banco de dados
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user) return;
     
     setIsLoading(true);
@@ -86,46 +86,27 @@ const DashboardHeader = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, toast]);
 
   // Carregar notificações quando o componente montar ou usuário mudar
   useEffect(() => {
     fetchNotifications();
-    
     // Configurar escuta em tempo real para atualizações de notificações
     const channel = supabase
       .channel('notification_updates')
       .on(
         'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications'
-        },
-        (payload) => {
-          // Atualizar notificações quando uma nova for inserida
-          fetchNotifications();
-        }
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        () => { fetchNotifications(); }
       )
       .on(
         'postgres_changes',
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'notifications'
-        },
-        (payload) => {
-          // Atualizar notificações quando uma for atualizada
-          fetchNotifications();
-        }
+        { event: 'UPDATE', schema: 'public', table: 'notifications' },
+        () => { fetchNotifications(); }
       )
       .subscribe();
-
-    // Limpar a subscription quando o componente for desmontado
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchNotifications]);
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -201,7 +182,6 @@ const DashboardHeader = () => {
         return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       case 'success':
         return <Check className="h-4 w-4 text-green-500" />;
-      case 'info':
       default:
         return <Info className="h-4 w-4 text-blue-500" />;
     }
@@ -212,6 +192,10 @@ const DashboardHeader = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
+            {/* SidebarTrigger para mobile */}
+            <div className="md:hidden mr-2">
+              <SidebarTrigger />
+            </div>
             <Link to="/dashboard" className="flex items-center">
               <span className="text-2xl font-bold text-finance-primary">Axios</span>
               <span className="text-2xl font-medium text-finance-dark ml-1">Finanças</span>
@@ -249,7 +233,7 @@ const DashboardHeader = () => {
                 <ScrollArea className="h-[300px]">
                   {isLoading ? (
                     <div className="flex justify-center items-center h-[200px]">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900" />
                     </div>
                   ) : notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -59,7 +58,6 @@ const DashboardSidebar = () => {
             <span className="font-bold text-xl text-finance-primary">Axios</span>
             <span className="font-semibold">Finanças</span>
           </Link>
-          <SidebarTrigger />
         </div>
       </SidebarHeader>
       
