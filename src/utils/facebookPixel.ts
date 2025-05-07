@@ -28,33 +28,18 @@ export const initFacebookPixel = () => {
   }
 };
 
-// Função para hash de dados sensíveis (email, telefone, etc.)
-const hashData = (data: string): string => {
-  try {
-    // Como não podemos usar crypto diretamente no navegador para SHA-256,
-    // usamos uma função stub que seria substituída por uma implementação real
-    // Em produção, esse hash seria feito no backend
-    console.warn('Hash real deve ser implementado no backend por segurança');
-    return data; // Retorna sem hash na implementação frontend
-  } catch (error) {
-    console.error('Erro ao fazer hash dos dados:', error);
-    return '';
-  }
-};
-
 // Função para obter dados adicionais do usuário para a API de Conversão
 export const getUserData = (email?: string) => {
   const userData: Record<string, any> = {
-    client_ip_address: '', // Coletado automaticamente pelo Facebook no servidor
     client_user_agent: navigator.userAgent,
     fbc: getCookie('_fbc'),
     fbp: getCookie('_fbp'),
     external_id: '' // Pode ser preenchido se o usuário estiver logado
   };
   
-  // Adiciona email hasheado se disponível
+  // Adiciona email se disponível (será hasheado no backend)
   if (email) {
-    userData.em = [hashData(email.toLowerCase().trim())];
+    userData.em = [email.toLowerCase().trim()];
   }
   
   return userData;

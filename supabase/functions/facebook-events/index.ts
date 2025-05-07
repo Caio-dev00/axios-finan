@@ -90,15 +90,16 @@ serve(async (req) => {
       })
     }
 
-    // Get the client IP - properly format it for Facebook API
-    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || ''
+    // Create a copy of userData without client_ip_address to avoid IP validation issues
+    const userDataCopy = { ...userData };
+    
+    // Remove client_ip_address if it's empty or invalid
+    if (!userDataCopy.client_ip_address || userDataCopy.client_ip_address === '') {
+      delete userDataCopy.client_ip_address;
+    }
 
     // Process and hash user data according to Facebook requirements
-    const processedUserData = processUserData({
-      ...userData,
-      client_ip_address: clientIp,
-      client_user_agent: req.headers.get('user-agent') || ''
-    });
+    const processedUserData = processUserData(userDataCopy);
 
     // Prepare the event payload
     const eventPayload = {
