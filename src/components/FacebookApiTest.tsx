@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getUserData } from '@/utils/facebookPixel';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 const FacebookApiTest = () => {
   const [eventType, setEventType] = useState('PageView');
@@ -152,7 +152,8 @@ const FacebookApiTest = () => {
         )}
         
         {result && !error && (
-          <Alert variant="success" className="mt-4 border-green-500 bg-green-50">
+          <Alert variant="default" className="mt-4 border-green-500 bg-green-50 text-green-700">
+            <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertTitle className="text-green-600">Sucesso</AlertTitle>
             <AlertDescription className="text-green-700">
               Evento enviado com sucesso!
