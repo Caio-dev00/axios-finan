@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Income {
@@ -52,23 +51,31 @@ export const deleteIncome = async (id: string) => {
 };
 
 export const getIncomes = async () => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+
   const { data, error } = await supabase
     .from("incomes")
     .select("*")
+    .eq("user_id", userId)
     .order("date", { ascending: false });
 
   if (error) throw error;
   return data.map(income => ({
     ...income,
     date: new Date(income.date),
-    amount: parseFloat(income.amount as any),
+    amount: Number.parseFloat(income.amount.toString()),
   }));
 };
 
 export const getRecentIncomes = async (limit = 3) => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+
   const { data, error } = await supabase
     .from("incomes")
     .select("*")
+    .eq("user_id", userId)
     .order("date", { ascending: false })
     .limit(limit);
 
@@ -76,6 +83,6 @@ export const getRecentIncomes = async (limit = 3) => {
   return data.map(income => ({
     ...income,
     date: new Date(income.date),
-    amount: parseFloat(income.amount as any),
+    amount: Number.parseFloat(income.amount.toString()),
   }));
 };

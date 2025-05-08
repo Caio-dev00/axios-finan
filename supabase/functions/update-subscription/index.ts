@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -44,6 +43,7 @@ serve(async (req) => {
     }
 
     let result;
+    let isNewSubscription = false;
 
     if (existingSubscription) {
       // Atualizar a assinatura existente
@@ -82,21 +82,25 @@ serve(async (req) => {
       }
       
       result = data;
+      isNewSubscription = true;
     }
 
-    // Criar uma notificação para o usuário
-    const { error: notificationError } = await supabaseClient
-      .from("notifications")
-      .insert({
-        user_id,
-        title: "Bem-vindo ao Plano Pro!",
-        message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos!",
-        type: "subscription",
-      });
-      
-    if (notificationError) {
-      console.error("Erro ao criar notificação:", notificationError);
-      // Não lançamos o erro aqui para não interromper o fluxo principal
+    // Só criar a notificação se for uma nova assinatura
+    if (isNewSubscription) {
+      const { error: notificationError } = await supabaseClient
+        .from("notifications")
+        .insert({
+          user_id,
+          title: "Bem-vindo ao Plano Pro!",
+          message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos!",
+          type: "subscription",
+          is_read: false
+        });
+        
+      if (notificationError) {
+        console.error("Erro ao criar notificação:", notificationError);
+        // Não lançamos o erro aqui para não interromper o fluxo principal
+      }
     }
 
     console.log("Assinatura atualizada com sucesso para o usuário:", user_id);

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
@@ -49,6 +48,9 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
     return getDemoFinancialSummary();
   }
 
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -72,6 +74,7 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   const { data: currentIncomes, error: incomeError } = await supabase
     .from("incomes")
     .select("amount")
+    .eq("user_id", userId)
     .gte("date", currentStartStr)
     .lte("date", currentEndStr);
 
@@ -81,6 +84,7 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   const { data: currentExpenses, error: expenseError } = await supabase
     .from("expenses")
     .select("amount")
+    .eq("user_id", userId)
     .gte("date", currentStartStr)
     .lte("date", currentEndStr);
 
@@ -90,6 +94,7 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   const { data: lastMonthIncomes, error: lastIncomeError } = await supabase
     .from("incomes")
     .select("amount")
+    .eq("user_id", userId)
     .gte("date", lastStartStr)
     .lte("date", lastEndStr);
 
@@ -99,16 +104,17 @@ export const getFinancialSummary = async (): Promise<FinancialSummary> => {
   const { data: lastMonthExpenses, error: lastExpenseError } = await supabase
     .from("expenses")
     .select("amount")
+    .eq("user_id", userId)
     .gte("date", lastStartStr)
     .lte("date", lastEndStr);
 
   if (lastExpenseError) throw lastExpenseError;
 
   // Calcular totais
-  const totalIncome = currentIncomes.reduce((sum, record) => sum + parseFloat(record.amount.toString()), 0);
-  const totalExpense = currentExpenses.reduce((sum, record) => sum + parseFloat(record.amount.toString()), 0);
-  const lastMonthTotalIncome = lastMonthIncomes.reduce((sum, record) => sum + parseFloat(record.amount.toString()), 0);
-  const lastMonthTotalExpense = lastMonthExpenses.reduce((sum, record) => sum + parseFloat(record.amount.toString()), 0);
+  const totalIncome = currentIncomes.reduce((sum, record) => sum + Number.parseFloat(record.amount.toString()), 0);
+  const totalExpense = currentExpenses.reduce((sum, record) => sum + Number.parseFloat(record.amount.toString()), 0);
+  const lastMonthTotalIncome = lastMonthIncomes.reduce((sum, record) => sum + Number.parseFloat(record.amount.toString()), 0);
+  const lastMonthTotalExpense = lastMonthExpenses.reduce((sum, record) => sum + Number.parseFloat(record.amount.toString()), 0);
 
   // Calcular variações percentuais
   const incomeChange = lastMonthTotalIncome === 0 ? 0 : Math.round(((totalIncome - lastMonthTotalIncome) / lastMonthTotalIncome) * 100);
@@ -143,11 +149,15 @@ export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> =
   if (isDemo) {
     return getDemoTransactions(limit);
   }
+
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
   
   // Buscar as receitas mais recentes
   const { data: incomesData, error: incomeError } = await supabase
     .from("incomes")
     .select("id, description, source, amount, date")
+    .eq("user_id", userId)
     .order("date", { ascending: false })
     .limit(limit);
 
@@ -157,6 +167,7 @@ export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> =
   const { data: expensesData, error: expenseError } = await supabase
     .from("expenses")
     .select("id, description, category, amount, date")
+    .eq("user_id", userId)
     .order("date", { ascending: false })
     .limit(limit);
 
@@ -167,7 +178,7 @@ export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> =
     id: income.id,
     name: income.description,
     category: income.source, // Map source to category for consistency
-    amount: parseFloat(income.amount.toString()),
+    amount: Number.parseFloat(income.amount.toString()),
     date: income.date,
     type: 'income' as const
   }));
@@ -177,7 +188,7 @@ export const getRecentTransactions = async (limit = 4): Promise<Transaction[]> =
     id: expense.id,
     name: expense.description,
     category: expense.category,
-    amount: parseFloat(expense.amount.toString()),
+    amount: Number.parseFloat(expense.amount.toString()),
     date: expense.date,
     type: 'expense' as const
   }));
@@ -274,6 +285,9 @@ export const getDemoTransactions = (limit = 4): Transaction[] => {
 
 // Function to generate demo data for reports
 export const getReportData = async () => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+
   const now = new Date();
   const monthlyData: MonthlyData[] = [];
   const categoryData: CategoryData[] = [];
@@ -293,6 +307,7 @@ export const getReportData = async () => {
     const { data: monthIncomes } = await supabase
       .from("incomes")
       .select("amount")
+      .eq("user_id", userId)
       .gte("date", startStr)
       .lte("date", endStr);
       
@@ -300,17 +315,18 @@ export const getReportData = async () => {
     const { data: monthExpenses } = await supabase
       .from("expenses")
       .select("amount")
+      .eq("user_id", userId)
       .gte("date", startStr)
       .lte("date", endStr);
       
     // Calcular totais
     const totalIncome = monthIncomes?.reduce(
-      (sum, record) => sum + parseFloat(record.amount.toString()), 
+      (sum, record) => sum + Number.parseFloat(record.amount.toString()), 
       0
     ) || 0;
     
     const totalExpense = monthExpenses?.reduce(
-      (sum, record) => sum + parseFloat(record.amount.toString()), 
+      (sum, record) => sum + Number.parseFloat(record.amount.toString()), 
       0
     ) || 0;
     
@@ -329,34 +345,39 @@ export const getReportData = async () => {
   // Buscar categorias de despesas
   const { data: expensesByCategory } = await supabase
     .from("expenses")
-    .select("category, amount");
+    .select("category, amount")
+    .eq("user_id", userId);
     
   // Calcular total por categoria
   const categories: Record<string, number> = {};
   
-  expensesByCategory?.forEach(expense => {
+  for (const expense of expensesByCategory || []) {
     const category = expense.category;
-    const amount = parseFloat(expense.amount.toString());
+    const amount = Number.parseFloat(expense.amount.toString());
     
     if (!categories[category]) {
       categories[category] = 0;
     }
     categories[category] += amount;
-  });
+  }
   
-  Object.entries(categories).forEach(([name, valor]) => {
+  for (const [name, valor] of Object.entries(categories)) {
     categoryData.push({ name, valor });
-  });
+  }
   
   return { monthlyData, categoryData, cashFlowData };
 };
 
 // Função para obter todas as categorias de despesas
 export const getExpenseCategories = async (): Promise<ExpenseCategory[]> => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+
   // Buscar todas as categorias usadas em despesas
   const { data, error } = await supabase
     .from("expenses")
-    .select("category");
+    .select("category")
+    .eq("user_id", userId);
 
   if (error) throw error;
   
@@ -366,12 +387,12 @@ export const getExpenseCategories = async (): Promise<ExpenseCategory[]> => {
 
   // Calcular quantas vezes cada categoria é usada
   const categoryCounts: Record<string, number> = {};
-  data.forEach(item => {
+  for (const item of data) {
     if (!categoryCounts[item.category]) {
       categoryCounts[item.category] = 0;
     }
     categoryCounts[item.category]++;
-  });
+  }
 
   // Converter para array e ordenar por frequência de uso (mais usadas primeiro)
   return Object.entries(categoryCounts)

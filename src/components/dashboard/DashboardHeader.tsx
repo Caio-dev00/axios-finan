@@ -30,7 +30,7 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'success';
+  type: 'info' | 'warning' | 'success' | 'subscription';
   isRead: boolean;
   createdAt: Date;
 }
@@ -56,6 +56,7 @@ const DashboardHeader = () => {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -68,13 +69,25 @@ const DashboardHeader = () => {
           id: item.id,
           title: item.title,
           message: item.message,
-          type: item.type as 'info' | 'warning' | 'success',
+          type: item.type as 'info' | 'warning' | 'success' | 'subscription',
           isRead: item.is_read,
           createdAt: new Date(item.created_at)
         }));
+
+        // Filtrar notificações de assinatura duplicadas
+        const seenSubscriptionTitles = new Set();
+        const filteredNotifications = formattedNotifications.filter(notification => {
+          if (notification.type === 'subscription') {
+            if (seenSubscriptionTitles.has(notification.title)) {
+              return false;
+            }
+            seenSubscriptionTitles.add(notification.title);
+          }
+          return true;
+        });
         
-        setNotifications(formattedNotifications);
-        setNotificationCount(formattedNotifications.filter(n => !n.isRead).length);
+        setNotifications(filteredNotifications);
+        setNotificationCount(filteredNotifications.filter(n => !n.isRead).length);
       }
     } catch (error) {
       console.error("Erro ao buscar notificações:", error);
@@ -90,23 +103,35 @@ const DashboardHeader = () => {
 
   // Carregar notificações quando o componente montar ou usuário mudar
   useEffect(() => {
-    fetchNotifications();
-    // Configurar escuta em tempo real para atualizações de notificações
-    const channel = supabase
-      .channel('notification_updates')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications' },
-        () => { fetchNotifications(); }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'notifications' },
-        () => { fetchNotifications(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [fetchNotifications]);
+    if (user) {
+      fetchNotifications();
+      // Configurar escuta em tempo real para atualizações de notificações
+      const channel = supabase
+        .channel('notification_updates')
+        .on(
+          'postgres_changes',
+          { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => { fetchNotifications(); }
+        )
+        .on(
+          'postgres_changes',
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => { fetchNotifications(); }
+        )
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [fetchNotifications, user]);
 
   const handleMarkAsRead = async (id: string) => {
     try {
