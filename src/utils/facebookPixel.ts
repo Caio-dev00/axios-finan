@@ -308,6 +308,9 @@ export const trackFacebookEvent = (
   // Inicializa o pixel caso ainda não tenha sido inicializado
   initFacebookPixel();
   
+  // Gerar event_id único para deduplicação
+  const event_id = `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
   // Buscar telefone e external_id do localStorage
   const userPhone = localStorage.getItem('user_phone') || undefined;
   let externalId: string | undefined = undefined;
@@ -327,14 +330,15 @@ export const trackFacebookEvent = (
   // Adiciona os dados do usuário aos parâmetros do evento
   const enhancedParams = {
     ...eventParams,
-    event_id: `event_${Date.now()}`,
+    event_id,
+    eventID: event_id, // Passa também como eventID para deduplicação
     // Adiciona email aos parâmetros do evento se disponível
     ...(userData.em && { email: userData.em[0] })
   };
   
   if (window.fbq) {
-    window.fbq('track', eventName, enhancedParams);
-    sendToConversionAPI(eventName, userData, eventParams);
+    window.fbq('track', eventName, enhancedParams); // Passa event_id e eventID nos params
+    sendToConversionAPI(eventName, userData, { ...eventParams, event_id }); // Passa o mesmo event_id para a API
     console.log('[Facebook Pixel] Evento rastreado:', eventName, enhancedParams || '');
   } else {
     console.warn('Facebook Pixel não está carregado corretamente');
