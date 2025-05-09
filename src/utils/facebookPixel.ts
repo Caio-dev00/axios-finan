@@ -104,7 +104,6 @@ export const getUserData = (email?: string, phone?: string, externalId?: string)
         console.error('[Facebook Pixel] Erro ao obter email do usuário:', error);
       }
     }
-    // Fallback: buscar do localStorage se ainda não encontrou
     if (!userEmail) {
       userEmail = localStorage.getItem('user_email') || '';
     }
@@ -123,35 +122,45 @@ export const getUserData = (email?: string, phone?: string, externalId?: string)
         extId = user.id || '';
       }
     } catch (e) {
-      // Silencia o erro, mas não deixa o bloco vazio
+      // Silencia o erro propositalmente para não quebrar fluxo
     }
-    // Se ainda não encontrou, usa o external_id de visitante
     if (!extId) {
       extId = localStorage.getItem('external_id') || '';
+    }
+    // Gera um UUID se ainda não houver external_id
+    if (!extId) {
+      extId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+            (Number.parseInt(c) ^ (crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> (Number.parseInt(c) / 4))).toString(16)
+          );
+      localStorage.setItem('external_id', extId);
     }
   }
 
   // Buscar fbc e fbp dos cookies
   const fbc = getCookie('_fbc') || '';
   const fbp = getCookie('_fbp') || '';
+  // Gera fbp se não existir
+  let final_fbp = fbp;
+  if (!final_fbp) {
+    final_fbp = `fb.1.${Date.now()}.${Math.floor(Math.random() * 1000000000)}`;
+    document.cookie = `_fbp=${final_fbp}; path=/;`;
+  }
 
   const userData: UserData = {
     client_user_agent: navigator.userAgent,
     fbc: fbc,
-    fbp: fbp,
+    fbp: final_fbp,
     external_id: extId || '',
   };
 
-  // Adiciona email se disponível (será hasheado no backend)
   if (userEmail) {
     userData.em = [userEmail.toLowerCase().trim()];
   }
-
-  // Adiciona número de telefone se disponível (será hasheado no backend)
   if (userPhone) {
     userData.ph = [userPhone.trim()];
   }
-
   return userData;
 };
 
@@ -308,14 +317,11 @@ export const trackFacebookEvent = (
   eventParams?: CustomData, 
   userEmail?: string
 ): void => {
-  // Inicializa o pixel caso ainda não tenha sido inicializado
   initFacebookPixel();
   
-  // Gerar event_id único para deduplicação
   const event_id = `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const event_time = Math.floor(Date.now() / 1000);
 
-  // Buscar telefone e external_id do localStorage
   const userPhone = localStorage.getItem('user_phone') || undefined;
   let externalId: string | undefined = undefined;
   try {
@@ -325,26 +331,30 @@ export const trackFacebookEvent = (
       externalId = user.id || undefined;
     }
   } catch (e) {
-    // Silencia o erro
+    // Silencia o erro propositalmente para não quebrar fluxo
   }
 
-  // Dados do usuário para a API de Conversão
   const userData = getUserData(userEmail, userPhone, externalId);
-  
-  // Adiciona os dados do usuário aos parâmetros do evento
   const enhancedParams = {
     ...eventParams,
     event_id,
-    eventID: event_id, // Passa também como eventID para deduplicação
+    eventID: event_id,
     event_time,
-    // Adiciona email aos parâmetros do evento se disponível
     ...(userData.em && { email: userData.em[0] })
   };
-  
+
   if (window.fbq) {
-    window.fbq('track', eventName, enhancedParams); // Passa event_id, eventID e event_time nos params
+    // Passa event_id e eventID nos parâmetros (não como quarto argumento)
+    window.fbq('track', eventName, enhancedParams);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Facebook Pixel] (DEV) Evento enviado para Pixel:', eventName, enhancedParams);
+    } else {
+      console.log('[Facebook Pixel] Evento rastreado:', eventName, enhancedParams || '');
+    }
     sendToConversionAPI(eventName, userData, { ...eventParams, event_id, event_time }, event_id, event_time);
-    console.log('[Facebook Pixel] Evento rastreado:', eventName, enhancedParams || '');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Facebook Conversion API] (DEV) Evento enviado para API:', eventName, { ...eventParams, event_id, event_time });
+    }
   } else {
     console.warn('Facebook Pixel não está carregado corretamente');
   }
