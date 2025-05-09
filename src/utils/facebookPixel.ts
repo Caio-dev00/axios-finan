@@ -200,14 +200,17 @@ const sendToConversionAPI = async (
   eventName: string, 
   userData: UserData, 
   customData?: CustomData,
+  event_id?: string,
+  event_time?: number,
   retryCount = 0
 ): Promise<EventResponse> => {
   try {
-    // Gera ID único para o evento
-    const eventId = `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
+    // Use variáveis locais para evitar reatribuição de parâmetros
+    const final_event_id = event_id || `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const final_event_time = event_time || Math.floor(Date.now() / 1000);
+
     // Verifica duplicação
-    if (isEventDuplicate(eventName, eventId)) {
+    if (isEventDuplicate(eventName, final_event_id)) {
       console.log('[Facebook Conversion API] Evento duplicado ignorado:', eventName);
       return { success: false };
     }
@@ -218,8 +221,8 @@ const sendToConversionAPI = async (
       userData,
       customData: {
         ...customData,
-        event_id: eventId,
-        event_time: Math.floor(Date.now() / 1000)
+        event_id: final_event_id,
+        event_time: final_event_time
       },
       eventSourceUrl: window.location.href
     };
@@ -241,7 +244,7 @@ const sendToConversionAPI = async (
     // Implementa retry
     if (retryCount < MAX_RETRIES) {
       await delay(RETRY_DELAY * (2 ** retryCount)); // Exponential backoff
-      return sendToConversionAPI(eventName, userData, customData, retryCount + 1);
+      return sendToConversionAPI(eventName, userData, customData, event_id, event_time, retryCount + 1);
     }
     
     // Armazena evento falho para retry posterior
@@ -310,6 +313,7 @@ export const trackFacebookEvent = (
   
   // Gerar event_id único para deduplicação
   const event_id = `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const event_time = Math.floor(Date.now() / 1000);
 
   // Buscar telefone e external_id do localStorage
   const userPhone = localStorage.getItem('user_phone') || undefined;
@@ -332,13 +336,14 @@ export const trackFacebookEvent = (
     ...eventParams,
     event_id,
     eventID: event_id, // Passa também como eventID para deduplicação
+    event_time,
     // Adiciona email aos parâmetros do evento se disponível
     ...(userData.em && { email: userData.em[0] })
   };
   
   if (window.fbq) {
-    window.fbq('track', eventName, enhancedParams); // Passa event_id e eventID nos params
-    sendToConversionAPI(eventName, userData, { ...eventParams, event_id }); // Passa o mesmo event_id para a API
+    window.fbq('track', eventName, enhancedParams); // Passa event_id, eventID e event_time nos params
+    sendToConversionAPI(eventName, userData, { ...eventParams, event_id, event_time }, event_id, event_time);
     console.log('[Facebook Pixel] Evento rastreado:', eventName, enhancedParams || '');
   } else {
     console.warn('Facebook Pixel não está carregado corretamente');
