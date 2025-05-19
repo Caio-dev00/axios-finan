@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -55,7 +56,7 @@ const DashboardSidebar = () => {
       <SidebarHeader className="border-b border-gray-200 dark:border-gray-800 px-6 py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl text-finance-primary">Axios</span>
+            <span className="font-bold text-xl text-finance-primary">Wisex</span>
             <span className="font-semibold">Finanças</span>
           </Link>
         </div>

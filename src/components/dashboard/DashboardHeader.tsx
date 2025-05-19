@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -222,7 +223,7 @@ const DashboardHeader = () => {
               <SidebarTrigger />
             </div>
             <Link to="/dashboard" className="flex items-center">
-              <span className="text-2xl font-bold text-finance-primary">Axios</span>
+              <span className="text-2xl font-bold text-finance-primary">Wisex</span>
               <span className="text-2xl font-medium text-finance-dark ml-1">Finanças</span>
             </Link>
           </div>

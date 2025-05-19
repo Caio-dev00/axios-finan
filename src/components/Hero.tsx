@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -77,11 +78,11 @@ const Hero = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between">
           <div className="lg:w-1/2 lg:pr-12 mb-10 lg:mb-0 animate-fade-up">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-finance-dark leading-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-finance-dark leading-tight mb-6">
               Controle suas finanças com <span className="text-finance-primary">facilidade</span>
             </h1>
-            <p className="text-lg text-gray-700 mb-8 max-w-lg">
-              Axios Finanças é o app ideal para quem quer ter o controle das finanças pessoais de forma simples, organizada e eficaz.
+            <p className="text-base sm:text-lg text-gray-700 mb-8 max-w-lg">
+              Wisex Finanças é o app ideal para quem quer ter o controle das finanças pessoais de forma simples, organizada e eficaz.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button className="finance-btn-primary text-base" asChild>
@@ -104,11 +105,11 @@ const Hero = () => {
             </div>
           </div>
           <div className={`lg:w-1/2 ${isAnimating ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
-            <div className="glass-card p-6 rounded-xl shadow-lg bg-white/80 backdrop-blur-sm">
+            <div className="glass-card p-4 sm:p-6 rounded-xl shadow-lg bg-white/80 backdrop-blur-sm">
               <div className="relative overflow-hidden rounded-lg shadow-sm">
-                <div className="w-full bg-white p-4 rounded-lg shadow-sm">
+                <div className="w-full bg-white p-3 sm:p-4 rounded-lg shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-700 mb-3">Balanço Mensal</h3>
-                  <div className="h-64">
+                  <div className="h-48 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={dashboardData[activeData]}
@@ -131,36 +132,36 @@ const Hero = () => {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Gastos por Categoria</h3>
-                  <div className="h-[180px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2">Gastos por Categoria</h3>
+                  <div className="h-[140px] sm:h-[180px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
                         data={categoryData}
                         margin={{
                           top: 5,
                           right: 5,
-                          left: 5,
+                          left: 0,
                           bottom: 5,
                         }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{fontSize: 10}} />
-                        <YAxis tick={{fontSize: 10}} />
+                        <XAxis dataKey="name" tick={{fontSize: 9}} />
+                        <YAxis tick={{fontSize: 9}} />
                         <Tooltip formatter={(value) => formatCurrency(Number(value), 'BRL')} />
                         <Line type="monotone" dataKey="valor" stroke="#8884d8" />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Últimas Transações</h3>
-                  <div className="h-[180px] overflow-y-auto text-left">
+                <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2">Últimas Transações</h3>
+                  <div className="h-[140px] sm:h-[180px] overflow-y-auto text-left">
                     {transactions.map((transaction, index) => (
-                      <div key={index} className="py-2 border-b border-gray-100 last:border-0">
+                      <div key={index} className="py-1 sm:py-2 border-b border-gray-100 last:border-0">
                         <div className="flex justify-between">
-                          <p className="text-xs font-medium">{transaction.name}</p>
+                          <p className="text-xs font-medium truncate max-w-[120px] sm:max-w-none">{transaction.name}</p>
                           <p className={`text-xs font-semibold ${transaction.valor > 0 ? 'text-green-600' : 'text-red-500'}`}>
                             {formatCurrency(transaction.valor, 'BRL')}
                           </p>

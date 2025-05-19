@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -9,7 +10,6 @@ import FinancialTips from "@/components/FinancialTips";
 import Testimonials from "@/components/Testimonials";
 import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
-import FacebookApiTest from "@/components/FacebookApiTest";
 
 const Index = () => {
   return (

@@ -32,7 +32,7 @@ const Header = () => {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         <div className="flex items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-finance-primary">Axios</span>
+            <span className="text-2xl font-bold text-finance-primary">Wisex</span>
             <span className="text-2xl font-medium text-finance-dark">Finanças</span>
           </Link>
         </div>
@@ -111,7 +111,7 @@ const Header = () => {
               <div className="flex flex-col h-full">
                 <div className="py-4">
                   <Link to="/" className="flex items-center mb-6" onClick={() => setOpen(false)}>
-                    <span className="text-xl font-bold text-finance-primary">Axios</span>
+                    <span className="text-xl font-bold text-finance-primary">Wisex</span>
                     <span className="text-xl font-medium text-finance-dark ml-1">Finanças</span>
                   </Link>
                   <div className="flex flex-col space-y-4">

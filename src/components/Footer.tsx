@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mb-12">
           <div>
             <div className="flex items-center mb-4">
-              <span className="text-2xl font-bold text-finance-primary">Axios</span>
+              <span className="text-2xl font-bold text-finance-primary">Wisex</span>
               <span className="text-2xl font-medium text-white ml-1">Finanças</span>
             </div>
             <p className="text-gray-400">
@@ -47,7 +47,7 @@ const Footer = () => {
         
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            &copy; 2025 Axios Finanças. Todos os direitos reservados.
+            &copy; 2025 Wisex Finanças. Todos os direitos reservados.
           </p>
           <div className="flex space-x-4">
             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
