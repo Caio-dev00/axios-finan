@@ -25,6 +25,7 @@ import Resources from "@/pages/Resources";
 import PricingPage from "@/pages/Pricing";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import LearnMorePage from "@/pages/LearnMorePage";
+import KiwifySuccess from "@/pages/KiwifySuccess";
 
 import "./App.css";
 
@@ -40,6 +41,7 @@ const App: React.FC = () => {
             <Route path="/recursos" element={<Resources />} />
             <Route path="/saiba-mais" element={<LearnMorePage />} />
             <Route path="/pagamento-sucesso" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+            <Route path="/kiwify-success" element={<KiwifySuccess />} />
             
             <Route 
               path="/dashboard" 

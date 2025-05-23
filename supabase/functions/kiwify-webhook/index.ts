@@ -22,53 +22,71 @@ serve(async (req) => {
     // Parse webhook payload
     const payload = await req.json();
     
-    console.log("Webhook Kiwify recebido:", payload);
+    console.log("Webhook Kiwify recebido:", JSON.stringify(payload, null, 2));
 
     // Verificar se é um evento de compra aprovada
-    if (payload.status === "paid" || payload.status === "approved") {
-      const userEmail = payload.customer?.email;
-      const userId = payload.custom_fields?.user_id || payload.metadata?.user_id;
+    if (payload.order_status === "paid" || payload.webhook_event_type === "order_approved") {
+      const userEmail = payload.Customer?.email;
+      console.log("Email do cliente:", userEmail);
       
-      if (!userId && !userEmail) {
-        console.error("Webhook sem identificação do usuário");
+      if (!userEmail) {
+        console.error("Webhook sem email do cliente");
         return new Response(
-          JSON.stringify({ error: "User identification required" }),
+          JSON.stringify({ error: "Customer email required" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      let finalUserId = userId;
+      // Buscar usuário pelo email na tabela profiles
+      const { data: profile, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("id, email")
+        .eq("email", userEmail)
+        .maybeSingle();
 
-      // Se não temos user_id, mas temos email, buscar pelo perfil
-      if (!userId && userEmail) {
-        const { data: profile, error: profileError } = await supabaseClient
-          .from("profiles")
-          .select("id")
-          .eq("email", userEmail)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error("Erro ao buscar perfil por email:", profileError);
-        } else if (profile) {
-          finalUserId = profile.id;
-        }
+      if (profileError) {
+        console.error("Erro ao buscar perfil por email:", profileError);
       }
 
-      if (!finalUserId) {
-        console.error("Não foi possível identificar o usuário para ativar o plano Pro");
+      let userId = profile?.id;
+      console.log("Usuário encontrado:", userId);
+
+      if (!userId) {
+        console.log("Usuário não encontrado. Criando registro de assinatura pendente para:", userEmail);
+        
+        // Se o usuário não existe, vamos criar um registro temporário que será associado quando ele se cadastrar
+        const { data: pendingSubscription, error: pendingError } = await supabaseClient
+          .from("pending_subscriptions")
+          .insert({
+            email: userEmail,
+            plan_type: "pro",
+            order_id: payload.order_id || payload.id,
+            created_at: new Date().toISOString()
+          });
+
+        if (pendingError) {
+          console.error("Erro ao criar assinatura pendente:", pendingError);
+        } else {
+          console.log("Assinatura pendente criada para:", userEmail);
+        }
+
         return new Response(
-          JSON.stringify({ error: "User not found" }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ 
+            success: true, 
+            message: "Pagamento registrado. Assinatura será ativada quando o usuário se cadastrar.",
+            email: userEmail
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      console.log("Ativando plano Pro para usuário:", finalUserId);
+      console.log("Ativando plano Pro para usuário:", userId);
 
       // Verificar se já existe uma assinatura
       const { data: existingSubscription, error: fetchError } = await supabaseClient
         .from("user_subscriptions")
         .select("*")
-        .eq("user_id", finalUserId)
+        .eq("user_id", userId)
         .maybeSingle();
         
       if (fetchError) {
@@ -88,7 +106,7 @@ serve(async (req) => {
             end_date: null,
             updated_at: new Date().toISOString(),
           })
-          .eq("user_id", finalUserId);
+          .eq("user_id", userId);
           
         if (error) {
           console.error("Erro ao atualizar assinatura:", error);
@@ -96,15 +114,16 @@ serve(async (req) => {
         }
         
         subscriptionResult = data;
+        console.log("Assinatura atualizada para Pro");
       } else {
         // Criar nova assinatura
         const { data, error } = await supabaseClient
           .from("user_subscriptions")
           .insert({
-            user_id: finalUserId,
+            user_id: userId,
             plan_type: "pro",
             is_active: true,
-            payment_id: payload.id || payload.transaction_id,
+            payment_id: payload.order_id || payload.id,
           });
           
         if (error) {
@@ -113,12 +132,13 @@ serve(async (req) => {
         }
         
         subscriptionResult = data;
+        console.log("Nova assinatura Pro criada");
 
         // Criar notificação de boas-vindas para nova assinatura
         const { error: notificationError } = await supabaseClient
           .from("notifications")
           .insert({
-            user_id: finalUserId,
+            user_id: userId,
             title: "Bem-vindo ao Plano Pro!",
             message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos premium!",
             type: "subscription",
@@ -130,19 +150,21 @@ serve(async (req) => {
         }
       }
 
-      console.log("Plano Pro ativado com sucesso para usuário:", finalUserId);
+      console.log("Plano Pro ativado com sucesso para usuário:", userId);
       
       return new Response(
         JSON.stringify({ 
           success: true, 
           message: "Plano Pro ativado com sucesso",
-          user_id: finalUserId 
+          user_id: userId,
+          email: userEmail
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Para outros tipos de webhook, apenas confirmar recebimento
+    console.log("Webhook recebido mas não é de pagamento aprovado:", payload.webhook_event_type);
     return new Response(
       JSON.stringify({ message: "Webhook recebido" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
