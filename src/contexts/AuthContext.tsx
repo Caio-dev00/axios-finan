@@ -1,3 +1,4 @@
+
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
@@ -69,13 +70,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
       
-      if (error) return { error };
+      if (error) return { error: { message: error.message } };
       
       // Salva o email no localStorage para máxima cobertura do Facebook
       if (data?.user?.email) {
         localStorage.setItem('user_email', data.user.email.trim().toLowerCase());
       }
-      return {};
+      return { error: null };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Erro ao entrar. Tente novamente.";
       toast({
@@ -83,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: errorMessage,
         variant: "destructive",
       });
-      return { error };
+      return { error: { message: errorMessage } };
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error.message.includes("User already registered")) {
           return { error: { message: "Este email já está cadastrado. Por favor, faça login ou use outro email." } };
         }
-        return { error };
+        return { error: { message: error.message } };
       }
       
       toast({
@@ -114,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Verifique seu email para confirmar sua conta.",
       });
       
-      return {};
+      return { error: null };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Erro ao cadastrar. Tente novamente.";
       toast({
@@ -122,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: errorMessage,
         variant: "destructive",
       });
-      return { error };
+      return { error: { message: errorMessage } };
     } finally {
       setLoading(false);
     }

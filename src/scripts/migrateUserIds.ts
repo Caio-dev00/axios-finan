@@ -1,9 +1,10 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 async function migrateUserIds() {
   try {
-    // Get all users
-    const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
+    // Get all users - using any to avoid TypeScript issues with admin functions
+    const { data: users, error: usersError } = await (supabase.auth as any).admin.listUsers();
     if (usersError) throw usersError;
 
     // For each user, update their records
@@ -38,4 +39,4 @@ async function migrateUserIds() {
 }
 
 // Run the migration
-migrateUserIds(); 
+migrateUserIds();
