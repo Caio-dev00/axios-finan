@@ -36,8 +36,8 @@ const Pricing = () => {
       return;
     }
 
-    // Redirecionar para o link de pagamento externo com identificação do usuário
-    const paymentUrl = "https://pay.cakto.com.br/3bnjhuj_366904";
+    // Redirecionar para o novo link de pagamento com identificação do usuário
+    const paymentUrl = "https://pay.kiwify.com.br/LcTtKle";
     const finalUrl = `${paymentUrl}?user_id=${encodeURIComponent(user.id)}&origin=${encodeURIComponent(window.location.origin)}&email=${encodeURIComponent(user.email)}`;
     window.location.href = finalUrl;
   };

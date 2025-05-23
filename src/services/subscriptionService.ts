@@ -34,6 +34,27 @@ export const processPaymentCompletion = async (userId: string) => {
   }
 };
 
+export const processKiwifyPayment = async (userId: string, paymentData: any) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('kiwify-webhook', {
+      body: { 
+        user_id: userId,
+        status: 'paid',
+        customer: { email: paymentData.email },
+        custom_fields: { user_id: userId },
+        ...paymentData
+      }
+    });
+    
+    if (error) throw error;
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao processar pagamento Kiwify:', error);
+    throw error;
+  }
+};
+
 export const checkSubscriptionStatus = async (userId: string) => {
   try {
     const { data, error } = await supabase
