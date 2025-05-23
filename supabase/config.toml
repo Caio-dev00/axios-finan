@@ -1,5 +1,8 @@
 
-project_id = "project_id"
+project_id = "yascliotrmqhvqbvrhsc"
 
 [functions.facebook-events]
+verify_jwt = false
+
+[functions.kiwify-webhook]
 verify_jwt = false
