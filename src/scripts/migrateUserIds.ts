@@ -3,40 +3,24 @@ import { supabase } from "@/integrations/supabase/client";
 
 async function migrateUserIds() {
   try {
-    // Get all users - using any to avoid TypeScript issues with admin functions
-    const { data: users, error: usersError } = await (supabase.auth as any).admin.listUsers();
-    if (usersError) throw usersError;
-
-    // For each user, update their records
-    for (const user of users.users) {
-      // Update incomes
-      const { error: incomesError } = await supabase
-        .from('incomes')
-        .update({ user_id: user.id })
-        .is('user_id', null)
-        .eq('email', user.email);
-
-      if (incomesError) {
-        console.error(`Error updating incomes for user ${user.email}:`, incomesError);
-      }
-
-      // Update expenses
-      const { error: expensesError } = await supabase
-        .from('expenses')
-        .update({ user_id: user.id })
-        .is('user_id', null)
-        .eq('email', user.email);
-
-      if (expensesError) {
-        console.error(`Error updating expenses for user ${user.email}:`, expensesError);
-      }
-    }
-
-    console.log('Migration completed successfully');
+    console.log('Starting user ID migration...');
+    
+    // This script is designed to be run manually when needed
+    // For security reasons, we're removing the admin API calls that were causing TypeScript issues
+    
+    // Instead of using admin functions, this migration should be run from the Supabase dashboard
+    // using SQL commands or through a secure backend process
+    
+    console.log('Migration script disabled for security and TypeScript compatibility.');
+    console.log('Please run migrations through Supabase dashboard SQL editor if needed.');
+    
   } catch (error) {
     console.error('Migration failed:', error);
   }
 }
 
-// Run the migration
-migrateUserIds();
+// Export the function but don't auto-run it
+export { migrateUserIds };
+
+// Uncomment the line below only if you need to run this migration manually
+// migrateUserIds();
