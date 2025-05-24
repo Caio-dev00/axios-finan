@@ -29,6 +29,12 @@ serve(async (req) => {
       payment_id
     });
 
+    // Verificar se é um ID de teste (sempre aprovado)
+    const isTestTransaction = payment_id && payment_id.startsWith("TEST_TRANSACTION_");
+    if (isTestTransaction) {
+      console.log("🧪 ID de transação de teste detectado - aprovando automaticamente:", payment_id);
+    }
+
     if (!user_id) {
       console.error("❌ User ID é obrigatório");
       return new Response(
@@ -140,7 +146,9 @@ serve(async (req) => {
         .insert({
           user_id,
           title: "Bem-vindo ao Plano Pro!",
-          message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos premium!",
+          message: isTestTransaction 
+            ? "Sua assinatura de teste foi ativada com sucesso. Aproveite todos os recursos premium!" 
+            : "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos premium!",
           type: "subscription",
           is_read: false
         });
@@ -159,10 +167,13 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Assinatura atualizada com sucesso",
+        message: isTestTransaction 
+          ? "Assinatura de teste ativada com sucesso" 
+          : "Assinatura atualizada com sucesso",
         subscription: result,
         isNewSubscription,
-        user_info: userProfile
+        user_info: userProfile,
+        test_mode: isTestTransaction
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
