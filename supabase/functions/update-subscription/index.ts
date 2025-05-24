@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -21,14 +22,44 @@ serve(async (req) => {
     // Parse the request body
     const { payment_id, user_id, plan_type = "pro" } = await req.json();
 
+    console.log("Processando atualização de assinatura:", {
+      user_id,
+      plan_type,
+      payment_id
+    });
+
     if (!user_id) {
+      console.error("User ID é obrigatório");
       return new Response(
         JSON.stringify({ error: "User ID é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Processando atualização de assinatura para usuário:", user_id);
+    // Verificar se o usuário existe
+    const { data: userProfile, error: userError } = await supabaseClient
+      .from("profiles")
+      .select("id")
+      .eq("id", user_id)
+      .maybeSingle();
+      
+    if (userError) {
+      console.error("Erro ao verificar usuário:", userError);
+      return new Response(
+        JSON.stringify({ error: "Erro ao verificar usuário" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!userProfile) {
+      console.error("Usuário não encontrado:", user_id);
+      return new Response(
+        JSON.stringify({ error: "Usuário não encontrado" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Usuário encontrado, verificando assinatura existente...");
     
     // Verificar se o usuário já tem uma assinatura ativa
     const { data: existingSubscription, error: fetchError } = await supabaseClient
@@ -39,7 +70,10 @@ serve(async (req) => {
       
     if (fetchError) {
       console.error("Erro ao buscar assinatura:", fetchError);
-      throw fetchError;
+      return new Response(
+        JSON.stringify({ error: "Erro ao buscar assinatura existente" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     let result;
@@ -53,17 +87,22 @@ serve(async (req) => {
         .update({
           plan_type,
           is_active: true,
-          end_date: null, // Assinatura ativa não tem data de término
+          end_date: null,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user_id);
+        .eq("user_id", user_id)
+        .select();
         
       if (error) {
         console.error("Erro ao atualizar assinatura:", error);
-        throw error;
+        return new Response(
+          JSON.stringify({ error: "Erro ao atualizar assinatura" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       
       result = data;
+      console.log("Assinatura atualizada com sucesso");
     } else {
       // Criar uma nova assinatura
       console.log("Criando nova assinatura para o usuário:", user_id);
@@ -74,47 +113,59 @@ serve(async (req) => {
           plan_type,
           is_active: true,
           payment_id: payment_id || null,
-        });
+        })
+        .select();
         
       if (error) {
         console.error("Erro ao criar assinatura:", error);
-        throw error;
+        return new Response(
+          JSON.stringify({ error: "Erro ao criar assinatura" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       
       result = data;
       isNewSubscription = true;
+      console.log("Nova assinatura criada com sucesso");
     }
 
-    // Só criar a notificação se for uma nova assinatura
+    // Criar notificação de boas-vindas para nova assinatura
     if (isNewSubscription) {
       const { error: notificationError } = await supabaseClient
         .from("notifications")
         .insert({
           user_id,
           title: "Bem-vindo ao Plano Pro!",
-          message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos!",
+          message: "Sua assinatura foi ativada com sucesso. Aproveite todos os recursos premium!",
           type: "subscription",
           is_read: false
         });
         
       if (notificationError) {
         console.error("Erro ao criar notificação:", notificationError);
-        // Não lançamos o erro aqui para não interromper o fluxo principal
+        // Não falha a operação por causa da notificação
+      } else {
+        console.log("Notificação de boas-vindas criada");
       }
     }
 
-    console.log("Assinatura atualizada com sucesso para o usuário:", user_id);
+    console.log("Processo finalizado com sucesso para usuário:", user_id);
     
     return new Response(
-      JSON.stringify({ success: true, message: "Assinatura atualizada com sucesso" }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Assinatura atualizada com sucesso",
+        subscription: result,
+        isNewSubscription
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Erro ao processar requisição:", error.message);
+    console.error("Erro inesperado:", error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Erro interno do servidor" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
