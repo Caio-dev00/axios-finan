@@ -22,6 +22,7 @@ serve(async (req) => {
     // Parse the request body
     const { payment_id, user_id, plan_type = "pro" } = await req.json();
 
+    console.log("=== INÍCIO DO PROCESSAMENTO ===");
     console.log("Processando atualização de assinatura:", {
       user_id,
       plan_type,
@@ -29,39 +30,41 @@ serve(async (req) => {
     });
 
     if (!user_id) {
-      console.error("User ID é obrigatório");
+      console.error("❌ User ID é obrigatório");
       return new Response(
         JSON.stringify({ error: "User ID é obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verificar se o usuário existe
+    // Verificar se o usuário existe na tabela profiles
+    console.log("🔍 Verificando se usuário existe...");
     const { data: userProfile, error: userError } = await supabaseClient
       .from("profiles")
-      .select("id")
+      .select("id, email")
       .eq("id", user_id)
       .maybeSingle();
       
     if (userError) {
-      console.error("Erro ao verificar usuário:", userError);
+      console.error("❌ Erro ao verificar usuário:", userError);
       return new Response(
-        JSON.stringify({ error: "Erro ao verificar usuário" }),
+        JSON.stringify({ error: "Erro ao verificar usuário: " + userError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     if (!userProfile) {
-      console.error("Usuário não encontrado:", user_id);
+      console.error("❌ Usuário não encontrado:", user_id);
       return new Response(
         JSON.stringify({ error: "Usuário não encontrado" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Usuário encontrado, verificando assinatura existente...");
+    console.log("✅ Usuário encontrado:", userProfile);
     
-    // Verificar se o usuário já tem uma assinatura ativa
+    // Verificar se o usuário já tem uma assinatura
+    console.log("🔍 Verificando assinatura existente...");
     const { data: existingSubscription, error: fetchError } = await supabaseClient
       .from("user_subscriptions")
       .select("*")
@@ -69,9 +72,9 @@ serve(async (req) => {
       .maybeSingle();
       
     if (fetchError) {
-      console.error("Erro ao buscar assinatura:", fetchError);
+      console.error("❌ Erro ao buscar assinatura:", fetchError);
       return new Response(
-        JSON.stringify({ error: "Erro ao buscar assinatura existente" }),
+        JSON.stringify({ error: "Erro ao buscar assinatura existente: " + fetchError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -81,7 +84,7 @@ serve(async (req) => {
 
     if (existingSubscription) {
       // Atualizar a assinatura existente
-      console.log("Atualizando assinatura existente para o usuário:", user_id);
+      console.log("🔄 Atualizando assinatura existente...");
       const { data, error } = await supabaseClient
         .from("user_subscriptions")
         .update({
@@ -94,18 +97,18 @@ serve(async (req) => {
         .select();
         
       if (error) {
-        console.error("Erro ao atualizar assinatura:", error);
+        console.error("❌ Erro ao atualizar assinatura:", error);
         return new Response(
-          JSON.stringify({ error: "Erro ao atualizar assinatura" }),
+          JSON.stringify({ error: "Erro ao atualizar assinatura: " + error.message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
       result = data;
-      console.log("Assinatura atualizada com sucesso");
+      console.log("✅ Assinatura atualizada com sucesso");
     } else {
       // Criar uma nova assinatura
-      console.log("Criando nova assinatura para o usuário:", user_id);
+      console.log("➕ Criando nova assinatura...");
       const { data, error } = await supabaseClient
         .from("user_subscriptions")
         .insert({
@@ -117,20 +120,21 @@ serve(async (req) => {
         .select();
         
       if (error) {
-        console.error("Erro ao criar assinatura:", error);
+        console.error("❌ Erro ao criar assinatura:", error);
         return new Response(
-          JSON.stringify({ error: "Erro ao criar assinatura" }),
+          JSON.stringify({ error: "Erro ao criar assinatura: " + error.message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
       result = data;
       isNewSubscription = true;
-      console.log("Nova assinatura criada com sucesso");
+      console.log("✅ Nova assinatura criada com sucesso");
     }
 
     // Criar notificação de boas-vindas para nova assinatura
     if (isNewSubscription) {
+      console.log("🔔 Criando notificação de boas-vindas...");
       const { error: notificationError } = await supabaseClient
         .from("notifications")
         .insert({
@@ -142,29 +146,31 @@ serve(async (req) => {
         });
         
       if (notificationError) {
-        console.error("Erro ao criar notificação:", notificationError);
+        console.error("⚠️ Erro ao criar notificação:", notificationError);
         // Não falha a operação por causa da notificação
       } else {
-        console.log("Notificação de boas-vindas criada");
+        console.log("✅ Notificação de boas-vindas criada");
       }
     }
 
-    console.log("Processo finalizado com sucesso para usuário:", user_id);
+    console.log("🎉 PROCESSO FINALIZADO COM SUCESSO para usuário:", user_id);
+    console.log("=== FIM DO PROCESSAMENTO ===");
     
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Assinatura atualizada com sucesso",
         subscription: result,
-        isNewSubscription
+        isNewSubscription,
+        user_info: userProfile
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Erro inesperado:", error);
+    console.error("💥 ERRO INESPERADO:", error);
     
     return new Response(
-      JSON.stringify({ error: "Erro interno do servidor" }),
+      JSON.stringify({ error: "Erro interno do servidor: " + error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

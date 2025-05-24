@@ -5,12 +5,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const KiwifySuccess = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const [processedSuccessfully, setProcessedSuccessfully] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { refreshSubscription } = useSubscription();
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const KiwifySuccess = () => {
     const processPayment = async () => {
       try {
         setIsProcessing(true);
+        setError(null);
         
         // Extrair parâmetros da URL
         const queryParams = new URLSearchParams(location.search);
@@ -28,23 +30,20 @@ const KiwifySuccess = () => {
         const email = queryParams.get("email");
         const transactionId = queryParams.get("transaction_id");
         
-        console.log("Processando pagamento com parâmetros:", {
+        console.log("Parâmetros recebidos:", {
           userIdParam,
           email,
           transactionId,
-          currentUser: user?.email
+          currentUser: user?.id,
+          currentUserEmail: user?.email
         });
 
-        // Determinar o ID do usuário a ser usado
+        // Determinar o ID do usuário e email a serem usados
         let targetUserId = userIdParam || user?.id;
         let targetEmail = email || user?.email;
 
         if (!targetUserId && !targetEmail) {
-          toast({
-            title: "Erro no processamento",
-            description: "Não foi possível identificar o usuário para ativação do plano.",
-            variant: "destructive",
-          });
+          setError("Não foi possível identificar o usuário para ativação do plano.");
           setIsProcessing(false);
           return;
         }
@@ -61,6 +60,9 @@ const KiwifySuccess = () => {
 
           if (profileError) {
             console.error("Erro ao buscar perfil:", profileError);
+            setError("Erro ao buscar dados do usuário.");
+            setIsProcessing(false);
+            return;
           }
 
           if (profile) {
@@ -70,14 +72,12 @@ const KiwifySuccess = () => {
         }
 
         if (!targetUserId) {
-          toast({
-            title: "Usuário não encontrado",
-            description: "Para ativar seu plano Pro, você precisa criar uma conta ou fazer login com o email usado na compra.",
-            variant: "default",
-          });
+          setError("Para ativar seu plano Pro, você precisa criar uma conta ou fazer login com o email usado na compra.");
           
           if (targetEmail) {
-            navigate("/auth", { state: { suggestedEmail: targetEmail } });
+            setTimeout(() => {
+              navigate("/auth", { state: { suggestedEmail: targetEmail } });
+            }, 3000);
             return;
           }
           
@@ -98,7 +98,9 @@ const KiwifySuccess = () => {
         
         if (error) {
           console.error("Erro ao atualizar assinatura:", error);
-          throw error;
+          setError("Erro ao ativar o plano Pro. Tente novamente ou entre em contato com o suporte.");
+          setIsProcessing(false);
+          return;
         }
 
         console.log("Assinatura atualizada com sucesso:", data);
@@ -116,11 +118,7 @@ const KiwifySuccess = () => {
 
       } catch (error) {
         console.error("Erro ao processar pagamento:", error);
-        toast({
-          title: "Erro ao processar pagamento",
-          description: "Ocorreu um erro ao ativar seu plano Pro. Entre em contato com o suporte se o problema persistir.",
-          variant: "destructive",
-        });
+        setError("Ocorreu um erro inesperado ao ativar seu plano Pro. Entre em contato com o suporte.");
       } finally {
         setIsProcessing(false);
       }
@@ -141,6 +139,16 @@ const KiwifySuccess = () => {
               </h2>
               <p className="mt-2 text-gray-600 dark:text-gray-400">
                 Por favor, aguarde enquanto ativamos seu Plano Pro.
+              </p>
+            </>
+          ) : error ? (
+            <>
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+              <h2 className="mt-6 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Erro no processamento
+              </h2>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
+                {error}
               </p>
             </>
           ) : processedSuccessfully ? (
