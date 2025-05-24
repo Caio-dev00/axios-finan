@@ -39,9 +39,28 @@ serve(async (req) => {
     let finalUserId = user_id;
     let userProfile = null;
 
-    // Se não temos user_id mas temos email, buscar o usuário
-    if (!finalUserId && email) {
-      console.log("🔍 Buscando usuário pelo email:", email);
+    // Primeiro, tentar buscar o usuário na tabela auth.users pelo email
+    if (email && !finalUserId) {
+      console.log("🔍 Buscando usuário na tabela auth.users pelo email:", email);
+      
+      const { data: authUsers, error: authError } = await supabaseClient.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error("❌ Erro ao buscar usuários na auth:", authError);
+      } else {
+        const foundUser = authUsers.users.find(u => u.email === email);
+        if (foundUser) {
+          finalUserId = foundUser.id;
+          console.log("✅ Usuário encontrado na auth.users:", { id: finalUserId, email: foundUser.email });
+        } else {
+          console.log("⚠️ Usuário não encontrado na auth.users para email:", email);
+        }
+      }
+    }
+
+    // Se ainda não temos user_id, tentar buscar na tabela profiles
+    if (email && !finalUserId) {
+      console.log("🔍 Buscando usuário na tabela profiles pelo email:", email);
       
       const { data: profile, error: profileError } = await supabaseClient
         .from("profiles")
@@ -51,30 +70,18 @@ serve(async (req) => {
 
       if (profileError) {
         console.error("❌ Erro ao buscar perfil por email:", profileError);
-        return new Response(
-          JSON.stringify({ error: "Erro ao buscar dados do usuário por email: " + profileError.message }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      if (profile) {
+      } else if (profile) {
         finalUserId = profile.id;
         userProfile = profile;
-        console.log("✅ Usuário encontrado pelo email:", userProfile);
+        console.log("✅ Usuário encontrado na tabela profiles:", userProfile);
+      } else {
+        console.log("⚠️ Usuário não encontrado na tabela profiles para email:", email);
       }
     }
 
-    if (!finalUserId) {
-      console.error("❌ User ID ou email é obrigatório");
-      return new Response(
-        JSON.stringify({ error: "User ID ou email é obrigatório para ativar o plano" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Se ainda não temos o perfil, buscar pelo user_id
-    if (!userProfile) {
-      console.log("🔍 Verificando se usuário existe pelo ID...");
+    // Se temos user_id mas não temos o perfil, buscar o perfil
+    if (finalUserId && !userProfile) {
+      console.log("🔍 Buscando perfil pelo user_id:", finalUserId);
       const { data: profile, error: userError } = await supabaseClient
         .from("profiles")
         .select("id, email")
@@ -83,13 +90,22 @@ serve(async (req) => {
         
       if (userError) {
         console.error("❌ Erro ao verificar usuário:", userError);
-        return new Response(
-          JSON.stringify({ error: "Erro ao verificar usuário: " + userError.message }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      } else {
+        userProfile = profile;
+        console.log("✅ Perfil encontrado:", userProfile);
       }
+    }
 
-      userProfile = profile;
+    // Se ainda não temos user_id, não podemos continuar
+    if (!finalUserId) {
+      console.error("❌ Não foi possível identificar o usuário");
+      return new Response(
+        JSON.stringify({ 
+          error: "Não foi possível identificar o usuário. Verifique se o email está correto ou se o usuário está cadastrado.",
+          debug: { email, user_id, received_data: { payment_id, user_id, plan_type, email } }
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Se o usuário não existe na tabela profiles, criar o perfil
@@ -114,8 +130,6 @@ serve(async (req) => {
       
       userProfile = newProfile;
       console.log("✅ Perfil criado com sucesso:", userProfile);
-    } else {
-      console.log("✅ Usuário encontrado:", userProfile);
     }
     
     // Verificar se o usuário já tem uma assinatura
@@ -170,7 +184,6 @@ serve(async (req) => {
           user_id: finalUserId,
           plan_type,
           is_active: true,
-          payment_id: payment_id || null,
         })
         .select();
         

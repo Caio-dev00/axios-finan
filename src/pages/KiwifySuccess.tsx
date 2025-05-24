@@ -12,6 +12,7 @@ const KiwifySuccess = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const [processedSuccessfully, setProcessedSuccessfully] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const { user } = useAuth();
   const { refreshSubscription } = useSubscription();
   const navigate = useNavigate();
@@ -35,7 +36,8 @@ const KiwifySuccess = () => {
           emailParam,
           transactionId,
           currentUser: user?.id,
-          currentUserEmail: user?.email
+          currentUserEmail: user?.email,
+          fullUrl: window.location.href
         });
 
         // Determinar o ID do usuário e email a serem usados
@@ -60,7 +62,13 @@ const KiwifySuccess = () => {
 
         // Verificar se temos pelo menos um identificador
         if (!targetUserId && !targetEmail) {
-          setError("Não foi possível identificar o usuário. Por favor, faça login e tente novamente.");
+          const errorMsg = "Não foi possível identificar o usuário. Por favor, faça login e tente novamente.";
+          setError(errorMsg);
+          setDebugInfo({
+            receivedParams: { userIdParam, emailParam, transactionId },
+            currentUser: { id: user?.id, email: user?.email },
+            url: window.location.href
+          });
           setIsProcessing(false);
           return;
         }
@@ -75,6 +83,11 @@ const KiwifySuccess = () => {
         if (error) {
           console.error("Erro da edge function:", error);
           setError(error.message || "Erro ao ativar o plano Pro. Tente novamente ou entre em contato com o suporte.");
+          setDebugInfo({
+            requestData,
+            errorDetails: error,
+            receivedParams: { userIdParam, emailParam, transactionId }
+          });
           setIsProcessing(false);
           return;
         }
@@ -82,6 +95,11 @@ const KiwifySuccess = () => {
         if (!data?.success) {
           console.error("Resposta de erro:", data);
           setError(data?.error || "Erro ao ativar o plano Pro. Tente novamente ou entre em contato com o suporte.");
+          setDebugInfo({
+            requestData,
+            responseData: data,
+            receivedParams: { userIdParam, emailParam, transactionId }
+          });
           setIsProcessing(false);
           return;
         }
@@ -104,6 +122,10 @@ const KiwifySuccess = () => {
       } catch (error) {
         console.error("Erro ao processar pagamento:", error);
         setError("Ocorreu um erro inesperado ao ativar seu plano Pro. Entre em contato com o suporte.");
+        setDebugInfo({
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
       } finally {
         setIsProcessing(false);
       }
@@ -135,6 +157,16 @@ const KiwifySuccess = () => {
               <p className="mt-2 text-gray-600 dark:text-gray-400">
                 {error}
               </p>
+              {debugInfo && (
+                <details className="mt-4 text-left">
+                  <summary className="text-sm text-gray-500 cursor-pointer">
+                    Informações de debug (clique para expandir)
+                  </summary>
+                  <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded overflow-auto">
+                    {JSON.stringify(debugInfo, null, 2)}
+                  </pre>
+                </details>
+              )}
               {error.includes("faça login") && (
                 <div className="mt-4">
                   <Button
