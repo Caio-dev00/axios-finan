@@ -20,11 +20,12 @@ serve(async (req) => {
     );
 
     // Parse the request body
-    const { payment_id, user_id, plan_type = "pro" } = await req.json();
+    const { payment_id, user_id, plan_type = "pro", email } = await req.json();
 
     console.log("=== INÍCIO DO PROCESSAMENTO ===");
     console.log("Processando atualização de assinatura:", {
       user_id,
+      email,
       plan_type,
       payment_id
     });
@@ -35,46 +36,94 @@ serve(async (req) => {
       console.log("🧪 ID de transação de teste detectado - aprovando automaticamente:", payment_id);
     }
 
-    if (!user_id) {
-      console.error("❌ User ID é obrigatório");
-      return new Response(
-        JSON.stringify({ error: "User ID é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    let finalUserId = user_id;
+    let userProfile = null;
 
-    // Verificar se o usuário existe na tabela profiles
-    console.log("🔍 Verificando se usuário existe...");
-    const { data: userProfile, error: userError } = await supabaseClient
-      .from("profiles")
-      .select("id, email")
-      .eq("id", user_id)
-      .maybeSingle();
+    // Se não temos user_id mas temos email, buscar o usuário
+    if (!finalUserId && email) {
+      console.log("🔍 Buscando usuário pelo email:", email);
       
-    if (userError) {
-      console.error("❌ Erro ao verificar usuário:", userError);
+      const { data: profile, error: profileError } = await supabaseClient
+        .from("profiles")
+        .select("id, email")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("❌ Erro ao buscar perfil por email:", profileError);
+        return new Response(
+          JSON.stringify({ error: "Erro ao buscar dados do usuário por email: " + profileError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (profile) {
+        finalUserId = profile.id;
+        userProfile = profile;
+        console.log("✅ Usuário encontrado pelo email:", userProfile);
+      }
+    }
+
+    if (!finalUserId) {
+      console.error("❌ User ID ou email é obrigatório");
       return new Response(
-        JSON.stringify({ error: "Erro ao verificar usuário: " + userError.message }),
+        JSON.stringify({ error: "User ID ou email é obrigatório para ativar o plano" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Se ainda não temos o perfil, buscar pelo user_id
     if (!userProfile) {
-      console.error("❌ Usuário não encontrado:", user_id);
-      return new Response(
-        JSON.stringify({ error: "Usuário não encontrado" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log("🔍 Verificando se usuário existe pelo ID...");
+      const { data: profile, error: userError } = await supabaseClient
+        .from("profiles")
+        .select("id, email")
+        .eq("id", finalUserId)
+        .maybeSingle();
+        
+      if (userError) {
+        console.error("❌ Erro ao verificar usuário:", userError);
+        return new Response(
+          JSON.stringify({ error: "Erro ao verificar usuário: " + userError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      userProfile = profile;
     }
 
-    console.log("✅ Usuário encontrado:", userProfile);
+    // Se o usuário não existe na tabela profiles, criar o perfil
+    if (!userProfile) {
+      console.log("➕ Criando perfil para o usuário...");
+      const { data: newProfile, error: createError } = await supabaseClient
+        .from("profiles")
+        .insert({
+          id: finalUserId,
+          email: email || null
+        })
+        .select("id, email")
+        .single();
+        
+      if (createError) {
+        console.error("❌ Erro ao criar perfil:", createError);
+        return new Response(
+          JSON.stringify({ error: "Erro ao criar perfil do usuário: " + createError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      userProfile = newProfile;
+      console.log("✅ Perfil criado com sucesso:", userProfile);
+    } else {
+      console.log("✅ Usuário encontrado:", userProfile);
+    }
     
     // Verificar se o usuário já tem uma assinatura
     console.log("🔍 Verificando assinatura existente...");
     const { data: existingSubscription, error: fetchError } = await supabaseClient
       .from("user_subscriptions")
       .select("*")
-      .eq("user_id", user_id)
+      .eq("user_id", finalUserId)
       .maybeSingle();
       
     if (fetchError) {
@@ -99,7 +148,7 @@ serve(async (req) => {
           end_date: null,
           updated_at: new Date().toISOString(),
         })
-        .eq("user_id", user_id)
+        .eq("user_id", finalUserId)
         .select();
         
       if (error) {
@@ -118,7 +167,7 @@ serve(async (req) => {
       const { data, error } = await supabaseClient
         .from("user_subscriptions")
         .insert({
-          user_id,
+          user_id: finalUserId,
           plan_type,
           is_active: true,
           payment_id: payment_id || null,
@@ -144,7 +193,7 @@ serve(async (req) => {
       const { error: notificationError } = await supabaseClient
         .from("notifications")
         .insert({
-          user_id,
+          user_id: finalUserId,
           title: "Bem-vindo ao Plano Pro!",
           message: isTestTransaction 
             ? "Sua assinatura de teste foi ativada com sucesso. Aproveite todos os recursos premium!" 
@@ -161,7 +210,7 @@ serve(async (req) => {
       }
     }
 
-    console.log("🎉 PROCESSO FINALIZADO COM SUCESSO para usuário:", user_id);
+    console.log("🎉 PROCESSO FINALIZADO COM SUCESSO para usuário:", finalUserId);
     console.log("=== FIM DO PROCESSAMENTO ===");
     
     return new Response(

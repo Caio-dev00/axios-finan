@@ -27,12 +27,12 @@ const KiwifySuccess = () => {
         // Extrair parâmetros da URL
         const queryParams = new URLSearchParams(location.search);
         const userIdParam = queryParams.get("user_id");
-        const email = queryParams.get("email");
+        const emailParam = queryParams.get("email");
         const transactionId = queryParams.get("transaction_id");
         
         console.log("Parâmetros recebidos:", {
           userIdParam,
-          email,
+          emailParam,
           transactionId,
           currentUser: user?.id,
           currentUserEmail: user?.email
@@ -40,65 +40,48 @@ const KiwifySuccess = () => {
 
         // Determinar o ID do usuário e email a serem usados
         let targetUserId = userIdParam || user?.id;
-        let targetEmail = email || user?.email;
+        let targetEmail = emailParam || user?.email;
 
+        // Dados para enviar para a edge function
+        const requestData: any = {
+          plan_type: 'pro',
+          payment_id: transactionId || `TEST_TRANSACTION_${Date.now()}_APPROVED`
+        };
+
+        // Adicionar user_id se disponível
+        if (targetUserId) {
+          requestData.user_id = targetUserId;
+        }
+
+        // Adicionar email se disponível
+        if (targetEmail) {
+          requestData.email = targetEmail;
+        }
+
+        // Verificar se temos pelo menos um identificador
         if (!targetUserId && !targetEmail) {
-          setError("Não foi possível identificar o usuário para ativação do plano.");
+          setError("Não foi possível identificar o usuário. Por favor, faça login e tente novamente.");
           setIsProcessing(false);
           return;
         }
 
-        // Se não temos user_id mas temos email, buscar o usuário
-        if (!targetUserId && targetEmail) {
-          console.log("Buscando usuário pelo email:", targetEmail);
-          
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("email", targetEmail)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error("Erro ao buscar perfil:", profileError);
-            setError("Erro ao buscar dados do usuário.");
-            setIsProcessing(false);
-            return;
-          }
-
-          if (profile) {
-            targetUserId = profile.id;
-            console.log("Usuário encontrado:", targetUserId);
-          }
-        }
-
-        if (!targetUserId) {
-          setError("Para ativar seu plano Pro, você precisa criar uma conta ou fazer login com o email usado na compra.");
-          
-          if (targetEmail) {
-            setTimeout(() => {
-              navigate("/auth", { state: { suggestedEmail: targetEmail } });
-            }, 3000);
-            return;
-          }
-          
-          setIsProcessing(false);
-          return;
-        }
-
-        console.log("Atualizando assinatura para usuário:", targetUserId);
+        console.log("Enviando dados para edge function:", requestData);
 
         // Chamar a edge function para atualizar a assinatura
         const { data, error } = await supabase.functions.invoke('update-subscription', {
-          body: { 
-            user_id: targetUserId,
-            plan_type: 'pro',
-            payment_id: transactionId
-          }
+          body: requestData
         });
         
         if (error) {
-          console.error("Erro ao atualizar assinatura:", error);
-          setError("Erro ao ativar o plano Pro. Tente novamente ou entre em contato com o suporte.");
+          console.error("Erro da edge function:", error);
+          setError(error.message || "Erro ao ativar o plano Pro. Tente novamente ou entre em contato com o suporte.");
+          setIsProcessing(false);
+          return;
+        }
+
+        if (!data?.success) {
+          console.error("Resposta de erro:", data);
+          setError(data?.error || "Erro ao ativar o plano Pro. Tente novamente ou entre em contato com o suporte.");
           setIsProcessing(false);
           return;
         }
@@ -112,7 +95,9 @@ const KiwifySuccess = () => {
 
         toast({
           title: "Pagamento processado com sucesso!",
-          description: "Seu plano Pro foi ativado. Bem-vindo!",
+          description: data.test_mode 
+            ? "Seu plano Pro de teste foi ativado. Bem-vindo!" 
+            : "Seu plano Pro foi ativado. Bem-vindo!",
           variant: "default",
         });
 
@@ -150,6 +135,16 @@ const KiwifySuccess = () => {
               <p className="mt-2 text-gray-600 dark:text-gray-400">
                 {error}
               </p>
+              {error.includes("faça login") && (
+                <div className="mt-4">
+                  <Button
+                    onClick={() => navigate("/auth")}
+                    className="bg-finance-primary hover:bg-finance-primary/90"
+                  >
+                    Fazer Login
+                  </Button>
+                </div>
+              )}
             </>
           ) : processedSuccessfully ? (
             <>
